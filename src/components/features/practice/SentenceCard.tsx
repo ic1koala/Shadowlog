@@ -15,7 +15,13 @@ interface ParsedWord {
   text: string;
   charStart: number;
   charEnd: number;
+  startProgress: number;
+  endProgress: number;
 }
+
+// Subtle pre-roll delay (250ms) before audio starts playing.
+// This allows the user's eye to lock onto the highlighted first word and completely prevents the visual highlight from lagging behind speech onset.
+const AUDIO_PLAYBACK_DELAY_MS = 250;
 
 /**
  * Finds the best English voice available in the browser's SpeechSynthesis.
@@ -59,6 +65,7 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const rafIdRef = useRef<number | null>(null);
+  const playDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const stopAnimationLoop = useCallback(() => {
     if (rafIdRef.current !== null) {
@@ -67,22 +74,48 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
     }
   }, []);
 
-  // Parse English sentence into words with character indices for synchronization
+  const clearPendingPlay = useCallback(() => {
+    if (playDelayTimerRef.current) {
+      clearTimeout(playDelayTimerRef.current);
+      playDelayTimerRef.current = null;
+    }
+  }, []);
+
+  // Parse English sentence into words with weighted timing distribution for natural speech pacing
   const parsedWords = useMemo<ParsedWord[]>(() => {
     if (!sentence?.english) return [];
-    const words: ParsedWord[] = [];
+    const words: { id: number; text: string; charStart: number; charEnd: number; weight: number }[] = [];
     const regex = /\S+/g;
     let match: RegExpExecArray | null;
     let id = 0;
     while ((match = regex.exec(sentence.english)) !== null) {
+      // Base weight of 3.0 + word character length
+      // Gives short words ("a", "to", "I") a natural acoustic minimum duration instead of rushing past them
+      const weight = match[0].length + 3.0;
       words.push({
         id: id++,
         text: match[0],
         charStart: match.index,
         charEnd: match.index + match[0].length,
+        weight,
       });
     }
-    return words;
+
+    const totalWeight = words.reduce((sum, w) => sum + w.weight, 0);
+    let accumulated = 0;
+    return words.map((w) => {
+      const startProgress = accumulated / totalWeight;
+      accumulated += w.weight;
+      const endProgress = accumulated / totalWeight;
+      return {
+        id: w.id,
+        text: w.text,
+        charStart: w.charStart,
+        charEnd: w.charEnd,
+        startProgress,
+        endProgress,
+      };
+    });
   }, [sentence?.english]);
 
   const startAnimationLoop = useCallback(() => {
@@ -95,17 +128,21 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
         return;
       }
 
-      if (audio.duration && audio.duration > 0 && parsedWords.length > 0 && sentence?.english) {
-        // Add a slight lead-time offset (0.18s adjusted for playbackRate)
-        // so that the word is highlighted right as the speaker starts pronouncing it rather than lagging behind
-        const leadTime = 0.18 * audio.playbackRate;
-        const effectiveTime = Math.min(audio.duration, Math.max(0, audio.currentTime + leadTime));
-        const progress = Math.min(0.999, effectiveTime / audio.duration);
-        const targetChar = progress * sentence.english.length;
+      if (audio.duration && audio.duration > 0 && parsedWords.length > 0) {
+        // OpenAI TTS MP3 audio typically has ~0.35s of trailing silence at the end.
+        // Calibrate active speech duration so the final word doesn't lag after the audio has finished
+        const trailingSilence = 0.35;
+        const activeDuration = Math.max(0.4, audio.duration - trailingSilence);
+
+        // Lead-time offset (~0.25s adjusted for playback rate)
+        // Highlights the word slightly ahead of speech onset to match cognitive reading speed
+        const leadTime = 0.25 * audio.playbackRate;
+        const effectiveTime = Math.max(0, audio.currentTime + leadTime);
+        const progress = Math.min(0.999, effectiveTime / activeDuration);
 
         let currentIdx = 0;
         for (let i = 0; i < parsedWords.length; i++) {
-          if (targetChar <= parsedWords[i].charEnd || i === parsedWords.length - 1) {
+          if (progress < parsedWords[i].endProgress || i === parsedWords.length - 1) {
             currentIdx = i;
             break;
           }
@@ -117,7 +154,7 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
     };
 
     rafIdRef.current = requestAnimationFrame(updateHighlight);
-  }, [parsedWords, sentence?.english, stopAnimationLoop]);
+  }, [parsedWords, stopAnimationLoop]);
 
   // Pre-load SpeechSynthesis voices (Chrome loads them asynchronously)
   useEffect(() => {
@@ -142,6 +179,7 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
   useEffect(() => {
     setIsPlaying(false);
     setActiveWordIndex(null);
+    clearPendingPlay();
     stopAnimationLoop();
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
@@ -152,14 +190,16 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
       audioRef.current = null;
     }
     return () => {
+      clearPendingPlay();
       stopAnimationLoop();
     };
-  }, [sentence?.id, stopAnimationLoop]);
+  }, [sentence?.id, clearPendingPlay, stopAnimationLoop]);
 
   const speakWithSpeechSynthesis = useCallback(
     (text: string) => {
       if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
+      clearPendingPlay();
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "en-US";
@@ -188,21 +228,26 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
       utterance.onend = () => {
         setIsPlaying(false);
         setActiveWordIndex(null);
+        clearPendingPlay();
       };
 
       utterance.onerror = (e) => {
         console.warn("SpeechSynthesis error:", e);
         setIsPlaying(false);
         setActiveWordIndex(null);
+        clearPendingPlay();
       };
 
-      window.speechSynthesis.speak(utterance);
       setIsPlaying(true);
       if (parsedWords.length > 0) {
         setActiveWordIndex(0);
       }
+
+      playDelayTimerRef.current = setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, AUDIO_PLAYBACK_DELAY_MS);
     },
-    [playbackSpeed, parsedWords]
+    [playbackSpeed, parsedWords, clearPendingPlay]
   );
 
   const togglePlayAudio = useCallback(() => {
@@ -217,12 +262,14 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
         audio.onended = () => {
           setIsPlaying(false);
           setActiveWordIndex(null);
+          clearPendingPlay();
           stopAnimationLoop();
         };
 
         audio.onerror = () => {
           console.warn("TTS audio playback failed, falling back to SpeechSynthesis");
           audioRef.current = null;
+          clearPendingPlay();
           stopAnimationLoop();
           speakWithSpeechSynthesis(sentence.english);
         };
@@ -231,30 +278,41 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
       audioRef.current.playbackRate = playbackSpeed;
 
       if (isPlaying) {
+        clearPendingPlay();
         audioRef.current.pause();
         setIsPlaying(false);
         setActiveWordIndex(null);
         stopAnimationLoop();
       } else {
-        audioRef.current.currentTime = 0;
-        audioRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-            if (parsedWords.length > 0) setActiveWordIndex(0);
-            startAnimationLoop();
-          })
-          .catch(() => {
-            setIsPlaying(false);
-            setActiveWordIndex(null);
-            stopAnimationLoop();
-          });
+        clearPendingPlay();
+        // Immediately highlight the first word to draw focus and prepare learner
+        setIsPlaying(true);
+        if (parsedWords.length > 0) {
+          setActiveWordIndex(0);
+        }
+
+        // Delay audio playback start slightly (~250ms) so user is ready and highlight firmly leads
+        playDelayTimerRef.current = setTimeout(() => {
+          if (!audioRef.current) return;
+          audioRef.current.currentTime = 0;
+          audioRef.current
+            .play()
+            .then(() => {
+              startAnimationLoop();
+            })
+            .catch(() => {
+              setIsPlaying(false);
+              setActiveWordIndex(null);
+              stopAnimationLoop();
+            });
+        }, AUDIO_PLAYBACK_DELAY_MS);
       }
       return;
     }
 
     // Path B: SpeechSynthesis
     if (isPlaying) {
+      clearPendingPlay();
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
@@ -263,7 +321,16 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
     } else {
       speakWithSpeechSynthesis(sentence.english);
     }
-  }, [sentence, isPlaying, playbackSpeed, parsedWords, speakWithSpeechSynthesis, startAnimationLoop, stopAnimationLoop]);
+  }, [
+    sentence,
+    isPlaying,
+    playbackSpeed,
+    parsedWords,
+    clearPendingPlay,
+    speakWithSpeechSynthesis,
+    startAnimationLoop,
+    stopAnimationLoop,
+  ]);
 
   const changeSpeed = (speed: number) => {
     setPlaybackSpeed(speed);
@@ -334,7 +401,7 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
             return (
               <span
                 key={w.id}
-                className={`transition-all duration-150 rounded-lg px-1.5 py-0.5 inline-block ${
+                className={`transition-all duration-75 rounded-lg px-1.5 py-0.5 inline-block ${
                   isCurrent
                     ? "bg-blue-600 text-white font-bold shadow-md scale-105 ring-2 ring-blue-400/40"
                     : "text-foreground"
