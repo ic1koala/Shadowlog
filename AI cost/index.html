@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShadowLog AIコスト・収益試算シミュレーター</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    input[type=range] {
+      accent-color: #2563eb;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen py-8 px-4 sm:px-6">
+  <div class="max-w-5xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold mb-2">
+            実測データ連動型シミュレーター
+          </span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            ShadowLog 有料化・AIコスト収益試算ツール
+          </h1>
+          <p class="text-sm text-slate-500 mt-1">
+            OpenAI API（GPT-4o-mini / TTS-1 / Whisper-1）の実績消費データに基づく収支シミュレーション
+          </p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-slate-400">1回の練習あたりのAI原価</p>
+          <p class="text-2xl font-black text-blue-600 font-mono" id="unitCostBadge">0.48 円</p>
+          <p class="text-[11px] text-slate-400">($0.00319 / 回)</p>
+        </div>
+      </div>
+
+      <!-- Quick Preset Buttons -->
+      <div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-bold text-slate-400 mr-1">ワンクリック試算:</span>
+        <button onclick="applyPreset(50, 50, 300)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold transition text-slate-700">
+          📍 現在の想定 (50人 × 50回 × 300円)
+        </button>
+        <button onclick="applyPreset(50, 15, 300)" class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-xs font-semibold transition text-blue-700">
+          💡 300円・1日15回制限プラン
+        </button>
+        <button onclick="applyPreset(50, 50, 1480)" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold transition text-emerald-700">
+          👑 毎日50回無制限・Proプラン (1,480円)
+        </button>
+        <button onclick="applyPreset(200, 20, 500)" class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-xs font-semibold transition text-purple-700">
+          🚀 成長期 (200人 × 20回 × 500円)
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Grid: Controls + Results -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- Left Column: Sliders & Settings (5 cols) -->
+      <div class="lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <span>⚙️</span> シミュレーション条件設定
+        </h2>
+
+        <!-- Slider 1: Users -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-sm">
+            <label class="font-bold text-slate-700">有料会員数</label>
+            <div class="flex items-center gap-1 font-mono font-bold text-blue-600">
+              <input type="number" id="numUsers" min="1" max="10000" value="50" class="w-16 px-2 py-1 text-right border rounded-lg text-sm" />
+              <span>人</span>
+            </div>
+          </div>
+          <input type="range" id="rangeUsers" min="1" max="500" value="50" class="w-full" />
+        </div>
+
+        <!-- Slider 2: Daily Uses -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-sm">
+            <label class="font-bold text-slate-700">1人の1日利用回数</label>
+            <div class="flex items-center gap-1 font-mono font-bold text-blue-600">
+              <input type="number" id="numDailyUses" min="1" max="200" value="50" class="w-16 px-2 py-1 text-right border rounded-lg text-sm" />
+              <span>回/日</span>
+            </div>
+          </div>
+          <input type="range" id="rangeDailyUses" min="1" max="100" value="50" class="w-full" />
+          <p class="text-[11px] text-slate-400" id="monthlyUsesLabel">月間 1,500 回 / 人</p>
+        </div>
+
+        <!-- Slider 3: Price -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-sm">
+            <label class="font-bold text-slate-700">月額利用料金（税込）</label>
+            <div class="flex items-center gap-1 font-mono font-bold text-blue-600">
+              <input type="number" id="numPrice" min="100" max="10000" step="50" value="300" class="w-20 px-2 py-1 text-right border rounded-lg text-sm" />
+              <span>円/月</span>
+            </div>
+          </div>
+          <input type="range" id="rangePrice" min="100" max="3000" step="50" value="300" class="w-full" />
+        </div>
+
+        <!-- Advanced parameters accordion -->
+        <div class="pt-4 border-t border-slate-100 space-y-4">
+          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">為替・手数料設定</h3>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-600 font-medium mb-1">為替 (円/USD)</label>
+              <input type="number" id="usdJpy" value="150" class="w-full px-3 py-1.5 text-sm border rounded-xl font-mono" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-600 font-medium mb-1">決済手数料 (%)</label>
+              <input type="number" id="feePct" value="3.6" step="0.1" class="w-full px-3 py-1.5 text-sm border rounded-xl font-mono" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Cost Breakdown Pie / Bar -->
+        <div class="pt-4 border-t border-slate-100 space-y-2.5">
+          <p class="text-xs font-bold text-slate-700">1回あたりの原価構成比（実測値）</p>
+          <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex">
+            <div style="width: 62.5%" class="bg-indigo-500" title="TTS-1 読み上げ (62.5%)"></div>
+            <div style="width: 31.1%" class="bg-sky-400" title="Whisper 音声認識 (31.1%)"></div>
+            <div style="width: 6.4%" class="bg-emerald-400" title="GPT-4o-mini 文生成・コーチ (6.4%)"></div>
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-500">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> TTS-1 (63%)</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block"></span> Whisper (31%)</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> GPT-4o (6%)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Simulation Output (7 cols) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-medium">月間総売上</p>
+            <p class="text-xl sm:text-2xl font-black font-mono text-slate-900 mt-1" id="kpiRevenue">¥15,000</p>
+            <p class="text-[10px] text-slate-400 mt-0.5" id="kpiRevenueSub">50人 × 300円</p>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-medium">月間AI原価</p>
+            <p class="text-xl sm:text-2xl font-black font-mono text-rose-600 mt-1" id="kpiAiCost">¥35,929</p>
+            <p class="text-[10px] text-slate-400 mt-0.5" id="kpiAiCostSub">1人あたり ¥719/月</p>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+            <p class="text-xs text-slate-500 font-medium">月間総練習回数</p>
+            <p class="text-xl sm:text-2xl font-black font-mono text-slate-800 mt-1" id="kpiPractices">75,000</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">回 / 月</p>
+          </div>
+        </div>
+
+        <!-- Profit / Loss Hero Card -->
+        <div id="profitHeroCard" class="p-6 sm:p-8 rounded-2xl border text-white shadow-md transition-all duration-300">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider opacity-80" id="profitStatusBadge">月間最終損益（粗利）</p>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-3xl sm:text-4xl font-black font-mono tracking-tight" id="kpiProfit">-¥21,469</span>
+                <span class="text-sm font-bold opacity-90" id="kpiProfitMargin">(利益率: -143%)</span>
+              </div>
+            </div>
+            <div class="text-right sm:border-l sm:border-white/20 sm:pl-6">
+              <p class="text-xs opacity-80">1人あたりの月間収支</p>
+              <p class="text-xl sm:text-2xl font-black font-mono" id="kpiProfitPerUser">-¥429 /人</p>
+              <p class="text-[11px] opacity-75 mt-0.5">入金¥289 - 原価¥719</p>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-white/15 text-xs opacity-90" id="profitHeroAdvice">
+            <!-- Dynamic Advice -->
+          </div>
+        </div>
+
+        <!-- Strategic Break-Even Analysis Table -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <span>🎯</span> 損益分岐点 & 収益化アドバイス
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+              <p class="text-xs font-bold text-slate-600">① 今の料金（<span id="labelCurrPrice">300</span>円）での上限回数</p>
+              <p class="text-xl font-extrabold text-blue-600 font-mono" id="valBreakEvenDaily">1日 20 回まで</p>
+              <p class="text-[11px] text-slate-400">これを超えると原価割れ（赤字）になります。アプリ内で1日15〜20回の上限を設けることで確実に黒字化できます。</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+              <p class="text-xs font-bold text-slate-600">② 毎日 <span id="labelCurrUses">50</span> 回使う場合の適正料金</p>
+              <p class="text-xl font-extrabold text-emerald-600 font-mono" id="valRecPrice">月額 1,490 円</p>
+              <p class="text-[11px] text-slate-400">最低745円でトントン、利益率50%を確保する場合は1,480円〜1,980円が業界標準的にも非常に妥当な水準です。</p>
+            </div>
+          </div>
+
+          <!-- Optimization tips -->
+          <div class="p-4 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-900 space-y-1.5 leading-relaxed">
+            <p class="font-bold flex items-center gap-1.5">
+              <span>💡</span> コストを60%削減する最大の裏ワザ（音声キャッシュ）
+            </p>
+            <p class="text-blue-800">
+              AIコストの <strong>63%</strong> を占めるのは「模範音声の生成（TTS-1）」です。一度生成された音声やプリセット英文の音声を Supabase Storage や S3 にキャッシュして再利用すれば、2回目以降の練習原価は <strong>1回 約 0.18円</strong> まで圧縮できます。
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Empirical constants
+    const CHARS_PER_TTS = 133.1;
+    const SECONDS_PER_WHISPER = 9.92;
+    const TOKENS_PER_CHAT = 284.1 * 2; // 2 calls (gen + coach)
+    const OUTPUT_TOKENS = 100 * 2;
+
+    const PRICE_TTS_1M = 15.00;
+    const PRICE_WHISPER_MIN = 0.006;
+    const PRICE_GPT_IN_1M = 0.150;
+    const PRICE_GPT_OUT_1M = 0.600;
+
+    // Elements
+    const numUsers = document.getElementById('numUsers');
+    const rangeUsers = document.getElementById('rangeUsers');
+    const numDailyUses = document.getElementById('numDailyUses');
+    const rangeDailyUses = document.getElementById('rangeDailyUses');
+    const numPrice = document.getElementById('numPrice');
+    const rangePrice = document.getElementById('rangePrice');
+    const usdJpy = document.getElementById('usdJpy');
+    const feePct = document.getElementById('feePct');
+
+    function syncInputs(numInput, rangeInput) {
+      numInput.addEventListener('input', () => {
+        rangeInput.value = numInput.value;
+        calculate();
+      });
+      rangeInput.addEventListener('input', () => {
+        numInput.value = rangeInput.value;
+        calculate();
+      });
+    }
+
+    syncInputs(numUsers, rangeUsers);
+    syncInputs(numDailyUses, rangeDailyUses);
+    syncInputs(numPrice, rangePrice);
+    usdJpy.addEventListener('input', calculate);
+    feePct.addEventListener('input', calculate);
+
+    function applyPreset(users, dailyUses, price) {
+      numUsers.value = users;
+      rangeUsers.value = users;
+      numDailyUses.value = dailyUses;
+      rangeDailyUses.value = dailyUses;
+      numPrice.value = price;
+      rangePrice.value = price;
+      calculate();
+    }
+
+    function calculate() {
+      const users = parseInt(numUsers.value) || 1;
+      const dailyUses = parseFloat(numDailyUses.value) || 1;
+      const price = parseFloat(numPrice.value) || 100;
+      const rate = parseFloat(usdJpy.value) || 150;
+      const fee = parseFloat(feePct.value) || 3.6;
+
+      // Unit cost
+      const ttsUsd = (CHARS_PER_TTS / 1_000_000) * PRICE_TTS_1M;
+      const whisperUsd = (SECONDS_PER_WHISPER / 60) * PRICE_WHISPER_MIN;
+      const gptUsd = (TOKENS_PER_CHAT / 1_000_000) * PRICE_GPT_IN_1M + (OUTPUT_TOKENS / 1_000_000) * PRICE_GPT_OUT_1M;
+      const unitUsd = ttsUsd + whisperUsd + gptUsd;
+      const unitJpy = unitUsd * rate;
+
+      document.getElementById('unitCostBadge').innerText = `${unitJpy.toFixed(2)} 円`;
+
+      // Monthly volume
+      const monthlyUsesPerUser = dailyUses * 30;
+      document.getElementById('monthlyUsesLabel').innerText = `月間 ${monthlyUsesPerUser.toLocaleString()} 回 / 人`;
+      const totalPractices = users * monthlyUsesPerUser;
+
+      // Revenue & Fees
+      const totalRev = users * price;
+      const paymentFee = totalRev * (fee / 100);
+      const netRev = totalRev - paymentFee;
+
+      // AI Cost
+      const costPerUserJpy = monthlyUsesPerUser * unitJpy;
+      const totalAiCostJpy = totalPractices * unitJpy;
+
+      // Profit
+      const profitJpy = netRev - totalAiCostJpy;
+      const profitPerUser = (price * (1 - fee / 100)) - costPerUserJpy;
+      const margin = (profitJpy / totalRev) * 100;
+
+      // Break-even
+      const netRevPerUser = price * (1 - fee / 100);
+      const breakEvenMonthly = netRevPerUser / unitJpy;
+      const breakEvenDaily = breakEvenMonthly / 30;
+      const breakEvenPrice = costPerUserJpy / (1 - fee / 100);
+      const recPrice50 = (costPerUserJpy / 0.5) / (1 - fee / 100);
+
+      // Render KPIs
+      document.getElementById('kpiRevenue').innerText = `¥${Math.round(totalRev).toLocaleString()}`;
+      document.getElementById('kpiRevenueSub').innerText = `${users}人 × ${price}円 (決済手取 ¥${Math.round(netRev).toLocaleString()})`;
+
+      document.getElementById('kpiAiCost').innerText = `¥${Math.round(totalAiCostJpy).toLocaleString()}`;
+      document.getElementById('kpiAiCostSub').innerText = `1人あたり ¥${Math.round(costPerUserJpy).toLocaleString()}/月`;
+
+      document.getElementById('kpiPractices').innerText = Math.round(totalPractices).toLocaleString();
+
+      // Render Hero Card
+      const hero = document.getElementById('profitHeroCard');
+      const kpiProfit = document.getElementById('kpiProfit');
+      const kpiProfitMargin = document.getElementById('kpiProfitMargin');
+      const kpiProfitPerUser = document.getElementById('kpiProfitPerUser');
+      const advice = document.getElementById('profitHeroAdvice');
+      const statusBadge = document.getElementById('profitStatusBadge');
+
+      if (profitJpy >= 0) {
+        hero.className = 'p-6 sm:p-8 rounded-2xl border text-white shadow-md bg-gradient-to-r from-emerald-600 to-teal-700 transition-all duration-300';
+        statusBadge.innerText = '🟢 月間最終損益（黒字達成）';
+        kpiProfit.innerText = `+¥${Math.round(profitJpy).toLocaleString()}`;
+        kpiProfitMargin.innerText = `(利益率: +${margin.toFixed(1)}%)`;
+        kpiProfitPerUser.innerText = `+¥${Math.round(profitPerUser).toLocaleString()} /人`;
+        advice.innerHTML = `健全な黒字運営です！1人あたり毎月 <strong>約 ¥${Math.round(profitPerUser).toLocaleString()}</strong> の粗利が生まれます。`;
+      } else {
+        hero.className = 'p-6 sm:p-8 rounded-2xl border text-white shadow-md bg-gradient-to-r from-rose-600 to-red-700 transition-all duration-300';
+        statusBadge.innerText = '🔴 月間最終損益（原価割れ・赤字）';
+        kpiProfit.innerText = `-¥${Math.round(Math.abs(profitJpy)).toLocaleString()}`;
+        kpiProfitMargin.innerText = `(利益率: ${margin.toFixed(1)}%)`;
+        kpiProfitPerUser.innerText = `-¥${Math.round(Math.abs(profitPerUser)).toLocaleString()} /人`;
+        advice.innerHTML = `⚠️ 1人のAI原価（¥${Math.round(costPerUserJpy)}）が月額料金（¥${price}）を超えています。1日の練習上限を設けるか、月額料金の見直しを推奨します。`;
+      }
+
+      // Render Break-even
+      document.getElementById('labelCurrPrice').innerText = price;
+      document.getElementById('valBreakEvenDaily').innerText = `1日 ${breakEvenDaily.toFixed(1)} 回まで`;
+
+      document.getElementById('labelCurrUses').innerText = dailyUses;
+      document.getElementById('valRecPrice').innerText = `月額 ${Math.round(recPrice50 / 10) * 10} 円`;
+    }
+
+    calculate();
+  </script>
+</body>
+</html>
