@@ -204,7 +204,7 @@ export function AudioRecorder({
       </div>
 
       <p className="text-[11px] sm:text-xs text-center text-muted-foreground">
-        例文音声に合わせて、または聴き終わった直後に声に出して発話してください。
+        フレーズ音声に合わせて、または聴き終わった直後に声に出して発話してください。
       </p>
     </div>
   );

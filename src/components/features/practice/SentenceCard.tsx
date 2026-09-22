@@ -58,6 +58,14 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
   const [, setVoicesLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  const rafIdRef = useRef<number | null>(null);
+
+  const stopAnimationLoop = useCallback(() => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+  }, []);
 
   // Parse English sentence into words with character indices for synchronization
   const parsedWords = useMemo<ParsedWord[]>(() => {
@@ -76,6 +84,40 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
     }
     return words;
   }, [sentence?.english]);
+
+  const startAnimationLoop = useCallback(() => {
+    stopAnimationLoop();
+
+    const updateHighlight = () => {
+      const audio = audioRef.current;
+      if (!audio || audio.paused || audio.ended) {
+        stopAnimationLoop();
+        return;
+      }
+
+      if (audio.duration && audio.duration > 0 && parsedWords.length > 0 && sentence?.english) {
+        // Add a slight lead-time offset (0.18s adjusted for playbackRate)
+        // so that the word is highlighted right as the speaker starts pronouncing it rather than lagging behind
+        const leadTime = 0.18 * audio.playbackRate;
+        const effectiveTime = Math.min(audio.duration, Math.max(0, audio.currentTime + leadTime));
+        const progress = Math.min(0.999, effectiveTime / audio.duration);
+        const targetChar = progress * sentence.english.length;
+
+        let currentIdx = 0;
+        for (let i = 0; i < parsedWords.length; i++) {
+          if (targetChar <= parsedWords[i].charEnd || i === parsedWords.length - 1) {
+            currentIdx = i;
+            break;
+          }
+        }
+        setActiveWordIndex(currentIdx);
+      }
+
+      rafIdRef.current = requestAnimationFrame(updateHighlight);
+    };
+
+    rafIdRef.current = requestAnimationFrame(updateHighlight);
+  }, [parsedWords, sentence?.english, stopAnimationLoop]);
 
   // Pre-load SpeechSynthesis voices (Chrome loads them asynchronously)
   useEffect(() => {
@@ -100,6 +142,7 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
   useEffect(() => {
     setIsPlaying(false);
     setActiveWordIndex(null);
+    stopAnimationLoop();
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
@@ -108,7 +151,10 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
       audioRef.current.removeAttribute("src");
       audioRef.current = null;
     }
-  }, [sentence?.id]);
+    return () => {
+      stopAnimationLoop();
+    };
+  }, [sentence?.id, stopAnimationLoop]);
 
   const speakWithSpeechSynthesis = useCallback(
     (text: string) => {
@@ -171,31 +217,13 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
         audio.onended = () => {
           setIsPlaying(false);
           setActiveWordIndex(null);
-        };
-
-        // Real-time word highlighting based on audio playback progress
-        audio.ontimeupdate = () => {
-          if (!audio.duration || audio.duration <= 0 || parsedWords.length === 0) return;
-          const progress = Math.min(0.999, Math.max(0, audio.currentTime / audio.duration));
-
-          // Weighted word mapping based on character lengths
-          const totalChars = parsedWords.reduce((acc, w) => acc + w.text.length, 0);
-          const targetCharProgress = progress * totalChars;
-          let accumulated = 0;
-          let currentIdx = 0;
-          for (let i = 0; i < parsedWords.length; i++) {
-            accumulated += parsedWords[i].text.length;
-            if (targetCharProgress <= accumulated || i === parsedWords.length - 1) {
-              currentIdx = i;
-              break;
-            }
-          }
-          setActiveWordIndex(currentIdx);
+          stopAnimationLoop();
         };
 
         audio.onerror = () => {
           console.warn("TTS audio playback failed, falling back to SpeechSynthesis");
           audioRef.current = null;
+          stopAnimationLoop();
           speakWithSpeechSynthesis(sentence.english);
         };
       }
@@ -206,6 +234,7 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
         audioRef.current.pause();
         setIsPlaying(false);
         setActiveWordIndex(null);
+        stopAnimationLoop();
       } else {
         audioRef.current.currentTime = 0;
         audioRef.current
@@ -213,10 +242,12 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
           .then(() => {
             setIsPlaying(true);
             if (parsedWords.length > 0) setActiveWordIndex(0);
+            startAnimationLoop();
           })
           .catch(() => {
             setIsPlaying(false);
             setActiveWordIndex(null);
+            stopAnimationLoop();
           });
       }
       return;
@@ -232,7 +263,7 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
     } else {
       speakWithSpeechSynthesis(sentence.english);
     }
-  }, [sentence, isPlaying, playbackSpeed, parsedWords, speakWithSpeechSynthesis]);
+  }, [sentence, isPlaying, playbackSpeed, parsedWords, speakWithSpeechSynthesis, startAnimationLoop, stopAnimationLoop]);
 
   const changeSpeed = (speed: number) => {
     setPlaybackSpeed(speed);
@@ -258,13 +289,13 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
   if (!sentence) {
     return (
       <div className="w-full bg-card rounded-2xl p-5 sm:p-8 border border-border text-center space-y-4">
-        <p className="text-sm text-muted-foreground">例文がありません。「新しい例文を生成」をクリックしてください。</p>
+        <p className="text-sm text-muted-foreground">フレーズが設定されていません。「この条件で生成開始」をクリックしてください。</p>
         <button
           onClick={onRefresh}
           className="inline-flex items-center gap-2 px-5 py-3 sm:py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition shadow-sm min-h-[48px]"
         >
           <Sparkles className="w-4 h-4" />
-          例文を生成する
+          フレーズを生成する
         </button>
       </div>
     );
@@ -288,10 +319,10 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
         <button
           onClick={onRefresh}
           className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground hover:text-foreground transition px-2 py-1.5 rounded-lg hover:bg-muted min-h-[36px]"
-          title="別の例文を生成"
+          title="別のフレーズを生成"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          別の例文
+          別のフレーズ
         </button>
       </div>
 
@@ -333,12 +364,12 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
             }`}
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            {isPlaying ? "一時停止" : "模範音声を聴く"}
+            {isPlaying ? "一時停止" : "フレーズ音声を聴く"}
           </button>
 
           {/* Speed Selector with circular active indicator */}
           <div className="flex items-center bg-muted/70 p-1 rounded-full text-xs font-medium gap-1 shadow-inner">
-            {[0.8, 1.0, 1.2].map((spd) => {
+            {[0.6, 1.0, 1.2].map((spd) => {
               const isSelected = playbackSpeed === spd;
               return (
                 <button
@@ -349,10 +380,10 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
                       ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-500/30 scale-105"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
-                  title={`再生速度 ${spd}x`}
-                  aria-label={`再生速度 ${spd}x`}
+                  title={`再生速度 ${spd === 1.0 ? "1x" : `${spd}x`}`}
+                  aria-label={`再生速度 ${spd === 1.0 ? "1x" : `${spd}x`}`}
                 >
-                  {spd}x
+                  {spd === 1.0 ? "1x" : `${spd}x`}
                 </button>
               );
             })}

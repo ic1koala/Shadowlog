@@ -59,7 +59,7 @@ describe("AI Coach Feedback Generator", () => {
 
     const feedback = generateFallbackCoachFeedback(mockDiff);
     expect(feedback.pronunciationAdvice).toContain("query");
-    expect(feedback.retryFocusPoint).toContain("0.8x");
+    expect(feedback.retryFocusPoint).toContain("0.6x");
   });
 
   it("generates correct system and user prompt templates", () => {

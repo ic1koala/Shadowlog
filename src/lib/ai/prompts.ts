@@ -240,7 +240,7 @@ export function generateFallbackCoachFeedback(diff: DiffResult, wpmInfo?: WPMInf
 
   if (score >= 90) {
     return {
-      overallComment: "素晴らしいリズムと明瞭さです！模範音声のスピードとイントネーションを的確に捉えられています。",
+      overallComment: "素晴らしいリズムと明瞭さです！フレーズ音声のスピードとイントネーションを的確に捉えられています。",
       pronunciationAdvice:
         "単語一つひとつの発音だけでなく、文全体の流れるようなメロディがしっかり再現できています。さらに磨きをかけるため、文頭から文末まで息を止めず、ひと息で滑らかに言い切る感覚を意識してみましょう。",
       retryFocusPoint: "次は音声の感情やトーンまで真似して、より自然なネイティブの語りを再現してみましょう！",
@@ -269,7 +269,7 @@ export function generateFallbackCoachFeedback(diff: DiffResult, wpmInfo?: WPMInf
   if (score >= 50) {
     let advice = "まずは声に出して英語のリズムに飛び込めた姿勢が素晴らしいです。";
     if (missing.length > 0) {
-      advice += ` 今回聞き取られにくかった「${missing.slice(0, 3).join("」「")}」は、模範音声をもう一度よく聴いて、単語の頭の子音を少しクリアに出すよう意識してみましょう。`;
+      advice += ` 今回聞き取られにくかった「${missing.slice(0, 3).join("」「")}」は、フレーズ音声をもう一度よく聴いて、単語の頭の子音を少しクリアに出すよう意識してみましょう。`;
     }
     if (mismatch.length > 0) {
       advice += ` 「${mismatch[0]!.word}」は母音の口の開き方を少し大きめにすると、より正確に認識されやすくなります。`;
@@ -277,7 +277,7 @@ export function generateFallbackCoachFeedback(diff: DiffResult, wpmInfo?: WPMInf
     return {
       overallComment: "ナイスチャレンジです！速さに焦らず、まずは音のまとまりを掴んでいきましょう。",
       pronunciationAdvice: advice,
-      retryFocusPoint: "速度を0.8xに落として模範音声を聴き、音の繋がりを確認してからもう一度挑戦してみましょう！",
+      retryFocusPoint: "速度を0.6xに落としてフレーズ音声を聴き、音の繋がりを確認してからもう一度挑戦してみましょう！",
       pacingAdvice,
     };
   }
@@ -285,8 +285,8 @@ export function generateFallbackCoachFeedback(diff: DiffResult, wpmInfo?: WPMInf
   return {
     overallComment: "まずは大きな声で発話に挑戦できたことが第一歩です！最初から完璧を目指す必要はありません。",
     pronunciationAdvice:
-      "スピードが速く感じられた場合は、0.8xのゆっくり再生を活用してください。英文を見ながら音声を2〜3回聴き、単語の区切りではなく『意味のカタマリ（チャンク）』ごとに真似て発音すると、グッと認識率が上がります。",
-    retryFocusPoint: "速度0.8xで模範音声を聴き直し、口の形を意識しながらもう一度リトライしてみましょう！",
+      "スピードが速く感じられた場合は、0.6xのゆっくり再生を活用してください。英文を見ながら音声を2〜3回聴き、単語の区切りではなく『意味のカタマリ（チャンク）』ごとに真似て発音すると、グッと認識率が上がります。",
+    retryFocusPoint: "速度0.6xでフレーズ音声を聴き直し、口の形を意識しながらもう一度リトライしてみましょう！",
     pacingAdvice,
   };
 }

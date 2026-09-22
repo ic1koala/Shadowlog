@@ -36,7 +36,6 @@ export default function PracticePage() {
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("sentence");
   const [plan, setPlan] = useState<UserPlanType>("guest");
   const [showProModal, setShowProModal] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   const [sentence, setSentence] = useState<SentenceResponse | null>(null);
   const [isLoadingSentence, setIsLoadingSentence] = useState(false);
@@ -116,6 +115,21 @@ export default function PracticePage() {
     [industry, level, practiceMode]
   );
 
+const INDUSTRY_OPTIONS: Array<{ key: Industry; label: string }> = [
+  { key: "tech", label: "Tech / IT" },
+  { key: "business", label: "Business (ビジネス全般)" },
+  { key: "finance", label: "Finance (金融・財務)" },
+  { key: "medical", label: "Medical (医療・バイオ)" },
+  { key: "marketing", label: "Marketing (マーケティング)" },
+  { key: "daily", label: "Daily (日常・一般)" },
+];
+
+const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
+  { key: "beginner", label: "初級 (6〜10語)" },
+  { key: "intermediate", label: "中級 (12〜18語)" },
+  { key: "advanced", label: "上級 (20語〜)" },
+];
+
   // Switch practice mode (sentence vs passage)
   const handleModeChange = (targetMode: PracticeMode) => {
     if (targetMode === "passage") {
@@ -126,7 +140,9 @@ export default function PracticePage() {
       }
     }
     setPracticeMode(targetMode);
-    fetchNewSentence(undefined, undefined, targetMode);
+    if (sentence) {
+      fetchNewSentence(undefined, undefined, targetMode);
+    }
   };
 
   // Toggle plan from Pro modal
@@ -135,14 +151,27 @@ export default function PracticePage() {
     setPlan("pro");
     setShowProModal(false);
     setPracticeMode("passage");
-    fetchNewSentence(undefined, undefined, "passage");
+    if (sentence) {
+      fetchNewSentence(undefined, undefined, "passage");
+    }
   };
 
-  // Load preferences from localStorage on mount and fetch initial sentence ONCE with saved settings
-  useEffect(() => {
-    let savedInd: Industry = "tech";
-    let savedLvl: DifficultyLevel = "intermediate";
+  const handleIndustryChange = (newInd: Industry) => {
+    setIndustry(newInd);
+    try {
+      localStorage.setItem("shadowlog_industry", newInd);
+    } catch {}
+  };
 
+  const handleLevelChange = (newLvl: DifficultyLevel) => {
+    setLevel(newLvl);
+    try {
+      localStorage.setItem("shadowlog_level", newLvl);
+    } catch {}
+  };
+
+  // Load preferences from localStorage on mount (DO NOT auto-generate sentence to prevent token waste)
+  useEffect(() => {
     // Check URL search params for direct review repetition
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
@@ -168,7 +197,6 @@ export default function PracticePage() {
           level: lvl,
           mode: mode,
         });
-        setIsInitialized(true);
         return;
       }
     }
@@ -177,21 +205,16 @@ export default function PracticePage() {
       const storedInd = localStorage.getItem("shadowlog_industry") as Industry;
       const storedLvl = localStorage.getItem("shadowlog_level") as DifficultyLevel;
       if (storedInd) {
-        savedInd = storedInd;
         setIndustry(storedInd);
       }
       if (storedLvl) {
-        savedLvl = storedLvl;
         setLevel(storedLvl);
       }
     } catch {
       // localStorage may fail in restricted environments
     }
 
-    setIsInitialized(true);
-    // Fetch initial sentence using the explicitly loaded preferences (avoids race condition)
-    fetchNewSentence(savedInd, savedLvl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Intentionally omitted fetchNewSentence: User clicks "この条件で生成開始"
   }, []); // Run ONCE on mount
 
   const handleAudioReady = async (audioBlob: Blob, durationSeconds: number) => {
@@ -306,7 +329,7 @@ export default function PracticePage() {
             シャドーイング実践
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            模範音声を聴きながら同時に発話して、正確な英語の音とリズムを身につけましょう。
+            フレーズ音声を聴きながら同時に発話して、正確な英語の音とリズムを身につけましょう。
           </p>
         </div>
 
@@ -374,7 +397,7 @@ export default function PracticePage() {
             <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">
               1
             </span>
-            {practiceMode === "passage" ? "長文スピーチ原稿・模範音声" : "例文確認・模範音声"}
+            {practiceMode === "passage" ? "長文スピーチ原稿・フレーズ音声" : "フレーズ確認・フレーズ音声"}
           </div>
           {retryCount > 0 && (
             <span className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
@@ -384,11 +407,121 @@ export default function PracticePage() {
           )}
         </div>
 
-        <SentenceCard
-          sentence={sentence}
-          isLoading={!isInitialized || isLoadingSentence}
-          onRefresh={() => fetchNewSentence()}
-        />
+        {!sentence ? (
+          <div className="w-full bg-card rounded-2xl p-5 sm:p-7 border border-border shadow-xs space-y-5 animate-in fade-in-50">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold text-[11px]">
+                  設定読み込み済み
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {practiceMode === "passage" ? "長文スピーチ（60〜90語）" : "短文シャドーイング（1文）"}
+                </span>
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-foreground pt-0.5">
+                シャドーイングフレーズの生成
+              </h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                保存されている業種・難易度設定を読み込みました。条件を確認し、「この条件で生成開始」ボタンを押してください。
+              </p>
+            </div>
+
+            {/* Condition Selectors */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  業種・ジャンル
+                </label>
+                <select
+                  value={industry}
+                  onChange={(e) => handleIndustryChange(e.target.value as Industry)}
+                  className="w-full p-2.5 rounded-xl border border-border bg-background text-xs sm:text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                >
+                  {INDUSTRY_OPTIONS.map((opt) => (
+                    <option key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  難易度
+                </label>
+                <select
+                  value={level}
+                  onChange={(e) => handleLevelChange(e.target.value as DifficultyLevel)}
+                  className="w-full p-2.5 rounded-xl border border-border bg-background text-xs sm:text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                >
+                  {LEVEL_OPTIONS.map((opt) => (
+                    <option key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Start Generation Button */}
+            <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-border">
+              <div className="text-xs text-muted-foreground">
+                選択中: <span className="font-bold text-foreground">{INDUSTRY_OPTIONS.find((i) => i.key === industry)?.label}</span> /{" "}
+                <span className="font-bold text-foreground">{LEVEL_OPTIONS.find((l) => l.key === level)?.label}</span>
+              </div>
+              <button
+                onClick={() => fetchNewSentence(industry, level, practiceMode)}
+                disabled={isLoadingSentence}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition shadow-sm hover:shadow-md disabled:opacity-50 min-h-[46px]"
+              >
+                {isLoadingSentence ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                    フレーズを生成中...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    この条件で生成開始
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {/* Quick condition bar when sentence is active */}
+            <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span>設定:</span>
+                <span className="font-bold text-foreground">
+                  {INDUSTRY_OPTIONS.find((i) => i.key === industry)?.label}
+                </span>
+                <span>/</span>
+                <span className="font-bold text-foreground">
+                  {LEVEL_OPTIONS.find((l) => l.key === level)?.label}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setSentence(null);
+                  setDiffResult(null);
+                  setTranscription("");
+                  setWpmInfo(undefined);
+                }}
+                className="text-primary hover:underline font-bold text-xs"
+              >
+                条件を変更する
+              </button>
+            </div>
+
+            <SentenceCard
+              sentence={sentence}
+              isLoading={isLoadingSentence}
+              onRefresh={() => fetchNewSentence()}
+            />
+          </div>
+        )}
       </section>
 
       {/* Step 2: Audio Recorder */}
@@ -451,7 +584,7 @@ export default function PracticePage() {
             onClick={() => fetchNewSentence()}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-sm min-h-[48px] text-sm"
           >
-            <span>{practiceMode === "passage" ? "次の長文スピーチへ" : "次の例文へ"}</span>
+            <span>{practiceMode === "passage" ? "次の長文スピーチへ" : "次のフレーズへ"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
