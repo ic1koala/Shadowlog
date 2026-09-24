@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   getWeakWords,
@@ -56,6 +57,11 @@ export default function ReviewPage() {
 
   // Pro modal state
   const [showProModal, setShowProModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load all learning records
   const loadData = useCallback(() => {
@@ -682,14 +688,14 @@ export default function ReviewPage() {
       )}
 
       {/* Pro Modal */}
-      {showProModal && (
+      {showProModal && mounted && createPortal(
         <div
           onClick={() => setShowProModal(false)}
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in-50"
+          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in-50"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-card w-full max-w-md rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-border shadow-2xl space-y-5 relative my-auto max-h-[92vh] overflow-y-auto"
+            className="bg-card w-full max-w-md rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-border shadow-2xl space-y-5 relative my-auto max-h-[90vh] overflow-y-auto"
           >
             <div className="text-center space-y-2">
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500">
@@ -733,7 +739,8 @@ export default function ReviewPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Sparkles, Check, Zap, Shield, ArrowRight, X } from "lucide-react";
 import { TicketStatus } from "@/lib/storage/ticket-store";
@@ -21,8 +22,25 @@ export function UpgradeModal({
   const [selectedPlan, setSelectedPlan] = useState<"base" | "pro">("pro");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleCheckout = async (plan: "base" | "pro") => {
     setIsLoading(true);
@@ -51,27 +69,37 @@ export function UpgradeModal({
 
   const isGuest = !ticketStatus.isRegistered;
 
-  return (
+  const modalContent = (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 my-auto max-h-[92vh] flex flex-col overflow-hidden"
+        className="relative w-full max-w-2xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95"
       >
-        {/* Sticky Header with Close Button */}
-        <div className="sticky top-0 z-10 flex justify-end p-3 sm:p-4 bg-white/90 backdrop-blur-xs border-b border-slate-100/60">
+        {/* Sticky Header with Title & Close Button */}
+        <div className="shrink-0 flex items-center justify-between px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50/80 backdrop-blur-xs border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
+              <Sparkles className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-xs font-bold text-slate-800">プランの選択・アップグレード</span>
+          </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-200/60 transition min-h-[36px] min-w-[36px] flex items-center justify-center"
             aria-label="閉じる"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-5 sm:p-8 overflow-y-auto overscroll-contain">
+        {/* Scrollable Body */}
+        <div
+          className="flex-1 overflow-y-auto p-5 sm:p-8 overscroll-contain space-y-6"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {/* Header */}
           <div className="text-center max-w-md mx-auto space-y-2 mb-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
@@ -250,10 +278,12 @@ export function UpgradeModal({
                 特定商取引法に基づく表記
               </Link>
               をご確認ください。
-            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
