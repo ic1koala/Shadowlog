@@ -33,7 +33,7 @@ export function getPlanType(): UserPlanType {
   if (typeof window === "undefined") return "guest";
   try {
     const saved = localStorage.getItem(KEY_PLAN) as UserPlanType;
-    if (saved === "pro" || saved === "free" || saved === "guest") return saved;
+    if (saved === "pro" || saved === "base" || saved === "free" || saved === "guest") return saved;
   } catch {
     // ignore
   }

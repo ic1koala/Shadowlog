@@ -21,6 +21,13 @@ import {
   setPlanType,
 } from "@/lib/storage/user-learning-store";
 import {
+  getTicketStatus,
+  consumeTicket,
+  TicketStatus,
+  getCurrentUserEmail,
+} from "@/lib/storage/ticket-store";
+import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
+import {
   ArrowRight,
   BookOpen,
   Lightbulb,
@@ -36,6 +43,9 @@ export default function PracticePage() {
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("sentence");
   const [plan, setPlan] = useState<UserPlanType>("guest");
   const [showProModal, setShowProModal] = useState(false);
+  const [ticketStatus, setTicketStatus] = useState<TicketStatus | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
 
   const [sentence, setSentence] = useState<SentenceResponse | null>(null);
   const [isLoadingSentence, setIsLoadingSentence] = useState(false);
@@ -53,9 +63,26 @@ export default function PracticePage() {
   const recorderSectionRef = useRef<HTMLDivElement | null>(null);
   const activeRequestIdRef = useRef<number>(0);
 
-  // Sync current user plan from storage
+  // Sync current user plan and tickets from storage
   useEffect(() => {
-    setPlan(getPlanType());
+    const s = getTicketStatus();
+    setTicketStatus(s);
+    setPlan(s.plan);
+    setUserEmail(getCurrentUserEmail());
+
+    // Check URL search params for Stripe success
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("upgrade") === "success") {
+        const upgradedPlan = urlParams.get("plan") || "pro";
+        setPlanType(upgradedPlan as UserPlanType);
+        setPlan(upgradedPlan as UserPlanType);
+        setUpgradeSuccess(`🎉 ${upgradedPlan === "pro" ? "Proプラン" : "ベースプラン"} へのアップグレードが完了しました！`);
+        const updatedStatus = getTicketStatus();
+        setTicketStatus(updatedStatus);
+        window.dispatchEvent(new Event("shadowlog:ticket-update"));
+      }
+    }
   }, []);
 
   const fetchNewSentence = useCallback(
@@ -67,6 +94,19 @@ export default function PracticePage() {
       const targetIndustry = overrideIndustry || industry;
       const targetLevel = overrideLevel || level;
       const targetMode = overrideMode || practiceMode;
+
+      // Check ticket limits before generating
+      const currentStatus = getTicketStatus();
+      setTicketStatus(currentStatus);
+
+      if (targetMode === "sentence" && !currentStatus.canPracticeShort) {
+        setShowProModal(true);
+        return;
+      }
+      if (targetMode === "passage" && !currentStatus.canPracticePro) {
+        setShowProModal(true);
+        return;
+      }
 
       const requestId = ++activeRequestIdRef.current;
       setIsLoadingSentence(true);
@@ -132,18 +172,27 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
 
   // Switch practice mode (sentence vs passage)
   const handleModeChange = (targetMode: PracticeMode) => {
+    const currentStatus = getTicketStatus();
+    setTicketStatus(currentStatus);
+
     if (targetMode === "passage") {
-      const currentPlan = getPlanType();
-      if (currentPlan !== "pro") {
+      if (!currentStatus.canPracticePro) {
+        setShowProModal(true);
+        return;
+      }
+    } else {
+      if (!currentStatus.canPracticeShort) {
         setShowProModal(true);
         return;
       }
     }
+
     setPracticeMode(targetMode);
     if (sentence) {
       fetchNewSentence(undefined, undefined, targetMode);
     }
   };
+
 
   // Toggle plan from Pro modal
   const handleEnableProPlan = () => {
@@ -248,6 +297,14 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       setDiffResult(data.diff);
       setCoachFeedback(data.coachFeedback);
       setWpmInfo(data.wpmInfo);
+
+      // Consume ticket upon successful analysis and notify components
+      consumeTicket(practiceMode === "passage" ? "long" : "short");
+      const updatedStatus = getTicketStatus();
+      setTicketStatus(updatedStatus);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("shadowlog:ticket-update"));
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "音声解析エラーが発生しました";
       setErrorMessage(msg);
@@ -590,57 +647,27 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         </div>
       )}
 
-      {/* Pro Modal */}
-      {showProModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in-50">
-          <div className="bg-card w-full max-w-md rounded-3xl p-6 sm:p-8 border border-border shadow-2xl space-y-5 relative">
-            <div className="text-center space-y-2">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500">
-                <Crown className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg sm:text-xl font-extrabold text-foreground">
-                長文スピーチモード (Pro専用)
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                60〜100語の実践的なプレゼン原稿を通しでシャドーイングし、話速（WPM）や息継ぎをプロレベルに引き上げましょう。
-              </p>
-            </div>
-
-            <div className="space-y-2.5 text-xs text-foreground bg-muted/30 p-4 rounded-2xl border border-border">
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>60〜100語のプレゼン・スピーチ長文通し発話</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>話速 WPM（Words Per Minute）のリアルタイム測定</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>息継ぎ（チャンキング）＆スタミナ維持のAI指導</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>つまずき単語帳＆学習履歴の無制限保存</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <button
-                onClick={handleEnableProPlan}
-                className="w-full py-3.5 bg-primary text-primary-foreground font-bold rounded-xl text-sm shadow-md hover:bg-primary/90 transition"
-              >
-                Pro プランを有効化して長文モードを試す
-              </button>
-              <button
-                onClick={() => setShowProModal(false)}
-                className="w-full py-2.5 text-xs text-muted-foreground hover:text-foreground transition"
-              >
-                今は短文モードを続ける
-              </button>
-            </div>
-          </div>
+      {/* Upgrade Success Notification */}
+      {upgradeSuccess && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold flex items-center justify-between shadow-sm">
+          <span>{upgradeSuccess}</span>
+          <button
+            onClick={() => setUpgradeSuccess(null)}
+            className="text-xs text-emerald-600 hover:text-emerald-800 underline"
+          >
+            閉じる
+          </button>
         </div>
+      )}
+
+      {/* Upgrade Modal */}
+      {ticketStatus && (
+        <UpgradeModal
+          isOpen={showProModal}
+          onClose={() => setShowProModal(false)}
+          ticketStatus={ticketStatus}
+          userEmail={userEmail}
+        />
       )}
     </div>
   );

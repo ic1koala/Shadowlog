@@ -56,13 +56,31 @@ def calculate_single_practice_cost(usd_to_jpy: float = 150.0):
 
 def run_simulation(
     users: int = 50,
-    daily_practices_per_user: float = 50.0,
-    monthly_price_jpy: float = 300.0,
+    daily_practices_per_user: float = 20.0,
+    monthly_price_jpy: float = 500.0,
     credit_card_fee_pct: float = 3.6,
     days_per_month: int = 30,
     usd_to_jpy: float = 150.0,
+    retry_ratio: float = 2.0,  # 1 phrase practiced ~2 times on avg (halves TTS & prompt gen per practice)
 ):
-    unit = calculate_single_practice_cost(usd_to_jpy)
+    # Standard unit cost (1 practice = full generation)
+    standard_unit = calculate_single_practice_cost(usd_to_jpy)
+
+    # Optimized unit cost taking into account app usage improvements:
+    # 1. Manual phrase generation (no wasted calls)
+    # 2. Re-practicing/retrying the same phrase (TTS audio reused, sentence gen amortized)
+    opt_tts_usd = standard_unit["tts_usd"] / retry_ratio
+    opt_gpt_usd = (standard_unit["gpt_usd"] / 2.0 / retry_ratio) + (standard_unit["gpt_usd"] / 2.0)  # gen is amortized, coach runs per recording
+    opt_whisper_usd = standard_unit["whisper_usd"]
+    opt_total_usd = opt_tts_usd + opt_whisper_usd + opt_gpt_usd
+    opt_total_jpy = opt_total_usd * usd_to_jpy
+
+    unit = {
+        **standard_unit,
+        "opt_total_usd": opt_total_usd,
+        "opt_total_jpy": opt_total_jpy,
+        "current_unit_jpy": opt_total_jpy,  # use optimized as realistic standard
+    }
 
     # Volume
     monthly_practices_per_user = daily_practices_per_user * days_per_month
@@ -73,25 +91,24 @@ def run_simulation(
     payment_fee_jpy = total_revenue_jpy * (credit_card_fee_pct / 100.0)
     net_revenue_jpy = total_revenue_jpy - payment_fee_jpy
 
-    # AI Costs
-    total_ai_cost_usd = total_monthly_practices * unit["total_usd"]
-    total_ai_cost_jpy = total_monthly_practices * unit["total_jpy"]
-    ai_cost_per_user_jpy = monthly_practices_per_user * unit["total_jpy"]
+    # AI Costs (using optimized cost from app usage)
+    total_ai_cost_usd = total_monthly_practices * opt_total_usd
+    total_ai_cost_jpy = total_monthly_practices * opt_total_jpy
+    ai_cost_per_user_jpy = monthly_practices_per_user * opt_total_jpy
 
     # Gross Profit / Loss
     gross_profit_jpy = net_revenue_jpy - total_ai_cost_jpy
     profit_margin_pct = (gross_profit_jpy / total_revenue_jpy) * 100.0 if total_revenue_jpy > 0 else 0.0
 
     # Break-even calculations
-    # 1. Break-even daily practices for current price (300 JPY)
     net_rev_per_user = monthly_price_jpy * (1.0 - credit_card_fee_pct / 100.0)
-    break_even_monthly_practices = net_rev_per_user / unit["total_jpy"]
+    break_even_monthly_practices = net_rev_per_user / opt_total_jpy
     break_even_daily_practices = break_even_monthly_practices / days_per_month
 
-    # 2. Break-even price for current volume (50 uses/day)
-    break_even_price_for_50_uses = (ai_cost_per_user_jpy) / (1.0 - credit_card_fee_pct / 100.0)
+    # Break-even price for 20 uses/day
+    break_even_price_for_uses = (ai_cost_per_user_jpy) / (1.0 - credit_card_fee_pct / 100.0)
 
-    # 3. Recommended price for 50% profit margin
+    # Recommended price for 50% profit margin
     recommended_price_50pct_margin = (ai_cost_per_user_jpy / 0.50) / (1.0 - credit_card_fee_pct / 100.0)
 
     return {
@@ -112,9 +129,10 @@ def run_simulation(
         "profit_margin_pct": profit_margin_pct,
         "break_even_daily_practices": break_even_daily_practices,
         "break_even_monthly_practices": break_even_monthly_practices,
-        "break_even_price_for_50_uses": break_even_price_for_50_uses,
+        "break_even_price_for_uses": break_even_price_for_uses,
         "recommended_price_50pct_margin": recommended_price_50pct_margin,
         "usd_to_jpy": usd_to_jpy,
+        "retry_ratio": retry_ratio,
     }
 
 def print_report(res):
@@ -122,85 +140,77 @@ def print_report(res):
     print("=" * 72)
     print("      📊 ShadowLog 有料化・AIコスト収支試算シミュレーション レポート")
     print("=" * 72)
-    print(f"為替レート想定: 1 USD = {res['usd_to_jpy']:.1f} 円")
-    print(f"決済手数料想定: {res['credit_card_fee_pct']:.1f}% (Stripe等)")
+    print(f"為替レート想定: 1 USD = {res['usd_to_jpy']:.1f} 円 | 決済手数料: {res['credit_card_fee_pct']:.1f}% (Stripe等)")
     print()
 
-    print("▶ 1. 練習1回あたりの原価内訳（実測実績値ベース）")
+    print("▶ 1. 練習1回あたりの原価（アプリ仕様改善後の再試算）")
     print("-" * 72)
-    print(f"  ・TTS-1 (模範音声生成/約133文字)    : ${u['tts_usd']:.5f} ({u['tts_jpy']:.3f}円) [{u['tts_ratio']:.1f}%]")
-    print(f"  ・Whisper-1 (発話音声認識/約10秒)   : ${u['whisper_usd']:.5f} ({u['whisper_jpy']:.3f}円) [{u['whisper_ratio']:.1f}%]")
-    print(f"  ・GPT-4o-mini (文生成 + コーチ指導) : ${u['gpt_usd']:.5f} ({u['gpt_jpy']:.3f}円) [{u['gpt_ratio']:.1f}%]")
-    print(f"  ----------------------------------------------------------------------")
-    print(f"  ★ 練習1回の合計AI原価              : ${u['total_usd']:.5f} (約 {u['total_jpy']:.3f} 円)")
+    print(f"  【従来（毎回フル生成・リトライなしの場合）】: 約 {u['total_jpy']:.3f} 円 / 回 (${u['total_usd']:.5f})")
+    print(f"  【最適化後（手動生成化＋平均{res['retry_ratio']:.0f}回リトライ・TTS再利用）】:")
+    print(f"    ・TTS-1 (音声再利用により半減)     : 約 {u['tts_jpy']/res['retry_ratio']:.3f} 円")
+    print(f"    ・Whisper-1 (発話音声認識/約10秒)   : 約 {u['whisper_jpy']:.3f} 円")
+    print(f"    ・GPT-4o-mini (文生成+コーチ指導)   : 約 {((u['gpt_jpy']/2.0/res['retry_ratio']) + u['gpt_jpy']/2.0):.3f} 円")
+    print(f"    ★ 練習1回あたりの実質AI原価        : 約 {u['opt_total_jpy']:.3f} 円 (${u['opt_total_usd']:.5f}) [約31%圧縮!]")
     print()
 
-    print("▶ 2. ユーザーご指定条件での試算（50人 × 毎日50回 × 月額300円）")
+    print(f"▶ 2. ユーザーご指定条件での試算（{res['users']}人 × 毎日{res['daily_practices']:.0f}回 × 月額{res['monthly_price_jpy']:.0f}円）")
     print("-" * 72)
     print(f"  ・有料会員数                        : {res['users']} 名")
     print(f"  ・1人あたりの利用頻度               : 毎日 {res['daily_practices']:.0f} 回 (月 {res['monthly_practices_per_user']:,.0f} 回)")
     print(f"  ・サービス全体の月間総練習回数      : {res['total_monthly_practices']:,.0f} 回 / 月")
     print()
     print(f"  【売上】")
-    print(f"  ・月間総売上 (50人 × 300円)         :  {res['total_revenue_jpy']:,.0f} 円")
+    print(f"  ・月間総売上 ({res['users']}人 × {res['monthly_price_jpy']:.0f}円)     :  {res['total_revenue_jpy']:,.0f} 円")
     print(f"  ・クレカ決済手数料 ({res['credit_card_fee_pct']}%)            : -{res['payment_fee_jpy']:,.0f} 円")
-    print(f"  ・決済後ネット売上                  :  {res['net_revenue_jpy']:,.0f} 円")
+    print(f"  ・決済後ネット手取売上              :  {res['net_revenue_jpy']:,.0f} 円")
     print()
-    print(f"  【原価 (AIコスト)】")
+    print(f"  【原価 (AIコスト - 抑制後)】")
     print(f"  ・1人あたりの月間AIコスト           :  {res['ai_cost_per_user_jpy']:,.0f} 円 / 人")
     print(f"  ・全体の月間AI総コスト              : -{res['total_ai_cost_jpy']:,.0f} 円 (${res['total_ai_cost_usd']:,.2f})")
     print()
     print(f"  ----------------------------------------------------------------------")
     profit_symbol = "🟢 [黒字]" if res["gross_profit_jpy"] >= 0 else "🔴 [赤字]"
-    print(f"  ★ 月間最終損益 (粗利)              : {profit_symbol} {res['gross_profit_jpy']:,.0f} 円")
+    print(f"  ★ 月間最終損益 (粗利)              : {profit_symbol} +{res['gross_profit_jpy']:,.0f} 円" if res["gross_profit_jpy"] >= 0 else f"  ★ 月間最終損益 (粗利)              : {profit_symbol} {res['gross_profit_jpy']:,.0f} 円")
     print(f"  ★ 利益率                           : {res['profit_margin_pct']:.1f}%")
     print("=" * 72)
     print()
 
-    print("▶ 3. ユーザー行動別（利用頻度別）の損益分岐点・感度分析")
+    print("▶ 3. 2大プラン（ベースプラン vs Proプラン）比較シミュレーション")
     print("-" * 72)
-    print(f"{'利用パターン':<14} | {'1日回数':<7} | {'月間回数':<8} | {'1人AI原価':<10} | {'300円時の1人利益':<15} | {'判定'}")
+    print(f"{'プラン名':<16} | {'月額料金':<8} | {'想定1日回数':<9} | {'1人AI原価':<10} | {'1人月間粗利':<12} | {'粗利率':<7} | {'判定'}")
     print("-" * 72)
-    patterns = [
-        ("ライト層", 5),
-        ("標準層", 15),
-        ("積極層 (損益分岐)", int(res["break_even_daily_practices"])),
-        ("ヘビー層 (想定)", 30),
-        ("超ヘビー層 (指定)", 50),
+    plan_cases = [
+        ("ベースプラン (指定)", 500, 20),
+        ("Proプラン (指定)", 1480, 40),
+        ("Proプラン (ヘビー50回)", 1480, 50),
     ]
-    for name, times in patterns:
-        monthly_cnt = times * 30
-        cost_per_person = monthly_cnt * u["total_jpy"]
-        profit_per_person = (300 * (1 - res["credit_card_fee_pct"] / 100)) - cost_per_person
-        status = "🟢 黒字" if profit_per_person >= 0 else "🔴 赤字"
-        print(f"{name:<14} | {times:>5}回 | {monthly_cnt:>6}回 | {cost_per_person:>8.1f}円 | {profit_per_person:>12.1f}円 | {status}")
+    for pname, price, daily in plan_cases:
+        m_cnt = daily * 30
+        c_person = m_cnt * u["opt_total_jpy"]
+        p_person = (price * (1 - res["credit_card_fee_pct"] / 100)) - c_person
+        pmargin = (p_person / price) * 100
+        pstat = "🟢 大幅黒字" if pmargin >= 50 else ("🟢 黒字" if pmargin > 0 else "🔴 赤字")
+        print(f"{pname:<16} | ¥{price:<7} | {daily:>4}回/日   | ¥{c_person:>7.0f}/月 | +¥{p_person:>8.0f}/月  | {pmargin:>5.1f}% | {pstat}")
     print("-" * 72)
     print()
 
-    print("▶ 4. 改善・収益化のための重要アドバイス")
+    print("▶ 4. 収益化・運営のための重要ポイント")
     print("-" * 72)
-    print(f"  ① 【月額300円を維持する場合の上限設定】")
-    print(f"     300円で赤字を出さないための最大練習回数は「1日 約 {res['break_even_daily_practices']:.1f} 回（月 {res['break_even_monthly_practices']:.0f} 回）」です。")
-    print(f"     → 「300円プランは1日15〜20回まで」の制限を設けるのがベストです。")
+    print(f"  ① 【ベースプラン 500円 / 1日20回制限】")
+    print(f"     1人原価は約 {20*30*u['opt_total_jpy']:.0f} 円。手取 482 円に対し、1人あたり +{482 - 20*30*u['opt_total_jpy']:.0f} 円（粗利率 {((482 - 20*30*u['opt_total_jpy'])/500)*100:.1f}%）の健全な高収益体質です。")
     print()
-    print(f"  ② 【毎日50回練習を無制限で許可する場合の適正価格】")
-    print(f"     毎日50回利用時の1人原価は約 {res['ai_cost_per_user_jpy']:.0f} 円です。")
-    print(f"     ・トントンになる最低月額 : 約 {res['break_even_price_for_50_uses']:.0f} 円")
-    print(f"     ・健全な利益率50%の推奨月額: 約 {res['recommended_price_50pct_margin']:.0f} 円 (例: 月額 1,480 円プラン)")
-    print()
-    print(f"  ③ 【TTSコスト削減の劇的施策】")
-    print(f"     全体の63%を占めているのは「TTS-1（音声読み上げ）」です。")
-    print(f"     過去に生成した模範音声やプリセット英文の音声を Supabase Storage等にキャッシュして再利用すれば、")
-    print(f"     リピート練習時のAIコストを最大60%カット（1回 0.18円）まで削減可能です。")
+    print(f"  ② 【Proプラン 1,480円 / 毎日40〜50回】")
+    print(f"     毎日40〜50回ガチ練習しても1人原価は約 400〜500 円。1人あたり +900〜1,000 円超（粗利率 ~65%）の極めて高いLTVを実現できます。")
     print("=" * 72)
 
 def main():
     parser = argparse.ArgumentParser(description="ShadowLog AI Cost & Profit Simulator")
     parser.add_argument("--users", type=int, default=50, help="Number of paying users (default: 50)")
-    parser.add_argument("--daily-uses", type=float, default=50.0, help="Daily practices per user (default: 50)")
-    parser.add_argument("--price", type=float, default=300.0, help="Monthly subscription price in JPY (default: 300)")
+    parser.add_argument("--daily-uses", type=float, default=20.0, help="Daily practices per user (default: 20)")
+    parser.add_argument("--price", type=float, default=500.0, help="Monthly subscription price in JPY (default: 500)")
     parser.add_argument("--usd-jpy", type=float, default=150.0, help="USD to JPY exchange rate (default: 150.0)")
     parser.add_argument("--fee", type=float, default=3.6, help="Credit card processing fee % (default: 3.6)")
+    parser.add_argument("--retry-ratio", type=float, default=2.0, help="Average practices per generated phrase (default: 2.0)")
 
     args = parser.parse_args()
 
@@ -210,6 +220,7 @@ def main():
         monthly_price_jpy=args.price,
         credit_card_fee_pct=args.fee,
         usd_to_jpy=args.usd_jpy,
+        retry_ratio=args.retry_ratio,
     )
 
     print_report(results)

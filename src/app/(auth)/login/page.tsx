@@ -30,6 +30,12 @@ export default function LoginPage() {
 
       setIsSuccess(true);
       setMessage("ログインに成功しました。ダッシュボードへ移動します...");
+      // Upgrade guest state to registered user & grant +15 tickets
+      if (typeof window !== "undefined") {
+        const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
+        upgradeGuestToRegisteredUser(email);
+        window.dispatchEvent(new Event("shadowlog:ticket-update"));
+      }
       window.location.href = "/";
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "ログインに失敗しました";
@@ -52,7 +58,7 @@ export default function LoginPage() {
             Shadow<span className="text-primary">Log</span> にログイン
           </h2>
           <p className="text-xs text-muted-foreground">
-            アカウントにサインインして学習ログとストリークを保存しましょう
+            アカウントにサインインして学習ログを保存（無料会員登録で追加15回チケット ＆ Pro味見2回プレゼント！）
           </p>
         </div>
 

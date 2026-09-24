@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Mic, BarChart2, Settings, Sparkles, GraduationCap } from "lucide-react";
+import { TicketBadge } from "@/components/features/subscription/TicketBadge";
 
 export default function DashboardLayout({
   children,
@@ -32,32 +33,37 @@ export default function DashboardLayout({
             </span>
           </Link>
 
-          <nav className="flex items-center gap-1 sm:gap-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition ${
-                    isActive
-                      ? "bg-primary/10 text-primary font-semibold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="flex items-center gap-4">
+            <nav className="flex items-center gap-1 sm:gap-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition ${
+                      isActive
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="h-5 w-px bg-border hidden md:block" />
+            <TicketBadge />
+          </div>
         </div>
       </header>
 
       {/* Mobile Top Bar — visible only on mobile */}
       <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur-md sm:hidden safe-top">
-        <div className="px-4 h-12 flex items-center justify-center">
+        <div className="px-4 h-12 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-7 h-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
               <Sparkles className="w-4 h-4" />
@@ -66,6 +72,7 @@ export default function DashboardLayout({
               Shadow<span className="text-primary">Log</span>
             </span>
           </Link>
+          <TicketBadge />
         </div>
       </header>
 

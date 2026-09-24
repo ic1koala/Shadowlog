@@ -88,7 +88,7 @@ export interface PracticeSession {
   createdAt: string;
 }
 
-export type UserPlanType = "guest" | "free" | "pro";
+export type UserPlanType = "guest" | "free" | "base" | "pro";
 
 export interface WeakWord {
   id: string;
