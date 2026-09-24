@@ -129,9 +129,11 @@ export async function POST(req: NextRequest) {
 
       transcriptionText = transcription.text.trim();
     } catch (openaiError) {
-      console.warn("Whisper transcription failed, falling back:", openaiError);
-      // If offline/development fallback
-      transcriptionText = originalText;
+      console.warn("Whisper transcription failed:", openaiError);
+      return NextResponse.json(
+        { error: "音声の文字起こしに失敗しました。マイクの設定を確認してもう一度録音をお試しください。" },
+        { status: 502 }
+      );
     }
 
     // Calculate diff between original and spoken text

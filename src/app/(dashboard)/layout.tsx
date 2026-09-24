@@ -76,8 +76,8 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      {/* Main Content Area — add bottom padding on mobile for bottom nav */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-8">
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-8">
         {children}
       </main>
 

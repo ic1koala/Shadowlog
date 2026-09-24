@@ -192,6 +192,14 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
     return () => {
       clearPendingPlay();
       stopAnimationLoop();
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute("src");
+        audioRef.current = null;
+      }
     };
   }, [sentence?.id, clearPendingPlay, stopAnimationLoop]);
 

@@ -79,6 +79,10 @@ export default function PracticePage() {
         const updatedStatus = getTicketStatus();
         setTicketStatus(updatedStatus);
         window.dispatchEvent(new Event("shadowlog:ticket-update"));
+
+        // Clean up URL parameters so refresh doesn't trigger repeatedly
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, "", cleanUrl);
       }
     }
   }, []);
@@ -321,7 +325,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     setIsSaving(true);
     try {
       // 1. Save to user learning store (records weak words and stored session)
-      recordPracticeSession({
+      const saved = recordPracticeSession({
         sentence: sentence.english,
         japanese: sentence.japanese,
         transcription,
@@ -337,11 +341,12 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         wpm: wpmInfo?.wpm,
       });
 
-      // 2. Save stats to API / Supabase
+      // 2. Save stats to API / Supabase with the same session id to prevent duplicate counts
       const res = await fetch("/api/stats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: saved.session.id,
           sentence: sentence.english,
           transcription,
           wordCount: diffResult.originalWordCount,
@@ -386,11 +391,16 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               <Crown className="w-3.5 h-3.5 fill-amber-500" />
               Pro
             </span>
+          ) : plan === "base" ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
+              <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+              Base
+            </span>
           ) : (
             <button
               onClick={() => setShowProModal(true)}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition"
-              title="Proプラン詳細"
+              title="プラン詳細"
             >
               <Sparkles className="w-3.5 h-3.5" />
               体験版

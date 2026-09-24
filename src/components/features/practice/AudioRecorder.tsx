@@ -52,6 +52,16 @@ export function AudioRecorder({
 
   useEffect(() => {
     setIsPlayingRecorded(false);
+    if (audioPreviewRef.current) {
+      audioPreviewRef.current.pause();
+      audioPreviewRef.current = null;
+    }
+    return () => {
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.pause();
+        audioPreviewRef.current = null;
+      }
+    };
   }, [audioUrl]);
 
   const togglePlayRecorded = () => {

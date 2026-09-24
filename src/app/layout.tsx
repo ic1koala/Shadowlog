@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { PageTracker } from "@/components/analytics/PageTracker";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -43,6 +45,8 @@ export default function RootLayout({
     <html lang="ja">
       <body className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20">
         {children}
+        <PageTracker />
+        <Analytics />
       </body>
     </html>
   );

@@ -100,7 +100,7 @@ export default function DashboardPage() {
             最近の学習履歴
           </h3>
           <span className="text-[11px] sm:text-xs text-muted-foreground">
-            直近 {sessions.length} 件
+            直近 {Math.min(sessions.length, 5)} 件{sessions.length > 5 ? ` (全${sessions.length}件)` : ""}
           </span>
         </div>
 

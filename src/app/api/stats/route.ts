@@ -18,10 +18,18 @@ export async function GET() {
     if (isSupabaseConfigured) {
       try {
         const supabase = await createClient();
-        const { data, error } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+
+        let query = supabase
           .from("practice_sessions")
           .select("*")
           .order("created_at", { ascending: false });
+
+        if (user?.id) {
+          query = query.eq("user_id", user.id);
+        }
+
+        const { data, error } = await query;
 
         if (!error && data) {
           const rows = data as unknown as PracticeSessionRow[];
@@ -59,6 +67,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     let body: {
+      id?: string;
       sentence?: string;
       transcription?: string;
       wordCount?: number;
@@ -76,6 +85,7 @@ export async function POST(req: NextRequest) {
     }
 
     const {
+      id,
       sentence = "",
       transcription = "",
       wordCount = 0,
@@ -91,7 +101,7 @@ export async function POST(req: NextRequest) {
     }
 
     const newSession: PracticeSession = {
-      id: `session-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: id || `session-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       sentence,
       transcription,
       wordCount,
