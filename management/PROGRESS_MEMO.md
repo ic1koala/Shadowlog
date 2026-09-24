@@ -66,8 +66,12 @@
 - [x] Stripe Checkout（月額500円 / 1,480円）連携エンドポイントの実装 (`src/app/api/stripe/checkout/route.ts`)
 - [x] 単体テスト作成 ＆ 全61テスト完全合格確認 (`tests/unit/ticket-store.test.ts`)
 - [x] Next.js 本番ビルド検証（`npm run build` 成功）
-- [ ] 実務担当側: Gitコミット ＆ GitHub経由でのVercelプッシュ・自動デプロイ確認 (依頼済)
+- [x] 実務担当側: Gitコミット ＆ GitHub経由でのVercelプッシュ・自動デプロイ完了 (`b27cafb`)
+- [x] 法務ページ実装指示書の作成 (`management/LEGAL_PAGES_SPEC.md`)
+- [ ] 実務担当側: 法務3画面 (`/terms`, `/privacy`, `/tokushoho`) の新設 ＆ フッター/ログイン画面リンク設置 ＆ デプロイ (依頼済)
 - [ ] 統括担当: Threads用 初期発信テンプレート & クローズドβ招待文の骨子作成
+
+
 
 ---
 

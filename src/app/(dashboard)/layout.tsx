@@ -81,11 +81,17 @@ export default function DashboardLayout({
         {children}
       </main>
 
-      {/* Desktop Footer — hidden on mobile */}
-      <footer className="border-t border-border/80 py-6 text-center text-xs text-muted-foreground hidden sm:block">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      {/* Footer */}
+      <footer className="border-t border-border/80 py-6 text-center text-xs text-muted-foreground pb-24 sm:pb-6">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs">
+            <Link href="/terms" className="hover:underline text-muted-foreground hover:text-foreground">利用規約</Link>
+            <span>•</span>
+            <Link href="/privacy" className="hover:underline text-muted-foreground hover:text-foreground">プライバシーポリシー</Link>
+            <span>•</span>
+            <Link href="/tokushoho" className="hover:underline text-muted-foreground hover:text-foreground">特定商取引法に基づく表記</Link>
+          </div>
           <p>© {new Date().getFullYear()} ShadowLog. All rights reserved.</p>
-          <p>AIシャドーイング学習＆発話可視化プラットフォーム</p>
         </div>
       </footer>
 

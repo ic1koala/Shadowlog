@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Sparkles, Check, Zap, Shield, ArrowRight, X } from "lucide-react";
 import { TicketStatus } from "@/lib/storage/ticket-store";
 
@@ -221,13 +222,26 @@ export function UpgradeModal({
           )}
 
           {/* Footer Security Badges */}
-          <div className="flex items-center justify-center gap-4 text-[11px] text-slate-400">
-            <span className="flex items-center gap-1">
-              <Shield className="w-3.5 h-3.5 text-emerald-500" />
-              Stripe安全暗号化決済
-            </span>
-            <span>•</span>
-            <span>いつでもマイページから1クリック解約可能</span>
+          <div className="flex flex-col items-center justify-center gap-1.5 text-[11px] text-slate-400">
+            <div className="flex items-center justify-center gap-4">
+              <span className="flex items-center gap-1">
+                <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                Stripe安全暗号化決済
+              </span>
+              <span>•</span>
+              <span>いつでもマイページから1クリック解約可能</span>
+            </div>
+            <div className="text-[10px] text-slate-400 pt-0.5">
+              お申し込み前に
+              <Link href="/terms" target="_blank" className="text-indigo-600 underline mx-1 hover:text-indigo-800">
+                利用規約・解約規定
+              </Link>
+              および
+              <Link href="/tokushoho" target="_blank" className="text-indigo-600 underline mx-1 hover:text-indigo-800">
+                特定商取引法に基づく表記
+              </Link>
+              をご確認ください。
+            </div>
           </div>
         </div>
       </div>

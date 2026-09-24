@@ -15,6 +15,8 @@ import {
   Calendar,
   ArrowRight,
   Mic,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -86,6 +88,29 @@ export default function SettingsPage() {
       setTimeout(() => setIsSaved(false), 3000);
     } catch {
       alert("設定の保存に失敗しました。");
+    }
+  };
+
+  const handleResetData = async () => {
+    if (!window.confirm("累計発話単語数、学習履歴、苦手単語帳の記録をリセットしますか？この操作は取り消せません。")) {
+      return;
+    }
+    try {
+      // Clear server stats
+      try {
+        await fetch("/api/stats", { method: "DELETE" });
+      } catch (e) {
+        console.warn("Failed to reset API stats:", e);
+      }
+
+      // Clear local storage
+      localStorage.removeItem("shadowlog_stored_sessions");
+      localStorage.removeItem("shadowlog_weak_words");
+      window.dispatchEvent(new Event("shadowlog:session-update"));
+
+      alert("学習データをリセットしました。単語数とセッション履歴が0になりました。");
+    } catch {
+      alert("リセットに失敗しました。");
     }
   };
 
@@ -299,6 +324,29 @@ export default function SettingsPage() {
               ✓ 選択したマイクは次回以降も自動で優先接続されます
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Learning Data Management */}
+      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
+        <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
+          <RotateCcw className="w-5 h-5 text-muted-foreground" />
+          <span>学習データ・記録の初期化</span>
+        </div>
+
+        <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+          累計発話単語数、学習履歴、苦手単語帳の記録をリセットして0から再スタートできます。練習前の初期状態に戻したい場合にご利用ください。
+        </p>
+
+        <div>
+          <button
+            type="button"
+            onClick={handleResetData}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 active:scale-95 transition"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            学習記録と発話単語数をリセットする
+          </button>
         </div>
       </div>
 

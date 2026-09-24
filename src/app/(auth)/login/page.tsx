@@ -115,6 +115,13 @@ export default function LoginPage() {
             {isSubmitting ? "サインイン中..." : "サインイン"}
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          <p className="text-[11px] text-muted-foreground text-center pt-2 leading-relaxed">
+            サインインまたはアカウント作成により、
+            <Link href="/terms" className="text-primary underline mx-0.5">利用規約</Link> および
+            <Link href="/privacy" className="text-primary underline mx-0.5">プライバシーポリシー</Link>
+            に同意したものとみなされます。
+          </p>
         </form>
 
         <div className="pt-4 border-t border-border text-center">

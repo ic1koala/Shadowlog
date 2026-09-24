@@ -4,27 +4,8 @@ import { PracticeSessionRow, PracticeSessionInsert } from "@/types/database";
 import { calculateUserStats } from "@/lib/stats/stats-calculator";
 import { createClient } from "@/lib/supabase/server";
 
-// Fallback in-memory store for development/testing when Supabase is unconfigured
-const mockSessionsStore: PracticeSession[] = [
-  {
-    id: "session-init-1",
-    sentence: "We should optimize our cloud infrastructure for maximum reliability.",
-    transcription: "We should optimize our cloud infrastructure for maximum reliability.",
-    wordCount: 9,
-    matchedWordCount: 9,
-    accuracyScore: 100,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // yesterday
-  },
-  {
-    id: "session-init-2",
-    sentence: "The quarterly financial earnings exceeded our initial projections.",
-    transcription: "The quarterly financial earnings exceeded our projections.",
-    wordCount: 8,
-    matchedWordCount: 7,
-    accuracyScore: 88,
-    createdAt: new Date().toISOString(), // today
-  },
-];
+// Fallback in-memory store for development/testing when Supabase is unconfigured (starts empty)
+const mockSessionsStore: PracticeSession[] = [];
 
 export async function GET() {
   try {
@@ -165,3 +146,30 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE() {
+  try {
+    mockSessionsStore.length = 0;
+    const isSupabaseConfigured =
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder-project");
+
+    if (isSupabaseConfigured) {
+      try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("practice_sessions").delete().eq("user_id", user.id);
+        }
+      } catch (err) {
+        console.warn("Failed to delete from Supabase:", err);
+      }
+    }
+
+    return NextResponse.json({ success: true, message: "Stats reset successfully" }, { status: 200 });
+  } catch (error) {
+    console.error("DELETE /api/stats error:", error);
+    return NextResponse.json({ error: "Failed to reset stats" }, { status: 500 });
+  }
+}
+

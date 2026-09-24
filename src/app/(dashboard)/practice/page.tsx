@@ -17,7 +17,6 @@ import {
 } from "@/types";
 import {
   recordPracticeSession,
-  getPlanType,
   setPlanType,
 } from "@/lib/storage/user-learning-store";
 import {
@@ -34,7 +33,6 @@ import {
   RotateCcw,
   Crown,
   Sparkles,
-  Check,
 } from "lucide-react";
 
 export default function PracticePage() {
@@ -190,18 +188,6 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     setPracticeMode(targetMode);
     if (sentence) {
       fetchNewSentence(undefined, undefined, targetMode);
-    }
-  };
-
-
-  // Toggle plan from Pro modal
-  const handleEnableProPlan = () => {
-    setPlanType("pro");
-    setPlan("pro");
-    setShowProModal(false);
-    setPracticeMode("passage");
-    if (sentence) {
-      fetchNewSentence(undefined, undefined, "passage");
     }
   };
 
@@ -368,6 +354,9 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         throw new Error("記録の保存に失敗しました");
       }
       setIsSaved(true);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("shadowlog:session-update"));
+      }
     } catch (err: unknown) {
       console.error(err);
       alert("学習記録の保存に失敗しました。時間をおいて再試行してください。");
