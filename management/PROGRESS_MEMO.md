@@ -72,7 +72,7 @@
 - [x] 広報担当とThreads初期投稿の作成・投稿完了（Stage 2 クローズドβ始動）
 - [x] ユーザーFB＆改善要望管理簿の作成 (`management/FEEDBACK_LOG.md`)
 - [x] 統括ダッシュボード向けDailyアクセス解析仕様書の作成 (`management/ANALYTICS_SPEC.md`)
-- [ ] 実務担当側: サイレントアクセスロガー ＆ `@vercel/analytics` 導入 ＆ 統括ダッシュボードへのDaily解析UI統合 ＆ デプロイ (依頼済)
+- [x] 実務担当側: サイレントアクセスロガー ＆ `@vercel/analytics` 導入 ＆ 統括ダッシュボードへのDaily解析UI統合 ＆ デプロイ完了 (`992500e`)
 - [ ] 友人招待およびThreadsからのフィードバック受領・優先度判定・実務担当への改善指示出し
 
 

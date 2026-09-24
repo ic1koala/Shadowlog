@@ -52,17 +52,26 @@ export function UpgradeModal({
   const isGuest = !ticketStatus.isRegistered;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-2xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 my-auto max-h-[92vh] flex flex-col overflow-hidden"
+      >
+        {/* Sticky Header with Close Button */}
+        <div className="sticky top-0 z-10 flex justify-end p-3 sm:p-4 bg-white/90 backdrop-blur-xs border-b border-slate-100/60">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label="閉じる"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-        <div className="p-6 sm:p-8">
+        <div className="p-5 sm:p-8 overflow-y-auto overscroll-contain">
           {/* Header */}
           <div className="text-center max-w-md mx-auto space-y-2 mb-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">

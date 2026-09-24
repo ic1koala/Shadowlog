@@ -683,8 +683,14 @@ export default function ReviewPage() {
 
       {/* Pro Modal */}
       {showProModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in-50">
-          <div className="bg-card w-full max-w-md rounded-3xl p-6 sm:p-8 border border-border shadow-2xl space-y-5 relative">
+        <div
+          onClick={() => setShowProModal(false)}
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in-50"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-card w-full max-w-md rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-border shadow-2xl space-y-5 relative my-auto max-h-[92vh] overflow-y-auto"
+          >
             <div className="text-center space-y-2">
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500">
                 <Crown className="w-7 h-7" />
