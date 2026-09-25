@@ -5,6 +5,71 @@ export interface PromptTemplate {
   userPrompt: string;
 }
 
+const INDUSTRY_SITUATIONS: Record<Industry, string[]> = {
+  tech: [
+    "Production outage post-mortem and root cause analysis",
+    "API rate limiting, concurrency, and architecture discussion",
+    "Code review feedback on pull request and refactoring suggestion",
+    "Sprint planning, backlog grooming, and velocity estimation",
+    "Adopting an open-source library vs building in-house tooling",
+    "Container orchestration, Kubernetes deployment, and CI/CD pipelines",
+    "Database schema migration, indexing, and query optimization",
+    "Cybersecurity vulnerability patch and zero-trust policies",
+    "Integrating LLMs and AI agent workflows into existing microservices",
+    "Frontend performance optimization and Core Web Vitals tuning",
+  ],
+  business: [
+    "Quarterly business review and KPI variance explanation",
+    "Cross-functional alignment between sales, product, and legal",
+    "Negotiating contract renewals, SLA terms, and enterprise pricing",
+    "Pitching an innovative pilot program to executive stakeholders",
+    "Resolving team bottlenecks and promoting psychological safety",
+    "Navigating budget reallocation and fiscal resource constraints",
+    "Vendor evaluation, RFP scoring, and risk mitigation strategies",
+    "Managing customer escalation and turning churn risk into loyalty",
+    "Onboarding remote distributed team members across time zones",
+    "Post-merger organizational change management and culture integration",
+  ],
+  finance: [
+    "Analyzing quarterly EBITDA margins and cash burn projections",
+    "Portfolio rebalancing in response to central bank interest rate hikes",
+    "M&A due diligence, valuation multiples, and synergy estimates",
+    "Hedging currency risk against foreign exchange market volatility",
+    "Auditing internal controls for compliance and risk reporting",
+    "Assessing credit risk ratings for corporate debt issuance",
+    "ESG investment criteria and sustainable fund performance disclosure",
+    "Capital allocation strategy between dividends and R&D reinvestment",
+  ],
+  medical: [
+    "Discussing Phase III clinical trial efficacy and adverse event rates",
+    "Interpreting diagnostic imaging results and biomarker assays",
+    "Explaining treatment options and potential side effects with compassion",
+    "Implementing electronic health record (EHR) interoperability protocols",
+    "Hospital infection control standards and antimicrobial stewardship",
+    "Telemedicine triage workflows and remote patient monitoring devices",
+    "Ethical considerations in genetic screening and personalized medicine",
+  ],
+  marketing: [
+    "Optimizing customer acquisition cost (CAC) and lifetime value (LTV)",
+    "A/B testing ad creative variants, copy headlines, and conversion funnels",
+    "Formulating an omnichannel brand narrative for product launch",
+    "Influencer collaboration contract and attribution modeling",
+    "Addressing social media sentiment and public relations opportunities",
+    "Search engine optimization (SEO) algorithm update recovery roadmap",
+    "Webinar attendee engagement metrics and lead qualification scoring",
+  ],
+  daily: [
+    "Ordering a customized specialty beverage and pastries at a local cafe",
+    "Navigating an unexpected flight cancellation and rebooking at the airport gate",
+    "Asking a neighborhood resident for hidden gem dining recommendations",
+    "Discussing favorite podcast episodes and thought-provoking book takeaways",
+    "Troubleshooting smart home lighting and wireless router connectivity",
+    "Negotiating terms for an apartment lease renewal and maintenance request",
+    "Planning a weekend hiking trip with weather contingencies and gear checklists",
+    "Sharing creative cooking techniques and ingredient substitutions with friends",
+  ],
+};
+
 export function getSentenceGenerationPrompt(
   industry: Industry,
   level: DifficultyLevel,
@@ -19,22 +84,13 @@ export function getSentenceGenerationPrompt(
       "Target length: 20 to 30 words. Use complex sentence structures (relative clauses, conditionals, participial constructions), sophisticated industry vocabulary, and natural rhythm suitable for professional presentations or executive meetings. Suitable for C1 CEFR level.",
   };
 
-  const industryGuidelines: Record<Industry, string> = {
-    tech: "Context: Modern software development, cloud infrastructure, AI/ML systems, agile teams, code reviews, and tech startup environments.",
-    business:
-      "Context: Corporate strategy, project management, cross-functional collaboration, client negotiations, and quarterly business reviews.",
-    finance:
-      "Context: Financial analysis, investment portfolios, risk mitigation, macroeconomic trends, and quarterly earnings reports.",
-    medical:
-      "Context: Healthcare delivery, medical technologies, clinical trials, healthcare protocols, and patient communications.",
-    marketing:
-      "Context: Brand storytelling, digital campaigns, customer retention, growth metrics, and market research.",
-    daily:
-      "Context: Real-world daily conversations, traveling, dining, casual networking, and personal interests.",
-  };
+  const situations = INDUSTRY_SITUATIONS[industry] || INDUSTRY_SITUATIONS.tech;
+  const randomSituation = situations[Math.floor(Math.random() * situations.length)];
+  const randomSeed = Math.random().toString(36).substring(2, 8);
 
   const systemPrompt = `You are an expert English language coach specializing in shadowing practice.
-Your task is to generate ONE natural, contextually authentic English sentence along with its natural Japanese translation.
+Your task is to generate ONE fresh, authentic, contextually rich English sentence along with its natural Japanese translation.
+NEVER generate generic, repetitive, or cliché template sentences.
 
 Strict Output Format:
 Return ONLY a valid JSON object with the following schema:
@@ -44,12 +100,15 @@ Return ONLY a valid JSON object with the following schema:
 }
 Do NOT include markdown fences, extra commentary, or additional fields.`;
 
-  const userPrompt = `Generate a shadowing practice sentence with the following specifications:
-- Industry/Domain: ${industry} (${industryGuidelines[industry]})
+  const userPrompt = `Generate a unique shadowing practice sentence with the following specifications:
+- Industry/Domain: ${industry}
+- Context/Situation: ${topic ? topic : randomSituation}
 - Difficulty Level: ${level} (${levelGuidelines[level]})
-${topic ? `- Specific Topic: ${topic}` : ""}
+- Variation Seed: ${randomSeed}
 
-Ensure the sentence has good cadence and rhythm for oral shadowing practice.`;
+Requirements:
+- Make the vocabulary, syntax, and sentence structure novel and distinct from typical textbook examples.
+- Ensure natural conversational or business cadence and rhythm suitable for oral shadowing practice.`;
 
   return { systemPrompt, userPrompt };
 }
@@ -62,8 +121,13 @@ export function getPassageGenerationPrompt(
   level: DifficultyLevel,
   topic?: string
 ): PromptTemplate {
+  const situations = INDUSTRY_SITUATIONS[industry] || INDUSTRY_SITUATIONS.tech;
+  const randomSituation = situations[Math.floor(Math.random() * situations.length)];
+  const randomSeed = Math.random().toString(36).substring(2, 8);
+
   const systemPrompt = `You are an elite executive speechwriter and English speaking coach.
 Your task is to generate ONE coherent, inspiring, and natural presentation/speech passage (paragraph of 3 to 5 sentences, 60 to 90 words total) along with its natural Japanese translation.
+Avoid formulaic openings like "Good morning everyone". Dive right into substantive, engaging speech content.
 
 Strict Output Format:
 Return ONLY a valid JSON object with the following schema:
@@ -75,13 +139,14 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
 
   const userPrompt = `Generate an engaging business presentation or conference speech passage with the following specifications:
 - Industry/Domain: ${industry}
+- Scenario/Topic: ${topic ? topic : randomSituation}
 - Difficulty Level: ${level}
 - Target Word Count: 60 to 90 words (3 to 5 clear, rhythmic sentences)
-${topic ? `- Specific Topic: ${topic}` : ""}
+- Variation Seed: ${randomSeed}
 
 Style Guidelines:
-- Write in the style of a keynote presentation, team briefing, or industry conference speech.
-- Use natural transitional signposts (e.g., "First,", "In addition,", "As we look ahead,").
+- Write in the style of an authentic keynote speech, engineering town hall, or executive briefing.
+- Use natural transitional signposts and engaging rhetoric.
 - Ensure rhythmic pauses and clear chunking for continuous shadowing.`;
 
   return { systemPrompt, userPrompt };

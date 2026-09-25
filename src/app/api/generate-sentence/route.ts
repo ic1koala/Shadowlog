@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7,
+        temperature: 0.85,
       });
 
       const responseText = completion.choices[0]?.message?.content;

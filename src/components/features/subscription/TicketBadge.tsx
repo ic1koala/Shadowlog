@@ -44,7 +44,7 @@ export function TicketBadge() {
         ) : status.plan === "base" ? (
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>ベースプラン (1日20回)</span>
+            <span>ベースプラン (1日30回)</span>
           </div>
         ) : (
           /* Free or Guest Ticket Badge */

@@ -258,7 +258,7 @@ export function DiffViewer({
               }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              {isSaved ? "学習ログを記録済み" : isSaving ? "記録中..." : "記録を保存する"}
+              {isSaved ? "実績に自動反映済み" : isSaving ? "記録中..." : "記録を保存する"}
             </button>
           )}
         </div>

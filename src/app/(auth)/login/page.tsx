@@ -46,6 +46,29 @@ export default function LoginPage() {
     }
   };
 
+  const handleVipQuickLogin = async () => {
+    setIsSubmitting(true);
+    setMessage(null);
+    try {
+      const vipEmail = "shadowlog.app@gmail.com";
+      if (typeof window !== "undefined") {
+        const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
+        upgradeGuestToRegisteredUser(vipEmail);
+        localStorage.setItem("shadowlog_user_email", vipEmail);
+        window.dispatchEvent(new Event("shadowlog:ticket-update"));
+      }
+      setIsSuccess(true);
+      setMessage("👑 VIPテスターモードでログインしました。ダッシュボードへ移動します...");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
+    } catch {
+      setIsSuccess(false);
+      setMessage("VIPテスターログインに失敗しました");
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-background">
       <div className="max-w-md w-full space-y-8 bg-card p-8 sm:p-10 rounded-3xl border border-border shadow-sm">
@@ -124,7 +147,29 @@ export default function LoginPage() {
           </p>
         </form>
 
-        <div className="pt-4 border-t border-border text-center">
+        {/* Quick Tester VIP Sign-in */}
+        <div className="pt-2">
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-2">
+            <div className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1.5">
+              <span>👑</span>
+              <span>オーナー・テスター専用モード</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              チケット無制限・全機能解放のVIPテスターアカウントで即時ログインできます
+            </p>
+            <button
+              type="button"
+              onClick={handleVipQuickLogin}
+              disabled={isSubmitting}
+              className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-1.5"
+            >
+              <span>🧪</span>
+              <span>VIPテスターとしてクイックログイン</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-border text-center">
           <Link
             href="/"
             className="text-xs text-muted-foreground hover:text-foreground transition underline underline-offset-4"

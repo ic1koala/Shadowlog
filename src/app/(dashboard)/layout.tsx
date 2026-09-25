@@ -88,8 +88,6 @@ export default function DashboardLayout({
             <Link href="/terms" className="hover:underline text-muted-foreground hover:text-foreground">利用規約</Link>
             <span>•</span>
             <Link href="/privacy" className="hover:underline text-muted-foreground hover:text-foreground">プライバシーポリシー</Link>
-            <span>•</span>
-            <Link href="/tokushoho" className="hover:underline text-muted-foreground hover:text-foreground">特定商取引法に基づく表記</Link>
           </div>
           <p>© {new Date().getFullYear()} ShadowLog. All rights reserved.</p>
         </div>

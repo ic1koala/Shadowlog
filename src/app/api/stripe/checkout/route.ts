@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       ? "ShadowLog ベースプラン (月額)"
       : "ShadowLog Proプラン (月額)";
     const productDesc = isBase
-      ? "短文シャドーイング無制限（1日20回まで）＆弱点カルテ"
+      ? "短文シャドーイング（1日30回まで）＆弱点カルテ"
       : "長文スピーチモード（60〜90語）＆業界別生成＆無制限練習";
 
     const origin = req.headers.get("origin") || "http://localhost:3000";

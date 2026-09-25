@@ -295,6 +295,48 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("shadowlog:ticket-update"));
       }
+
+      // Auto-save session immediately so dashboard/stats are updated without manual button click
+      try {
+        setIsSaving(true);
+        const saved = recordPracticeSession({
+          sentence: sentence.english,
+          japanese: sentence.japanese,
+          transcription: data.transcription,
+          industry,
+          level,
+          wordCount: data.diff.originalWordCount,
+          matchedWordCount: data.diff.matchedWordCount,
+          accuracyScore: data.diff.accuracyScore,
+          retryCount,
+          diff: data.diff,
+          coachFeedback: data.coachFeedback,
+          mode: practiceMode,
+          wpm: data.wpmInfo?.wpm,
+        });
+
+        await fetch("/api/stats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: saved.session.id,
+            sentence: sentence.english,
+            transcription: data.transcription,
+            wordCount: data.diff.originalWordCount,
+            matchedWordCount: data.diff.matchedWordCount,
+            accuracyScore: data.diff.accuracyScore,
+          }),
+        });
+
+        setIsSaved(true);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("shadowlog:session-update"));
+        }
+      } catch (saveErr) {
+        console.warn("Auto-save session failed:", saveErr);
+      } finally {
+        setIsSaving(false);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "音声解析エラーが発生しました";
       setErrorMessage(msg);
@@ -311,6 +353,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     setDiffResult(null);
     setTranscription("");
     setWpmInfo(undefined);
+    setIsSaved(false);
     setRetryCount((prev) => prev + 1);
 
     // Smooth scroll to recording section
