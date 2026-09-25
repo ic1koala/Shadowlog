@@ -292,6 +292,17 @@ export function deleteWeakWord(id: string): void {
 }
 
 /**
+ * Deletes a stored practice session by id.
+ */
+export function deleteStoredSession(id: string): void {
+  const all = loadAllSessions().filter((s) => s.id !== id);
+  saveAllSessions(all);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("shadowlog:session-update"));
+  }
+}
+
+/**
  * Clears all local learning data (for testing or reset).
  */
 export function clearAllLearningData(): void {

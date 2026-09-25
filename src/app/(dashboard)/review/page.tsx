@@ -8,6 +8,7 @@ import {
   getStoredSessions,
   toggleMasteredWeakWord,
   deleteWeakWord,
+  deleteStoredSession,
   getPlanType,
   setPlanType,
   GUEST_MAX_WEAK_WORDS,
@@ -54,6 +55,7 @@ export default function ReviewPage() {
   const [wordFilter, setWordFilter] = useState<"all" | "active" | "mastered">("all");
   const [historyFilter, setHistoryFilter] = useState<"all" | "cleared" | "needsReview">("all");
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
+  const [expandedSentenceIds, setExpandedSentenceIds] = useState<Record<string, boolean>>({});
 
   // Pro modal state
   const [showProModal, setShowProModal] = useState(false);
@@ -68,6 +70,22 @@ export default function ReviewPage() {
     const handleOnline = () => setIsOffline(false);
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
+
+    // Sync URL search params for tab and targeted session
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      const sessionParam = params.get("session");
+      if (tabParam === "history" || tabParam === "words" || tabParam === "analytics") {
+        setActiveTab(tabParam);
+      }
+      if (sessionParam) {
+        setExpandedSessionId(sessionParam);
+        // Also expand sentence if jumped from dashboard
+        setExpandedSentenceIds((prev) => ({ ...prev, [sessionParam]: true }));
+      }
+    }
+
     return () => {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
@@ -106,6 +124,22 @@ export default function ReviewPage() {
   const handleDeleteWord = (id: string) => {
     deleteWeakWord(id);
     loadData();
+  };
+
+  // Delete practice session
+  const handleDeleteSession = (id: string) => {
+    if (confirm("この練習履歴を削除しますか？")) {
+      deleteStoredSession(id);
+      loadData();
+    }
+  };
+
+  // Toggle sentence accordion expansion
+  const toggleSentenceExpand = (id: string) => {
+    setExpandedSentenceIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   // Play audio of a word or sentence
@@ -342,86 +376,88 @@ export default function ReviewPage() {
               {filteredWords.map((word) => (
                 <div
                   key={word.id}
-                  className={`bg-card rounded-2xl p-4 sm:p-5 border transition shadow-xs flex flex-col justify-between gap-3 ${
+                  className={`bg-card rounded-2xl p-3.5 sm:p-4 border transition shadow-xs flex flex-col justify-between gap-2.5 ${
                     word.mastered ? "border-emerald-500/30 bg-emerald-500/5 opacity-85" : "border-border"
                   }`}
                 >
                   <div className="space-y-2">
+                    {/* Header Row: Word, Audio icon, Actions (Mastered, Practice) & Badges/Delete */}
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg sm:text-xl font-bold font-mono tracking-tight text-foreground">
+                      <div className="flex items-center gap-1.5 flex-wrap flex-1">
+                        <span className="text-base sm:text-lg font-bold font-mono tracking-tight text-foreground">
                           {word.word}
                         </span>
                         <button
                           onClick={() => handleSpeak(word.word)}
-                          className="p-1 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition"
+                          className="p-1 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition shrink-0"
                           title="発音を聴く"
                         >
                           <Volume2 className="w-4 h-4" />
                         </button>
+
+                        {/* Action buttons directly next to speaker icon */}
+                        <button
+                          onClick={() => handleToggleMastered(word.id)}
+                          className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg transition shrink-0 ${
+                            word.mastered
+                              ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                              : "bg-muted hover:bg-muted/80 text-foreground"
+                          }`}
+                        >
+                          <Check className="w-3 h-3" />
+                          {word.mastered ? "克服済み" : "克服済みにする"}
+                        </button>
+
+                        <button
+                          onClick={() => handlePracticeSentence(word)}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:bg-primary/10 px-2 py-1 rounded-lg transition shrink-0"
+                          title="この文を再練習"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          再練習
+                        </button>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
+                      {/* Right-aligned tags and delete button */}
+                      <div className="flex items-center gap-1 shrink-0">
                         {word.errorCount > 1 && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 border border-rose-500/20">
-                            ミス {word.errorCount}回
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 border border-rose-500/20">
+                            ミス{word.errorCount}
                           </span>
                         )}
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                             word.type === "missing"
                               ? "bg-rose-500/10 text-rose-600"
                               : "bg-amber-500/10 text-amber-600"
                           }`}
                         >
-                          {word.type === "missing" ? "脱落" : "発音ズレ"}
+                          {word.type === "missing" ? "脱落" : "ズレ"}
                         </span>
+                        <button
+                          onClick={() => handleDeleteWord(word.id)}
+                          className="p-1 text-muted-foreground hover:text-destructive rounded-lg transition"
+                          title="単語帳から削除"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
 
                     {word.type === "mismatch" && word.spokenWord && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400 font-mono">
-                        認識された音: &ldquo;{word.spokenWord}&rdquo;
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400 font-mono">
+                        認識音: &ldquo;{word.spokenWord}&rdquo;
                       </p>
                     )}
 
-                    <div className="bg-muted/30 p-2.5 rounded-xl border border-border/60 text-xs space-y-1">
-                      <p className="text-foreground font-medium italic">&ldquo;{word.sentence}&rdquo;</p>
+                    {/* Compact Example Sentence */}
+                    <div className="bg-muted/30 p-2 rounded-xl border border-border/60 text-xs space-y-0.5">
+                      <p className="text-foreground font-medium italic line-clamp-2 leading-snug">
+                        &ldquo;{word.sentence}&rdquo;
+                      </p>
                       {word.japanese && (
-                        <p className="text-muted-foreground text-[11px]">{word.japanese}</p>
+                        <p className="text-muted-foreground text-[11px] line-clamp-1">{word.japanese}</p>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between pt-2 border-t border-border gap-2">
-                    <button
-                      onClick={() => handleToggleMastered(word.id)}
-                      className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition ${
-                        word.mastered
-                          ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-                          : "text-muted-foreground hover:bg-muted"
-                      }`}
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      {word.mastered ? "克服済み" : "克服済みにする"}
-                    </button>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handlePracticeSentence(word)}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline px-2 py-1.5"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        この文を再練習
-                      </button>
-                      <button
-                        onClick={() => handleDeleteWord(word.id)}
-                        className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg transition"
-                        title="削除"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -499,13 +535,15 @@ export default function ReviewPage() {
             <div className="space-y-3">
               {filteredSessions.map((session) => {
                 const isExpanded = expandedSessionId === session.id;
+                const isSentenceExpanded = !!expandedSentenceIds[session.id];
                 return (
                   <div
                     key={session.id}
-                    className="bg-card rounded-2xl p-4 sm:p-6 border border-border shadow-xs space-y-3"
+                    className="bg-card rounded-2xl p-4 sm:p-5 border border-border shadow-xs space-y-3 relative"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        {/* Status Badges Row */}
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
                             className={`px-2.5 py-0.5 rounded-lg font-bold text-xs ${
@@ -541,25 +579,62 @@ export default function ReviewPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm sm:text-base font-semibold text-foreground pt-1">
-                          {session.sentence}
-                        </p>
-                        {session.japanese && (
-                          <p className="text-xs text-muted-foreground">{session.japanese}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground font-mono truncate">
-                          認識: &ldquo;{session.transcription}&rdquo;
-                        </p>
+
+                        {/* Sentence with 2-line clamp Accordion */}
+                        <div className="pt-0.5 space-y-1">
+                          <p
+                            className={`text-sm sm:text-base font-semibold text-foreground leading-snug break-words ${
+                              !isSentenceExpanded ? "line-clamp-2" : ""
+                            }`}
+                          >
+                            {session.sentence}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => toggleSentenceExpand(session.id)}
+                            className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline cursor-pointer"
+                          >
+                            {isSentenceExpanded ? (
+                              <>
+                                折りたたむ <ChevronUp className="w-3 h-3" />
+                              </>
+                            ) : (
+                              <>
+                                全文を展開 <ChevronDown className="w-3 h-3" />
+                              </>
+                            )}
+                          </button>
+
+                          {session.japanese && (
+                            <p className={`text-xs text-muted-foreground break-words ${!isSentenceExpanded ? "line-clamp-1" : ""}`}>
+                              {session.japanese}
+                            </p>
+                          )}
+                          <p className={`text-xs text-muted-foreground font-mono break-words ${!isSentenceExpanded ? "truncate" : ""}`}>
+                            認識: &ldquo;{session.transcription}&rdquo;
+                          </p>
+                        </div>
                       </div>
 
-                      <button
-                        onClick={() => handlePracticeSentence(session)}
-                        className="shrink-0 inline-flex items-center gap-1 px-3 py-2 bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs hover:bg-primary/90 transition"
-                        title="この文を再シャドーイング"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        再練習
-                      </button>
+                      {/* Header Right Actions: Re-practice & Delete Button */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handlePracticeSentence(session)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs hover:bg-primary/90 transition"
+                          title="この文を再シャドーイング"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          再練習
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSession(session.id)}
+                          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition"
+                          title="この練習履歴を削除"
+                          aria-label="この練習履歴を削除"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Coach Feedback Expandable Accordion */}

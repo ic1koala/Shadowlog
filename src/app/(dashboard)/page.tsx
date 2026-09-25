@@ -117,13 +117,20 @@ export default function DashboardPage() {
         ) : (
           <div className="divide-y divide-border/60">
             {sessions.slice(0, 5).map((session) => (
-              <div
+              <Link
                 key={session.id}
-                className="py-3 sm:py-4 first:pt-0 last:pb-0 flex flex-col gap-2 sm:gap-3"
+                href={`/review?tab=history&session=${encodeURIComponent(session.id)}`}
+                className="py-3 sm:py-4 first:pt-0 last:pb-0 flex flex-col gap-2 sm:gap-3 group hover:bg-muted/40 rounded-xl px-2 sm:px-3 -mx-2 sm:-mx-3 transition-colors cursor-pointer block"
+                title="タップして指導レビューを確認"
               >
-                <p className="text-xs sm:text-sm font-semibold text-foreground leading-snug">
-                  {session.sentence}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs sm:text-sm font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                    {session.sentence}
+                  </p>
+                  <span className="text-[10px] text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+                    指導レビュー →
+                  </span>
+                </div>
                 <p className="text-[11px] sm:text-xs text-muted-foreground truncate font-mono">
                   認識: &ldquo;{session.transcription}&rdquo;
                 </p>
@@ -154,7 +161,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
