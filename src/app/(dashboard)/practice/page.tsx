@@ -34,6 +34,8 @@ import {
   RotateCcw,
   Crown,
   Sparkles,
+  Mic,
+  Square,
 } from "lucide-react";
 
 export default function PracticePage() {
@@ -59,6 +61,11 @@ export default function PracticePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeWeakWords, setActiveWeakWords] = useState<string[]>([]);
+
+  // Floating recording bar state
+  const [floatIsRecording, setFloatIsRecording] = useState(false);
+  const [floatHasBlob, setFloatHasBlob] = useState(false);
+  const recorderControlsRef = useRef<{ start: () => void; stop: () => void } | null>(null);
 
   const recorderSectionRef = useRef<HTMLDivElement | null>(null);
   const activeRequestIdRef = useRef<number>(0);
@@ -668,6 +675,13 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
             onAudioReady={handleAudioReady}
             isTranscribing={isTranscribing}
             disabled={isLoadingSentence}
+            onRecordingStateChange={(rec, hasBlob) => {
+              setFloatIsRecording(rec);
+              setFloatHasBlob(hasBlob);
+            }}
+            onRegisterControls={(controls) => {
+              recorderControlsRef.current = controls;
+            }}
           />
         </section>
       )}
@@ -730,6 +744,45 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           ticketStatus={ticketStatus}
           userEmail={userEmail}
         />
+      )}
+
+      {/* ── Floating Recording Bar ── */}
+      {/* Shown while sentence is active and no result yet (recording phase) */}
+      {sentence && !diffResult && !floatHasBlob && (
+        <div className="fixed bottom-16 sm:bottom-4 inset-x-0 flex justify-center px-4 z-40 pointer-events-none">
+          <div className="pointer-events-auto flex items-center gap-3 px-5 py-3 rounded-2xl bg-card/80 backdrop-blur-md border border-border shadow-2xl shadow-black/20 ring-1 ring-white/10">
+            {/* Recording timer pulse */}
+            {floatIsRecording && (
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-destructive animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-destructive" />
+                録音中
+              </span>
+            )}
+
+            {/* Start button (idle) */}
+            {!floatIsRecording && (
+              <button
+                onClick={() => recorderControlsRef.current?.start()}
+                disabled={isLoadingSentence || isTranscribing}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-md active:scale-95 min-h-[44px]"
+              >
+                <Mic className="w-4 h-4" />
+                シャドーイングを開始
+              </button>
+            )}
+
+            {/* Stop button (while recording) */}
+            {floatIsRecording && (
+              <button
+                onClick={() => recorderControlsRef.current?.stop()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 transition shadow-md active:scale-95 min-h-[44px]"
+              >
+                <Square className="w-4 h-4" />
+                録音を終了
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

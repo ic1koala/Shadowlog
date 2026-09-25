@@ -17,12 +17,16 @@ interface AudioRecorderProps {
   onAudioReady: (blob: Blob, durationSeconds: number) => void;
   isTranscribing: boolean;
   disabled?: boolean;
+  onRecordingStateChange?: (isRecording: boolean, hasBlob: boolean) => void;
+  onRegisterControls?: (controls: { start: () => void; stop: () => void }) => void;
 }
 
 export function AudioRecorder({
   onAudioReady,
   isTranscribing,
   disabled = false,
+  onRecordingStateChange,
+  onRegisterControls,
 }: AudioRecorderProps) {
   const {
     isRecording,
@@ -63,6 +67,16 @@ export function AudioRecorder({
       }
     };
   }, [audioUrl]);
+
+  // Notify parent of recording state changes for floating button bar
+  useEffect(() => {
+    onRecordingStateChange?.(isRecording, !!audioBlob);
+  }, [isRecording, audioBlob, onRecordingStateChange]);
+
+  // Expose start/stop controls to parent (for floating action bar)
+  useEffect(() => {
+    onRegisterControls?.({ start: startRecording, stop: stopRecording });
+  }, [onRegisterControls, startRecording, stopRecording]);
 
   const togglePlayRecorded = () => {
     if (!audioUrl) return;
@@ -155,29 +169,16 @@ export function AudioRecorder({
         </div>
       )}
 
-      {/* Controls Container */}
+      {/* Controls Container — start/stop are in the floating bar */}
       <div className="flex flex-col items-center gap-3 sm:gap-4 py-2">
+        {/* Idle placeholder — guides user to the floating button */}
         {!isRecording && !audioBlob && (
-          <button
-            onClick={startRecording}
-            disabled={disabled || isTranscribing}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-4 sm:py-3.5 bg-primary text-primary-foreground font-semibold rounded-2xl hover:bg-primary/90 disabled:opacity-50 transition shadow-md hover:shadow-lg active:scale-95 text-base sm:text-sm min-h-[52px]"
-          >
-            <Mic className="w-5 h-5" />
-            シャドーイングを開始
-          </button>
+          <p className="text-sm text-muted-foreground text-center">
+            画面下部のボタンでシャドーイングを開始してください
+          </p>
         )}
 
-        {isRecording && (
-          <button
-            onClick={stopRecording}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-4 sm:py-3.5 bg-destructive text-destructive-foreground font-semibold rounded-2xl hover:bg-destructive/90 transition shadow-md active:scale-95 text-base sm:text-sm min-h-[52px]"
-          >
-            <Square className="w-5 h-5" />
-            録音を終了する
-          </button>
-        )}
-
+        {/* After recording: submit / preview / redo */}
         {!isRecording && audioBlob && (
           <div className="w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
             {/* Primary action — submit for analysis */}
