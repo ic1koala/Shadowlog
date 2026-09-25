@@ -54,7 +54,7 @@
   <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-8">
 
     <!-- KPI / Status Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5 mb-8">
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">現在フォーカス</div>
         <div class="mt-1 text-xl font-bold text-slate-900 flex items-center gap-1.5">
@@ -67,18 +67,26 @@
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">目標有料会員 (3ヶ月後)</div>
         <div class="mt-1 text-xl font-bold text-indigo-600">100 名</div>
-        <div class="text-xs text-slate-500 mt-1">目標MRR: 約100,000円〜148,000円/月</div>
+        <div class="text-xs text-slate-500 mt-1">目標MRR: 約10万〜14.8万円/月</div>
       </div>
 
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">AI原価 & 粗利率（抑制後）</div>
-        <div class="mt-1 text-xl font-bold text-slate-900">約 0.32 円 <span class="text-xs font-normal text-slate-500">/ 1回</span></div>
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">AI原価 & 粗利率</div>
+        <div class="mt-1 text-xl font-bold text-slate-900">約 0.32 円 <span class="text-xs font-normal text-slate-500">/ 回</span></div>
         <div class="text-xs text-emerald-600 font-medium mt-1">粗利率 58%〜70% を維持</div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div class="bg-white p-4 rounded-xl border border-purple-200 shadow-sm bg-purple-50/30">
+        <div class="text-xs font-medium text-purple-800 uppercase tracking-wider">GMO固定費 & 損益分岐</div>
+        <div class="mt-1 text-xl font-bold text-purple-700">¥1,650 <span class="text-xs font-normal text-purple-600">/月</span></div>
+        <div class="text-xs text-purple-700 font-semibold mt-1">★ わずか 6 名 で固定費回収</div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-1 sm:col-span-2 md:col-span-1">
         <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">残り未完了タスク</div>
         <div class="mt-1 text-xl font-bold text-amber-600" id="remainingTasksCount">-</div>
+        <div class="text-xs text-slate-500 mt-1" id="completedTasksRatio">-</div>
+      </div>
     </div>
 
     <!-- Daily Analytics Section (Owner Only) -->
@@ -231,7 +239,8 @@
           { id: "s2-2", text: "【実務担当】サイレントアクセスロガー実装 ＆ 統括ダッシュボードへのDaily解析UI統合", done: true },
           { id: "s2-3", text: "習慣化リマインド通知（ストリーク途切れ防止のメール/Web通知）", done: false },
           { id: "s2-4", text: "SNSシェア用OGP画像自動生成機能（「#今日のシャドーイング」拡散用）", done: false },
-          { id: "s2-5", text: "テスターへの1on1インタビュー・価格納得感（月1,480円）の検証", done: false }
+          { id: "s2-5", text: "テスターへの1on1インタビュー・価格納得感（月1,480円）の検証", done: false },
+          { id: "s2-6", text: "【実務担当】弱点単語組み込み生成アルゴリズム ＆ オフライン閲覧キャッシュ同期", done: false }
         ]
       },
       {
@@ -250,15 +259,16 @@
       },
       {
         id: 4,
-        title: "Stage 4: スケール & LTV最大化 (法人/拡張)",
+        title: "Stage 4: スケール & 1ヶ月置き業界拡張アップデート",
         badge: "将来展望",
         badgeColor: "bg-slate-100 text-slate-800 border-slate-300",
-        description: "有料会員1,000名（月商88万円〜）、法人プランや弱点特訓AIへの展開。",
+        description: "有料会員1,000名（月商88万円〜）、1ヶ月置きの業界拡充および法人展開。",
         tasks: [
+          { id: "s4-m1", text: "【ローンチ1ヶ月後 v1.1】「接客・サービス（Hospitality）」業界フレーズの拡充", done: false },
+          { id: "s4-m2", text: "【ローンチ2ヶ月後 v1.2】「日常雑談・街中会話（Casual & Town）」フレーズの拡充", done: false },
+          { id: "s4-m3", text: "【ローンチ3ヶ月後 v1.3】「医療・特定専門領域（Medical）」高単価カテゴリの解放", done: false },
           { id: "s4-1", text: "PWA強化またはモバイルアプリ化（通知による継続率向上）", done: false },
-          { id: "s4-2", text: "法人向け（B2B）一括管理ダッシュボード（社員の発話量・WPM監視）の設計", done: false },
-          { id: "s4-3", text: "弱点音素（L/R, 連結音）自動抽出とパーソナライズ集中特訓機能", done: false },
-          { id: "s4-4", text: "企業・スクール提携（導入トライアル営業の開始）", done: false }
+          { id: "s4-2", text: "法人向け（B2B）一括管理ダッシュボード（社員の発話量・WPM監視）の設計", done: false }
         ]
       }
     ];

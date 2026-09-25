@@ -58,9 +58,20 @@ export default function ReviewPage() {
   // Pro modal state
   const [showProModal, setShowProModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    // Detect initial offline state and listen for changes
+    setIsOffline(!navigator.onLine);
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => setIsOffline(false);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
   }, []);
 
   // Load all learning records
@@ -172,6 +183,14 @@ export default function ReviewPage() {
           )}
         </div>
       </div>
+
+      {/* Offline indicator */}
+      {isOffline && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-500/10 border border-slate-500/25 text-slate-600 dark:text-slate-400 text-xs font-medium animate-in fade-in-50">
+          <span>📶</span>
+          <span>オフライン利用可能 — ローカルキャッシュから復習中</span>
+        </div>
+      )}
 
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

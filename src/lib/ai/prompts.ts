@@ -73,7 +73,8 @@ const INDUSTRY_SITUATIONS: Record<Industry, string[]> = {
 export function getSentenceGenerationPrompt(
   industry: Industry,
   level: DifficultyLevel,
-  topic?: string
+  topic?: string,
+  weakWords?: string[]
 ): PromptTemplate {
   const levelGuidelines: Record<DifficultyLevel, string> = {
     beginner:
@@ -88,9 +89,13 @@ export function getSentenceGenerationPrompt(
   const randomSituation = situations[Math.floor(Math.random() * situations.length)];
   const randomSeed = Math.random().toString(36).substring(2, 8);
 
+  const hasWeakWords = weakWords && weakWords.length > 0;
+  const weakWordList = hasWeakWords ? weakWords.slice(0, 3).join(", ") : null;
+
   const systemPrompt = `You are an expert English language coach specializing in shadowing practice.
 Your task is to generate ONE fresh, authentic, contextually rich English sentence along with its natural Japanese translation.
-NEVER generate generic, repetitive, or cliché template sentences.
+NEVER generate generic, repetitive, or cliché template sentences.${hasWeakWords ? `
+\nPersonalization: The learner struggles with these words: [${weakWordList}]. Naturally incorporate 1 to 2 of these words into the sentence without forcing them awkwardly.` : ""}
 
 Strict Output Format:
 Return ONLY a valid JSON object with the following schema:
@@ -104,7 +109,7 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
 - Industry/Domain: ${industry}
 - Context/Situation: ${topic ? topic : randomSituation}
 - Difficulty Level: ${level} (${levelGuidelines[level]})
-- Variation Seed: ${randomSeed}
+- Variation Seed: ${randomSeed}${hasWeakWords ? `\n- Weak Words to reinforce: ${weakWordList}` : ""}
 
 Requirements:
 - Make the vocabulary, syntax, and sentence structure novel and distinct from typical textbook examples.

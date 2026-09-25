@@ -18,6 +18,7 @@ import {
 import {
   recordPracticeSession,
   setPlanType,
+  getWeakWords,
 } from "@/lib/storage/user-learning-store";
 import {
   getTicketStatus,
@@ -57,6 +58,7 @@ export default function PracticePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeWeakWords, setActiveWeakWords] = useState<string[]>([]);
 
   const recorderSectionRef = useRef<HTMLDivElement | null>(null);
   const activeRequestIdRef = useRef<number>(0);
@@ -67,6 +69,15 @@ export default function PracticePage() {
     setTicketStatus(s);
     setPlan(s.plan);
     setUserEmail(getCurrentUserEmail());
+
+    // Load unmastered weak words (top 5) for personalized generation
+    const wData = getWeakWords();
+    const topWeak = wData.words
+      .filter((w) => !w.mastered)
+      .sort((a, b) => b.errorCount - a.errorCount)
+      .slice(0, 5)
+      .map((w) => w.word);
+    setActiveWeakWords(topWeak);
 
     // Check URL search params for Stripe success
     if (typeof window !== "undefined") {
@@ -129,6 +140,7 @@ export default function PracticePage() {
             industry: targetIndustry,
             level: targetLevel,
             mode: targetMode,
+            weakWords: targetMode === "sentence" ? activeWeakWords : [],
           }),
         });
 
@@ -154,7 +166,7 @@ export default function PracticePage() {
         }
       }
     },
-    [industry, level, practiceMode]
+    [industry, level, practiceMode, activeWeakWords]
   );
 
 const INDUSTRY_OPTIONS: Array<{ key: Industry; label: string }> = [
@@ -613,6 +625,14 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                 条件を変更する
               </button>
             </div>
+
+            {/* Personalization badge: shown when weak words are being reinforced */}
+            {activeWeakWords.length > 0 && sentence && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-[11px] font-semibold w-fit animate-in fade-in-50">
+                <span>🎯</span>
+                <span>苦手単語『{activeWeakWords.slice(0, 2).join("」「")}』の特訓問題</span>
+              </div>
+            )}
 
             <SentenceCard
               sentence={sentence}

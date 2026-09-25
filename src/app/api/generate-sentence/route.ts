@@ -21,7 +21,7 @@ const VALID_LEVELS: DifficultyLevel[] = ["beginner", "intermediate", "advanced"]
 
 export async function POST(req: NextRequest) {
   try {
-    let body: { industry?: string; level?: string; topic?: string; mode?: string } = {};
+    let body: { industry?: string; level?: string; topic?: string; mode?: string; weakWords?: string[] } = {};
     try {
       body = await req.json();
     } catch {
@@ -41,6 +41,9 @@ export async function POST(req: NextRequest) {
 
     const mode: PracticeMode = body.mode === "passage" ? "passage" : "sentence";
     const topic = typeof body.topic === "string" ? body.topic.trim() : undefined;
+    const weakWords: string[] = Array.isArray(body.weakWords)
+      ? body.weakWords.filter((w): w is string => typeof w === "string").slice(0, 5)
+      : [];
 
     // Check if OpenAI API key is configured
     try {
@@ -48,7 +51,7 @@ export async function POST(req: NextRequest) {
       const { systemPrompt, userPrompt } =
         mode === "passage"
           ? getPassageGenerationPrompt(industry, level, topic)
-          : getSentenceGenerationPrompt(industry, level, topic);
+          : getSentenceGenerationPrompt(industry, level, topic, weakWords);
 
       // 1. Generate sentence text with GPT-4o-mini
       const completion = await openai.chat.completions.create({
