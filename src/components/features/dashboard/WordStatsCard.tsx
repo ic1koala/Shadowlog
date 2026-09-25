@@ -63,7 +63,7 @@ export function WordStatsCard({
           <span className="text-sm font-medium text-muted-foreground">words</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          正確に発話・シャドーイングできた累計単語数です。
+          正確に発話・シャドーイングできた累計単語数（重複除く）です。
         </p>
       </div>
 

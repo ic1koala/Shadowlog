@@ -56,6 +56,7 @@ export default function ReviewPage() {
   const [historyFilter, setHistoryFilter] = useState<"all" | "cleared" | "needsReview">("all");
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [expandedSentenceIds, setExpandedSentenceIds] = useState<Record<string, boolean>>({});
+  const [expandedWordSentenceIds, setExpandedWordSentenceIds] = useState<Record<string, boolean>>({});
 
   // Pro modal state
   const [showProModal, setShowProModal] = useState(false);
@@ -137,6 +138,14 @@ export default function ReviewPage() {
   // Toggle sentence accordion expansion
   const toggleSentenceExpand = (id: string) => {
     setExpandedSentenceIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  // Toggle weak word sentence expansion
+  const toggleWordSentenceExpand = (id: string) => {
+    setExpandedWordSentenceIds((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
@@ -450,13 +459,32 @@ export default function ReviewPage() {
                       </p>
                     )}
 
-                    {/* Compact Example Sentence */}
-                    <div className="bg-muted/30 p-2 rounded-xl border border-border/60 text-xs space-y-0.5">
-                      <p className="text-foreground font-medium italic line-clamp-2 leading-snug">
-                        &ldquo;{word.sentence}&rdquo;
-                      </p>
+                    {/* Compact Example Sentence with Tap to Expand */}
+                    <div
+                      onClick={() => toggleWordSentenceExpand(word.id)}
+                      className="bg-muted/30 hover:bg-muted/50 p-2.5 rounded-xl border border-border/60 text-xs space-y-1 cursor-pointer transition-colors group/sent"
+                      title={expandedWordSentenceIds[word.id] ? "タップで折りたたむ" : "タップで全文を表示"}
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <p
+                          className={`text-foreground font-medium italic leading-snug break-words ${
+                            !expandedWordSentenceIds[word.id] ? "line-clamp-2" : ""
+                          }`}
+                        >
+                          &ldquo;{word.sentence}&rdquo;
+                        </p>
+                        <span className="text-[10px] text-muted-foreground/60 group-hover/sent:text-primary transition-colors shrink-0 ml-1 mt-0.5 font-bold">
+                          {expandedWordSentenceIds[word.id] ? "⌃" : "⌄"}
+                        </span>
+                      </div>
                       {word.japanese && (
-                        <p className="text-muted-foreground text-[11px] line-clamp-1">{word.japanese}</p>
+                        <p
+                          className={`text-muted-foreground text-[11px] break-words ${
+                            !expandedWordSentenceIds[word.id] ? "line-clamp-1" : ""
+                          }`}
+                        >
+                          {word.japanese}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -541,86 +569,49 @@ export default function ReviewPage() {
                     key={session.id}
                     className="bg-card rounded-2xl p-4 sm:p-5 border border-border shadow-xs space-y-3 relative"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1.5 flex-1 min-w-0">
-                        {/* Status Badges Row */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-lg font-bold text-xs ${
-                              session.isCleared
-                                ? "bg-emerald-500/15 text-emerald-600"
-                                : "bg-rose-500/15 text-rose-600"
-                            }`}
-                          >
-                            {session.accuracyScore}% {session.isCleared ? "クリア" : "要復習"}
+                    {/* Header Row: Badges on left, Re-practice & Delete on right */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-border/40">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-lg font-bold text-xs ${
+                            session.isCleared
+                              ? "bg-emerald-500/15 text-emerald-600"
+                              : "bg-rose-500/15 text-rose-600"
+                          }`}
+                        >
+                          {session.accuracyScore}% {session.isCleared ? "クリア" : "要復習"}
+                        </span>
+                        {session.mode === "passage" && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20">
+                            <Crown className="w-3 h-3 fill-amber-500" />
+                            長文スピーチ
                           </span>
-                          {session.mode === "passage" && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20">
-                              <Crown className="w-3 h-3 fill-amber-500" />
-                              長文スピーチ
-                            </span>
-                          )}
-                          {typeof session.wpm === "number" && (
-                            <span className="text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-mono border border-blue-500/20">
-                              {session.wpm} WPM
-                            </span>
-                          )}
-                          <span className="text-[11px] text-muted-foreground">
-                            {new Date(session.createdAt).toLocaleDateString("ja-JP", {
-                              month: "numeric",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                        )}
+                        {typeof session.wpm === "number" && (
+                          <span className="text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-mono border border-blue-500/20">
+                            {session.wpm} WPM
                           </span>
-                          {session.retryCount > 0 && (
-                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                              リトライ {session.retryCount}回
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Sentence with 2-line clamp Accordion */}
-                        <div className="pt-0.5 space-y-1">
-                          <p
-                            className={`text-sm sm:text-base font-semibold text-foreground leading-snug break-words ${
-                              !isSentenceExpanded ? "line-clamp-2" : ""
-                            }`}
-                          >
-                            {session.sentence}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => toggleSentenceExpand(session.id)}
-                            className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline cursor-pointer"
-                          >
-                            {isSentenceExpanded ? (
-                              <>
-                                折りたたむ <ChevronUp className="w-3 h-3" />
-                              </>
-                            ) : (
-                              <>
-                                全文を展開 <ChevronDown className="w-3 h-3" />
-                              </>
-                            )}
-                          </button>
-
-                          {session.japanese && (
-                            <p className={`text-xs text-muted-foreground break-words ${!isSentenceExpanded ? "line-clamp-1" : ""}`}>
-                              {session.japanese}
-                            </p>
-                          )}
-                          <p className={`text-xs text-muted-foreground font-mono break-words ${!isSentenceExpanded ? "truncate" : ""}`}>
-                            認識: &ldquo;{session.transcription}&rdquo;
-                          </p>
-                        </div>
+                        )}
+                        <span className="text-[11px] text-muted-foreground">
+                          {new Date(session.createdAt).toLocaleDateString("ja-JP", {
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        {session.retryCount > 0 && (
+                          <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                            リトライ {session.retryCount}回
+                          </span>
+                        )}
                       </div>
 
                       {/* Header Right Actions: Re-practice & Delete Button */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                         <button
                           onClick={() => handlePracticeSentence(session)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs hover:bg-primary/90 transition"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs hover:bg-primary/90 transition cursor-pointer"
                           title="この文を再シャドーイング"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
@@ -628,13 +619,48 @@ export default function ReviewPage() {
                         </button>
                         <button
                           onClick={() => handleDeleteSession(session.id)}
-                          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition"
+                          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition cursor-pointer"
                           title="この練習履歴を削除"
                           aria-label="この練習履歴を削除"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
+                    </div>
+
+                    {/* Sentence Body: spans 100% of card width */}
+                    <div className="w-full space-y-1.5">
+                      <p
+                        className={`text-sm sm:text-base font-semibold text-foreground leading-relaxed break-words w-full ${
+                          !isSentenceExpanded ? "line-clamp-2" : ""
+                        }`}
+                      >
+                        {session.sentence}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => toggleSentenceExpand(session.id)}
+                        className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline cursor-pointer"
+                      >
+                        {isSentenceExpanded ? (
+                          <>
+                            折りたたむ <ChevronUp className="w-3 h-3" />
+                          </>
+                        ) : (
+                          <>
+                            全文を展開 <ChevronDown className="w-3 h-3" />
+                          </>
+                        )}
+                      </button>
+
+                      {session.japanese && (
+                        <p className={`text-xs text-muted-foreground break-words w-full ${!isSentenceExpanded ? "line-clamp-1" : ""}`}>
+                          {session.japanese}
+                        </p>
+                      )}
+                      <p className={`text-xs text-muted-foreground font-mono break-words w-full ${!isSentenceExpanded ? "truncate" : ""}`}>
+                        認識: &ldquo;{session.transcription}&rdquo;
+                      </p>
                     </div>
 
                     {/* Coach Feedback Expandable Accordion */}

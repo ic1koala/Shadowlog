@@ -3,7 +3,6 @@
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import {
   Mic,
-  Square,
   RotateCcw,
   AlertCircle,
   Play,
@@ -17,15 +16,13 @@ import { useState, useRef, useEffect } from "react";
 interface AudioRecorderProps {
   onAudioReady: (blob: Blob, durationSeconds: number) => void;
   isTranscribing: boolean;
-  disabled?: boolean;
   onRecordingStateChange?: (isRecording: boolean, hasBlob: boolean) => void;
-  onRegisterControls?: (controls: { start: () => void; stop: () => void }) => void;
+  onRegisterControls?: (controls: { start: () => void; stop: () => void; reset: () => void }) => void;
 }
 
 export function AudioRecorder({
   onAudioReady,
   isTranscribing,
-  disabled = false,
   onRecordingStateChange,
   onRegisterControls,
 }: AudioRecorderProps) {
@@ -76,10 +73,10 @@ export function AudioRecorder({
     onRecordingStateChange?.(isRecording, !!audioBlob);
   }, [isRecording, audioBlob, onRecordingStateChange]);
 
-  // Expose start/stop controls to parent (for floating action bar)
+  // Expose start/stop/reset controls to parent (for floating action bar)
   useEffect(() => {
-    onRegisterControls?.({ start: startRecording, stop: stopRecording });
-  }, [onRegisterControls, startRecording, stopRecording]);
+    onRegisterControls?.({ start: startRecording, stop: stopRecording, reset: resetRecording });
+  }, [onRegisterControls, startRecording, stopRecording, resetRecording]);
 
   const togglePlayRecorded = () => {
     if (!audioUrl) return;
@@ -240,7 +237,10 @@ export function AudioRecorder({
               </button>
 
               <button
-                onClick={resetRecording}
+                onClick={() => {
+                  resetRecording();
+                  onRecordingStateChange?.(false, false);
+                }}
                 disabled={isTranscribing}
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 border border-border text-muted-foreground hover:text-foreground font-medium rounded-xl hover:bg-muted transition text-sm min-h-[48px]"
               >

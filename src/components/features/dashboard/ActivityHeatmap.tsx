@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { CalendarDays, TrendingUp, Sparkles } from "lucide-react";
 
 interface ActivityHeatmapProps {
@@ -10,6 +10,8 @@ interface ActivityHeatmapProps {
 const WEEKDAYS_JA = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
 export function ActivityHeatmap({ dailyCounts }: ActivityHeatmapProps) {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
   // Generate the past 14 days (past 2 weeks) up to today
   const { days, totalPast2Weeks, activeDays, maxCount, dailyAverage } = useMemo(() => {
     const list: Array<{
@@ -78,6 +80,20 @@ export function ActivityHeatmap({ dailyCounts }: ActivityHeatmapProps) {
     };
   }, [dailyCounts]);
 
+  // Ensure "Today" (the rightmost column) is scrolled into view by default on mobile devices
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    const el = scrollContainerRef.current;
+    // Scroll immediately and also after a short tick to handle layout render
+    el.scrollLeft = el.scrollWidth;
+    const timer = setTimeout(() => {
+      if (el) {
+        el.scrollLeft = el.scrollWidth;
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [days]);
+
   const getBarColor = (count: number) => {
     if (count === 0) return "bg-muted/40 text-muted-foreground/60";
     if (count <= 15) return "bg-gradient-to-t from-emerald-600 to-emerald-400 text-white shadow-xs";
@@ -122,7 +138,10 @@ export function ActivityHeatmap({ dailyCounts }: ActivityHeatmapProps) {
       </div>
 
       {/* 14-Day Visual Bar Chart */}
-      <div className="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+      <div
+        ref={scrollContainerRef}
+        className="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide"
+      >
         <div className="min-w-[520px] sm:min-w-full grid grid-cols-[repeat(14,minmax(0,1fr))] gap-1.5 sm:gap-2.5 items-end pt-3">
           {days.map((item) => {
             const heightPercent =

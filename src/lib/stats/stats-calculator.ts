@@ -11,7 +11,14 @@ export function formatDateKey(date: Date): string {
 }
 
 /**
- * Calculates current streak, best streak, total words, and daily word counts from a list of sessions.
+ * Normalizes a word for deduplication (lowercase, strip surrounding punctuation).
+ */
+export function normalizeWord(raw: string): string {
+  return raw.toLowerCase().replace(/^[^\w]+|[^\w]+$/g, "");
+}
+
+/**
+ * Calculates current streak, best streak, total unique words, and daily word counts from a list of sessions.
  */
 export function calculateUserStats(
   sessions: PracticeSession[],
@@ -27,17 +34,57 @@ export function calculateUserStats(
     };
   }
 
-  let totalWords = 0;
+  const uniqueWordsSet = new Set<string>();
   const dailyCounts: Record<string, number> = {};
 
   for (const session of sessions) {
-    totalWords += session.matchedWordCount;
+    // 1. Accumulate daily word counts (activity volume)
     const sessionDate = new Date(session.createdAt);
     if (!isNaN(sessionDate.getTime())) {
       const key = formatDateKey(sessionDate);
       dailyCounts[key] = (dailyCounts[key] || 0) + session.matchedWordCount;
     }
+
+    // 2. Extract unique matched/spoken words for deduplicated total words
+    const stored = session as { diff?: { tokens?: Array<{ status: string; word: string }> } };
+    if (stored.diff?.tokens && Array.isArray(stored.diff.tokens)) {
+      for (const token of stored.diff.tokens) {
+        if (token.status === "correct" && token.word) {
+          const clean = normalizeWord(token.word);
+          if (clean) uniqueWordsSet.add(clean);
+        }
+      }
+    } else {
+      // Fallback: match words between target sentence and actual transcription
+      const targetWords = new Set(
+        (session.sentence || "")
+          .split(/\s+/)
+          .map(normalizeWord)
+          .filter((w) => w.length > 0)
+      );
+      const spokenWords = (session.transcription || "")
+        .split(/\s+/)
+        .map(normalizeWord)
+        .filter((w) => w.length > 0);
+
+      let matchedCount = 0;
+      for (const word of spokenWords) {
+        if (targetWords.has(word)) {
+          uniqueWordsSet.add(word);
+          matchedCount++;
+        }
+      }
+
+      // If transcription was identical or empty fallback
+      if (matchedCount === 0 && session.matchedWordCount > 0) {
+        Array.from(targetWords)
+          .slice(0, session.matchedWordCount)
+          .forEach((w) => uniqueWordsSet.add(w));
+      }
+    }
   }
+
+  const totalWords = uniqueWordsSet.size;
 
   // Sort unique dates in ascending order
   const uniqueDates = Object.keys(dailyCounts).sort();

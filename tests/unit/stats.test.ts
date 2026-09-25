@@ -95,7 +95,7 @@ describe("Stats and Streak Calculation Unit Tests", () => {
 
       const stats = calculateUserStats(sessions, refDate);
       expect(stats.totalSessions).toBe(3);
-      expect(stats.totalWords).toBe(12); // 3 + 5 + 4
+      expect(stats.totalWords).toBe(10); // Deduplicated unique words (sentence and practiced counted once)
       expect(stats.currentStreak).toBe(2);
       expect(stats.bestStreak).toBe(2);
       expect(stats.dailyCounts["2026-09-20"]).toBe(8);

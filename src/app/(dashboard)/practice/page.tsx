@@ -65,7 +65,7 @@ export default function PracticePage() {
   // Floating recording bar state
   const [floatIsRecording, setFloatIsRecording] = useState(false);
   const [floatHasBlob, setFloatHasBlob] = useState(false);
-  const recorderControlsRef = useRef<{ start: () => void; stop: () => void } | null>(null);
+  const recorderControlsRef = useRef<{ start: () => void; stop: () => void; reset?: () => void } | null>(null);
 
   const recorderSectionRef = useRef<HTMLDivElement | null>(null);
   const activeRequestIdRef = useRef<number>(0);
@@ -369,6 +369,10 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     if (coachFeedback?.retryFocusPoint) {
       setActiveRetryTip(coachFeedback.retryFocusPoint);
     }
+    // Fully reset audio recorder and floating button state
+    recorderControlsRef.current?.reset?.();
+    setFloatHasBlob(false);
+    setFloatIsRecording(false);
     setDiffResult(null);
     setTranscription("");
     setWpmInfo(undefined);
@@ -474,7 +478,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               onClick={() => handleModeChange("sentence")}
               className={`px-3.5 py-2 rounded-xl transition ${
                 practiceMode === "sentence"
-                  ? "bg-card text-foreground shadow-xs font-bold"
+                  ? "bg-primary text-primary-foreground shadow-xs font-bold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -492,6 +496,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               長文スピーチ (Pro)
             </button>
           </div>
+
         </div>
       </div>
 
@@ -674,7 +679,6 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           <AudioRecorder
             onAudioReady={handleAudioReady}
             isTranscribing={isTranscribing}
-            disabled={isLoadingSentence}
             onRecordingStateChange={(rec, hasBlob) => {
               setFloatIsRecording(rec);
               setFloatHasBlob(hasBlob);
@@ -749,41 +753,48 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       {/* ── Floating Recording Bar ── */}
       {/* Shown while sentence is active and no result yet (recording phase) */}
       {sentence && !diffResult && !floatHasBlob && (
-        <div className="fixed bottom-16 sm:bottom-4 inset-x-0 flex justify-center px-4 z-40 pointer-events-none">
-          <div className="pointer-events-auto flex items-center gap-3 px-5 py-3 rounded-2xl bg-card/80 backdrop-blur-md border border-border shadow-2xl shadow-black/20 ring-1 ring-white/10">
-            {/* Recording timer pulse */}
-            {floatIsRecording && (
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-destructive animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-destructive" />
-                録音中
-              </span>
-            )}
+        <div className="fixed bottom-24 sm:bottom-10 left-1/2 -translate-x-1/2 flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
+          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full animate-in slide-in-from-bottom-5 duration-300">
+            {/* Status indicator */}
+            <div className="flex items-center gap-2">
+              {floatIsRecording ? (
+                <span className="flex items-center gap-2 text-xs font-bold text-destructive animate-pulse">
+                  <span className="w-2.5 h-2.5 rounded-full bg-destructive" />
+                  録音中...
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  準備完了
+                </span>
+              )}
+            </div>
 
-            {/* Start button (idle) */}
-            {!floatIsRecording && (
-              <button
-                onClick={() => recorderControlsRef.current?.start()}
-                disabled={isLoadingSentence || isTranscribing}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-md active:scale-95 min-h-[44px]"
-              >
-                <Mic className="w-4 h-4" />
-                シャドーイングを開始
-              </button>
-            )}
-
-            {/* Stop button (while recording) */}
-            {floatIsRecording && (
-              <button
-                onClick={() => recorderControlsRef.current?.stop()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 transition shadow-md active:scale-95 min-h-[44px]"
-              >
-                <Square className="w-4 h-4" />
-                録音を終了
-              </button>
-            )}
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              {!floatIsRecording ? (
+                <button
+                  onClick={() => recorderControlsRef.current?.start()}
+                  disabled={isLoadingSentence || isTranscribing}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-lg active:scale-95 min-h-[44px]"
+                >
+                  <Mic className="w-4 h-4" />
+                  シャドーイングを開始
+                </button>
+              ) : (
+                <button
+                  onClick={() => recorderControlsRef.current?.stop()}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 transition shadow-lg active:scale-95 min-h-[44px]"
+                >
+                  <Square className="w-4 h-4 fill-current" />
+                  録音を終了
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
