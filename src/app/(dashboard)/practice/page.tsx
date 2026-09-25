@@ -421,6 +421,11 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         }),
       });
 
+      // 3. Asynchronously sync to Supabase DB if logged in
+      import("@/lib/storage/sync-service").then(({ savePracticeSessionToSupabase }) => {
+        savePracticeSessionToSupabase(saved.session).catch(() => {});
+      });
+
       if (!res.ok) {
         throw new Error("記録の保存に失敗しました");
       }

@@ -16,6 +16,7 @@ import { useState, useRef, useEffect } from "react";
 interface AudioRecorderProps {
   onAudioReady: (blob: Blob, durationSeconds: number) => void;
   isTranscribing: boolean;
+  disabled?: boolean;
   onRecordingStateChange?: (isRecording: boolean, hasBlob: boolean) => void;
   onRegisterControls?: (controls: { start: () => void; stop: () => void; reset: () => void }) => void;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useStats } from "@/hooks/use-stats";
 import { WordStatsCard } from "@/components/features/dashboard/WordStatsCard";
@@ -9,6 +10,21 @@ import { Mic, ArrowRight, History, Sparkles, AlertCircle, GraduationCap } from "
 
 export default function DashboardPage() {
   const { stats, sessions, error, refresh } = useStats();
+
+  // Handle OAuth callback login success or general login sync
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("@/lib/storage/sync-service").then(async ({ getAuthenticatedUser, migrateGuestDataToSupabase }) => {
+        const user = await getAuthenticatedUser();
+        if (user && user.email) {
+          const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
+          upgradeGuestToRegisteredUser(user.email);
+          await migrateGuestDataToSupabase();
+          window.dispatchEvent(new Event("shadowlog:ticket-update"));
+        }
+      }).catch(() => {});
+    }
+  }, []);
 
   const totalWords = stats?.totalWords || 0;
   const totalSessions = stats?.totalSessions || 0;

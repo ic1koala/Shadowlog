@@ -55,7 +55,7 @@ export function setPlanType(plan: UserPlanType): void {
 /**
  * Loads all raw stored sessions from localStorage.
  */
-function loadAllSessions(): StoredSession[] {
+export function loadAllSessions(): StoredSession[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(KEY_STORED_SESSIONS);
@@ -69,7 +69,7 @@ function loadAllSessions(): StoredSession[] {
 /**
  * Saves all sessions to localStorage.
  */
-function saveAllSessions(sessions: StoredSession[]): void {
+export function saveAllSessions(sessions: StoredSession[]): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(KEY_STORED_SESSIONS, JSON.stringify(sessions));
@@ -81,7 +81,7 @@ function saveAllSessions(sessions: StoredSession[]): void {
 /**
  * Loads all raw weak words from localStorage.
  */
-function loadAllWeakWords(): WeakWord[] {
+export function loadAllWeakWords(): WeakWord[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(KEY_WEAK_WORDS);
@@ -95,7 +95,7 @@ function loadAllWeakWords(): WeakWord[] {
 /**
  * Saves all weak words to localStorage.
  */
-function saveAllWeakWords(words: WeakWord[]): void {
+export function saveAllWeakWords(words: WeakWord[]): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(KEY_WEAK_WORDS, JSON.stringify(words));

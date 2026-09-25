@@ -113,6 +113,15 @@ export default function ReviewPage() {
 
   useEffect(() => {
     loadData();
+
+    // Background sync from Supabase if online
+    if (typeof window !== "undefined" && navigator.onLine) {
+      import("@/lib/storage/sync-service").then(({ syncSessionsFromSupabase, syncWeakWordsFromSupabase }) => {
+        Promise.all([syncSessionsFromSupabase(), syncWeakWordsFromSupabase()]).then(() => {
+          loadData();
+        }).catch(() => {});
+      });
+    }
   }, [loadData]);
 
   // Toggle master status
