@@ -79,6 +79,7 @@ export function useAudioRecorder() {
   // Audio Input Devices management (for Bluetooth/External Mic switching)
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceIdState] = useState<string>("");
+  const [hasLabels, setHasLabels] = useState<boolean>(false);
 
   const STORAGE_KEY_ID = "shadowlog_mic_device_id";
   const STORAGE_KEY_LABEL = "shadowlog_mic_device_label";
@@ -118,28 +119,47 @@ export function useAudioRecorder() {
     if (typeof window === "undefined" || !navigator.mediaDevices?.enumerateDevices) return;
     try {
       const allDevices = await navigator.mediaDevices.enumerateDevices();
-      const audioInputs = allDevices.filter((d) => d.kind === "audioinput");
+      const audioInputs = allDevices.filter(
+        (d) => d.kind === "audioinput" && (d.deviceId || d.label)
+      );
       setDevices(audioInputs);
+
+      const labelsPresent = audioInputs.some((d) => Boolean(d.label));
+      setHasLabels(labelsPresent);
 
       // Restore previously saved microphone (by deviceId or label)
       try {
         const savedId = localStorage.getItem(STORAGE_KEY_ID);
         const savedLabel = localStorage.getItem(STORAGE_KEY_LABEL);
 
+        let matched: MediaDeviceInfo | undefined;
+
         if (savedId || savedLabel) {
           // 1. Try matching by deviceId
-          let matched = audioInputs.find((d) => d.deviceId && d.deviceId === savedId);
+          matched = audioInputs.find((d) => d.deviceId && d.deviceId === savedId);
           // 2. Fallback: match by label (useful for Bluetooth reconnects where deviceId changes)
           if (!matched && savedLabel) {
             matched = audioInputs.find((d) => d.label && d.label === savedLabel);
           }
+        }
 
-          if (matched) {
-            setSelectedDeviceIdState(matched.deviceId);
-            // Update saved ID if it changed
-            if (matched.deviceId !== savedId) {
-              localStorage.setItem(STORAGE_KEY_ID, matched.deviceId);
-            }
+        // 3. Smart suggestion: if user has AirPods or Bluetooth connected and no selection made, auto-pick it
+        if (!matched && labelsPresent) {
+          const airpods = audioInputs.find((d) =>
+            /airpods|bluetooth|headset|wireless|buds|wh-|wf-/i.test(d.label)
+          );
+          if (airpods) {
+            matched = airpods;
+          }
+        }
+
+        if (matched) {
+          setSelectedDeviceIdState(matched.deviceId);
+          if (matched.deviceId !== savedId) {
+            localStorage.setItem(STORAGE_KEY_ID, matched.deviceId);
+          }
+          if (matched.label) {
+            localStorage.setItem(STORAGE_KEY_LABEL, matched.label);
           }
         }
       } catch {
@@ -150,9 +170,45 @@ export function useAudioRecorder() {
     }
   }, []);
 
+  // Proactively request microphone access to unlock device labels (AirPods / External mics)
+  const requestDeviceAccess = useCallback(async () => {
+    if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) return false;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Immediately release track so recording indicator turns off
+      stream.getTracks().forEach((track) => track.stop());
+      await refreshDevices();
+      return true;
+    } catch (err) {
+      console.warn("Microphone permission request was cancelled or denied:", err);
+      return false;
+    }
+  }, [refreshDevices]);
+
   // Initial device enumeration & listen for device changes (Bluetooth connect/disconnect)
   useEffect(() => {
     refreshDevices();
+
+    // Check if permission is already granted; if so, unlock labels immediately
+    if (typeof window !== "undefined" && navigator.permissions?.query) {
+      try {
+        navigator.permissions
+          .query({ name: "microphone" as PermissionName })
+          .then((permissionStatus) => {
+            if (permissionStatus.state === "granted") {
+              requestDeviceAccess();
+            }
+            permissionStatus.onchange = () => {
+              if (permissionStatus.state === "granted") {
+                requestDeviceAccess();
+              }
+            };
+          })
+          .catch(() => {});
+      } catch {
+        // ignore
+      }
+    }
 
     if (typeof window !== "undefined" && navigator.mediaDevices?.addEventListener) {
       const handler = () => {
@@ -163,7 +219,7 @@ export function useAudioRecorder() {
         navigator.mediaDevices.removeEventListener("devicechange", handler);
       };
     }
-  }, [refreshDevices]);
+  }, [refreshDevices, requestDeviceAccess]);
 
   const cleanupAudio = useCallback(() => {
     if (timerIntervalRef.current) {
@@ -220,12 +276,12 @@ export function useAudioRecorder() {
       }
 
       // Request microphone stream with selected device or fallback
+      // Request microphone stream with selected device (using ideal constraint to prevent OverconstrainedError on AirPods/iOS)
       let stream: MediaStream;
       const baseConstraints: MediaTrackConstraints = {
-        deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+        deviceId: selectedDeviceId ? { ideal: selectedDeviceId } : undefined,
         echoCancellation: true,
         noiseSuppression: true,
-        autoGainControl: true,
       };
 
       try {
@@ -235,15 +291,20 @@ export function useAudioRecorder() {
       } catch (constraintErr) {
         // Fallback for Bluetooth headsets that fail with strict DSP filters (SCO profile issue)
         console.warn("Retrying getUserMedia with relaxed constraints for Bluetooth compatibility:", constraintErr);
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : true,
-        });
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: selectedDeviceId ? { deviceId: { ideal: selectedDeviceId } } : true,
+          });
+        } catch {
+          // Final fallback: any microphone
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
       }
 
       streamRef.current = stream;
 
       // Refresh devices to get device labels if permission was just granted
-      refreshDevices();
+      await refreshDevices();
 
       // Save the active track's label to ensure Bluetooth device name is remembered even on first grant
       const activeTrack = stream.getAudioTracks()[0];
@@ -416,6 +477,8 @@ export function useAudioRecorder() {
     devices,
     selectedDeviceId,
     setSelectedDeviceId,
+    hasLabels,
+    requestDeviceAccess,
     refreshDevices,
     startRecording,
     stopRecording,

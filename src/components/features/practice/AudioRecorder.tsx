@@ -10,6 +10,7 @@ import {
   Pause,
   Send,
   SlidersHorizontal,
+  Headphones,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -38,6 +39,8 @@ export function AudioRecorder({
     devices,
     selectedDeviceId,
     setSelectedDeviceId,
+    hasLabels,
+    requestDeviceAccess,
     startRecording,
     stopRecording,
     resetRecording,
@@ -120,25 +123,60 @@ export function AudioRecorder({
             録音中 {formatTimer(recordingTime)}
           </div>
         ) : (
-          devices.length > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-xl border border-border/60">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-primary shrink-0" />
-              <select
-                value={selectedDeviceId}
-                onChange={(e) => setSelectedDeviceId(e.target.value)}
-                disabled={isRecording || disabled}
-                className="bg-transparent text-foreground text-xs focus:outline-hidden cursor-pointer max-w-[180px] sm:max-w-[240px] truncate"
-                aria-label="マイク入力デバイスを選択"
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {/* Device Selector */}
+            {devices.length > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 px-2.5 py-1.5 rounded-xl border border-border/60 shadow-2xs">
+                {devices.find((d) => d.deviceId === selectedDeviceId && /airpods|bluetooth|headset|wireless|buds|wh-|wf-/i.test(d.label)) ? (
+                  <Headphones className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                ) : (
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-primary shrink-0" />
+                )}
+                <select
+                  value={selectedDeviceId}
+                  onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  onFocus={() => {
+                    if (!hasLabels) {
+                      requestDeviceAccess();
+                    }
+                  }}
+                  disabled={isRecording}
+                  className="bg-transparent text-foreground text-xs focus:outline-hidden cursor-pointer max-w-[190px] sm:max-w-[260px] truncate font-medium"
+                  aria-label="マイク入力デバイスを選択"
+                >
+                  <option value="">デフォルトマイク</option>
+                  {devices.map((device, idx) => {
+                    const isBt = /airpods|bluetooth|headset|wireless|buds|wh-|wf-/i.test(device.label);
+                    return (
+                      <option key={device.deviceId || idx} value={device.deviceId}>
+                        {isBt ? "🎧 " : ""}{device.label || `マイク ${idx + 1}`}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
+
+            {/* Unlock device labels button: visible when browser hasn't granted labels yet */}
+            {!hasLabels && (
+              <button
+                type="button"
+                onClick={requestDeviceAccess}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition shadow-2xs cursor-pointer shrink-0"
+                title="ブラウザのマイク許可を有効にしてAirPods等の名称を表示"
               >
-                <option value="">デフォルトマイク</option>
-                {devices.map((device, idx) => (
-                  <option key={device.deviceId || idx} value={device.deviceId}>
-                    {device.label || `マイク ${idx + 1}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )
+                <Headphones className="w-3 h-3" />
+                <span>AirPods等の名前を表示</span>
+              </button>
+            )}
+
+            {/* AirPods active badge */}
+            {devices.some((d) => d.deviceId === selectedDeviceId && /airpods|bluetooth|headset|wireless|buds|wh-|wf-/i.test(d.label)) && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-500/20 shrink-0">
+                🎧 AirPods接続中
+              </span>
+            )}
+          </div>
         )}
       </div>
 
