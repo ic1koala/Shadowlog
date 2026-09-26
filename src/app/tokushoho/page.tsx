@@ -53,8 +53,9 @@ export default function TokushohoPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 p-4 sm:p-5 gap-2 bg-muted/20">
               <span className="font-bold text-foreground">所在地・電話番号</span>
               <div className="sm:col-span-2 text-muted-foreground space-y-1 text-xs">
-                <p>所在地および電話番号については、取引時に請求があった場合、遅滞なく電子メール等により開示いたします。</p>
-                <p className="text-muted-foreground/80">開示をご希望の方は下記メールアドレスまでご連絡ください。</p>
+                <p>・<strong>電話番号</strong>: 080-9834-2113</p>
+                <p>・<strong>所在地</strong>: 所在地については、取引時に請求があった場合、遅滞なく電子メール等により開示いたします。</p>
+                <p className="text-muted-foreground/80">※ 開示をご希望の方は下記メールアドレスまでご連絡ください。</p>
               </div>
             </div>
 

@@ -91,3 +91,17 @@ button, a, [role="button"] {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Glassmorphism frosted-glass header and panel utilities */
+.glass-header {
+  background-color: rgba(248, 250, 252, 0.72);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+}
+
+.dark .glass-header {
+  background-color: rgba(9, 13, 22, 0.72);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+}
+

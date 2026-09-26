@@ -403,16 +403,16 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
 
       <div className="space-y-2 sm:space-y-3">
         {/* English sentence with karaoke-style real-time word highlighting */}
-        <p className="text-xl sm:text-3xl font-semibold leading-relaxed tracking-tight text-foreground flex flex-wrap gap-x-1 gap-y-1 items-baseline">
+        <p className="text-xl sm:text-3xl font-semibold leading-relaxed tracking-normal text-foreground flex flex-wrap gap-y-1.5 items-baseline">
           {parsedWords.map((w, idx) => {
             const isCurrent = activeWordIndex === idx;
             return (
               <span
                 key={w.id}
-                className={`transition-all duration-75 rounded-md px-1 py-0.5 inline-block ${
+                className={`transition-all duration-75 inline-block mr-1.5 ${
                   isCurrent
-                    ? "bg-blue-600 text-white font-bold shadow-md scale-105 ring-2 ring-blue-400/40"
-                    : "text-foreground"
+                    ? "bg-blue-600 text-white font-bold shadow-md scale-105 ring-2 ring-blue-400/40 px-1.5 py-0.5 rounded-md"
+                    : "text-foreground px-0.5"
                 }`}
               >
                 {w.text}
@@ -420,6 +420,7 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
             );
           })}
         </p>
+
 
         {showJapanese && (
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed pt-0.5 sm:pt-1">
