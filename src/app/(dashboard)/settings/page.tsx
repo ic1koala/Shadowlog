@@ -18,6 +18,7 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
+import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -366,6 +367,9 @@ export default function SettingsPage() {
           設定を保存する
         </button>
       </div>
+
+      {/* Feedback & Bug Report Section */}
+      <FeedbackForm />
     </div>
   );
 }
