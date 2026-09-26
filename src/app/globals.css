@@ -94,14 +94,14 @@ button, a, [role="button"] {
 
 /* Glassmorphism frosted-glass header and panel utilities */
 .glass-header {
-  background-color: rgba(248, 250, 252, 0.72);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  backdrop-filter: blur(16px) saturate(160%);
+  background-color: rgba(248, 250, 252, 0.88);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
 }
 
 .dark .glass-header {
-  background-color: rgba(9, 13, 22, 0.72);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  backdrop-filter: blur(16px) saturate(160%);
+  background-color: rgba(9, 13, 22, 0.88);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
 }
 

@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { collectClientEnvironmentInfo } from "@/lib/feedback/env-collector";
 
@@ -34,6 +35,7 @@ const CATEGORIES: CategoryOption[] = [
 ];
 
 export function FeedbackForm() {
+  const [isOpen, setIsOpen] = useState(false);
   const [category, setCategory] = useState<CategoryType>("bug");
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export function FeedbackForm() {
     reader.readAsDataURL(file);
   };
 
-  // Handle clipboard paste (Cmd+V / Ctrl+V)
+  // Handle clipboard paste
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items;
     for (let i = 0; i < items.length; i++) {
@@ -158,13 +160,43 @@ export function FeedbackForm() {
     }
   };
 
+  // Collapsed state — just a button
+  if (!isOpen) {
+    return (
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl border border-border bg-card hover:bg-muted text-foreground font-semibold text-sm transition shadow-sm active:scale-[0.98] min-h-[48px]"
+        >
+          <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <MessageSquare className="w-3.5 h-3.5" />
+          </div>
+          <span>不具合報告・お問い合わせ</span>
+          <ChevronDown className="w-4 h-4 text-muted-foreground ml-auto" />
+        </button>
+      </div>
+    );
+  }
+
+  // Expanded state — full form
   return (
-    <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5">
-      <div className="flex items-center gap-2.5 text-foreground font-bold text-base sm:text-lg">
-        <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-          <MessageSquare className="w-4 h-4" />
+    <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5 text-foreground font-bold text-base sm:text-lg">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+            <MessageSquare className="w-4 h-4" />
+          </div>
+          <span>不具合報告・お問い合わせ・ご意見</span>
         </div>
-        <span>不具合報告・お問い合わせ・ご意見</span>
+        <button
+          type="button"
+          onClick={() => { setIsOpen(false); setIsSuccess(false); setErrorMessage(null); }}
+          className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition"
+          title="閉じる"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
@@ -180,13 +212,20 @@ export function FeedbackForm() {
           <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
             貴重なご報告・ご意見をありがとうございます。受付確認メールを送信いたしました。内容を確認のうえ、必要に応じて順次ご連絡いたします。
           </p>
-          <div className="pt-2">
+          <div className="pt-2 flex items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => setIsSuccess(false)}
               className="px-4 py-2 rounded-xl text-xs font-semibold bg-background border border-border hover:bg-muted text-foreground transition"
             >
               続けて別の報告を送る
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsOpen(false); setIsSuccess(false); }}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+            >
+              閉じる
             </button>
           </div>
         </div>
@@ -241,14 +280,9 @@ export function FeedbackForm() {
 
           {/* Content Textarea */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label htmlFor="feedback-content" className="text-xs font-bold text-foreground block">
-                ご報告・お問い合わせ内容 <span className="text-destructive">*</span>
-              </label>
-              <span className="text-[10px] text-muted-foreground">
-                ※ 画像のクリップボード貼り付け (Cmd+V) も可能です
-              </span>
-            </div>
+            <label htmlFor="feedback-content" className="text-xs font-bold text-foreground block">
+              ご報告・お問い合わせ内容 <span className="text-destructive">*</span>
+            </label>
             <textarea
               id="feedback-content"
               value={content}
