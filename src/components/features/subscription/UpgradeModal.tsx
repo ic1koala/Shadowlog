@@ -161,7 +161,7 @@ export function UpgradeModal({
                 <ul className="space-y-2 text-xs text-slate-600">
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span><strong>1日 30回</strong>まで短文シャドーイング</span>
+                    <span><strong>短文シャドーイング無制限</strong>（使い放題）</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />

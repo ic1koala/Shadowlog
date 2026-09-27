@@ -33,6 +33,13 @@ export interface CustomerSummary {
   pro_trials_used: number;
   practice_count: number;
   last_practiced_at: string | null;
+  today_practice_count: number;
+  active_days: number;
+  daily_average_practice: number;
+  projected_monthly_practices: number;
+  projected_monthly_cost: number;
+  breakeven_daily_limit: number;
+  cost_risk_status: "safe" | "warning" | "danger" | "free";
 }
 
 export interface AdminCustomerResponse {
@@ -42,6 +49,9 @@ export interface AdminCustomerResponse {
     newCustomersThisWeek: number;
     totalPracticeSessions: number;
     paidOrProCount: number;
+    overallDailyAverage: number;
+    topUserDailyCount: number;
+    warningAccountCount: number;
   };
 }
 
@@ -143,18 +153,101 @@ export async function GET(req: NextRequest) {
       });
     });
 
-    const sessionStatsMap = new Map<string, { count: number; lastPracticedAt: string | null }>();
+    // Helper to format ISO date string to JST YYYY-MM-DD
+    function getJSTDateString(dateInput: Date | string): string {
+      const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Tokyo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(d);
+    }
+
+    const todayJST = getJSTDateString(new Date());
+
+    interface UserSessionStats {
+      count: number;
+      lastPracticedAt: string | null;
+      todayCount: number;
+      dateSet: Set<string>;
+    }
+
+    const sessionStatsMap = new Map<string, UserSessionStats>();
     let totalPracticeSessions = 0;
     (sessions || []).forEach((s) => {
       totalPracticeSessions++;
       if (!s.user_id) return;
-      const current = sessionStatsMap.get(s.user_id) || { count: 0, lastPracticedAt: null };
+      const current = sessionStatsMap.get(s.user_id) || {
+        count: 0,
+        lastPracticedAt: null,
+        todayCount: 0,
+        dateSet: new Set<string>(),
+      };
       current.count += 1;
       if (!current.lastPracticedAt || new Date(s.created_at) > new Date(current.lastPracticedAt)) {
         current.lastPracticedAt = s.created_at;
       }
+      const sessionJSTDate = getJSTDateString(s.created_at);
+      current.dateSet.add(sessionJSTDate);
+      if (sessionJSTDate === todayJST) {
+        current.todayCount += 1;
+      }
       sessionStatsMap.set(s.user_id, current);
     });
+
+    function calculateUsageAndRisk(
+      plan: "free" | "base" | "pro",
+      practiceCount: number,
+      todayCount: number,
+      uniqueDaysCount: number
+    ) {
+      const active_days = Math.max(1, uniqueDaysCount);
+      const daily_average_practice =
+        practiceCount > 0
+          ? Math.round((practiceCount / active_days) * 10) / 10
+          : 0;
+      const projected_monthly_practices = Math.round(daily_average_practice * 30);
+      const projected_monthly_cost = Math.round(projected_monthly_practices * 0.322);
+
+      let breakeven_daily_limit = 0;
+      let cost_risk_status: "safe" | "warning" | "danger" | "free" = "free";
+
+      if (plan === "pro") {
+        breakeven_daily_limit = 147;
+        const ratio = daily_average_practice / breakeven_daily_limit;
+        if (ratio >= 0.8) {
+          cost_risk_status = "danger";
+        } else if (ratio >= 0.5) {
+          cost_risk_status = "warning";
+        } else {
+          cost_risk_status = "safe";
+        }
+      } else if (plan === "base") {
+        breakeven_daily_limit = 50;
+        const ratio = daily_average_practice / breakeven_daily_limit;
+        if (ratio >= 0.8) {
+          cost_risk_status = "danger";
+        } else if (ratio >= 0.5) {
+          cost_risk_status = "warning";
+        } else {
+          cost_risk_status = "safe";
+        }
+      } else {
+        breakeven_daily_limit = 0;
+        cost_risk_status = "free";
+      }
+
+      return {
+        today_practice_count: todayCount,
+        active_days,
+        daily_average_practice,
+        projected_monthly_practices,
+        projected_monthly_cost,
+        breakeven_daily_limit,
+        cost_risk_status,
+      };
+    }
 
     // Merge profiles and authUsers
     const userMap = new Map<string, CustomerSummary>();
@@ -165,16 +258,24 @@ export async function GET(req: NextRequest) {
       const s = sessionStatsMap.get(p.id);
       const planVal: "free" | "base" | "pro" =
         p.plan === "pro" || p.plan === "base" ? p.plan : "free";
+      const effectivePlan = isAdminEmail(p.email) ? "pro" : planVal;
+      const metrics = calculateUsageAndRisk(
+        effectivePlan,
+        s?.count ?? 0,
+        s?.todayCount ?? 0,
+        s?.dateSet.size ?? 0
+      );
 
       userMap.set(p.id, {
         id: p.id,
         email: p.email || "(メールアドレス未設定)",
-        plan: isAdminEmail(p.email) ? "pro" : planVal,
+        plan: effectivePlan,
         created_at: p.created_at || new Date().toISOString(),
         tickets_used: t?.tickets_used ?? 0,
         pro_trials_used: t?.pro_trials_used ?? 0,
         practice_count: s?.count ?? 0,
         last_practiced_at: s?.lastPracticedAt ?? null,
+        ...metrics,
       });
     });
 
@@ -184,15 +285,24 @@ export async function GET(req: NextRequest) {
         const t = ticketMap.get(u.id);
         const s = sessionStatsMap.get(u.id);
         const email = u.email || "(メールアドレス未設定)";
+        const effectivePlan = isAdminEmail(email) ? "pro" : "free";
+        const metrics = calculateUsageAndRisk(
+          effectivePlan,
+          s?.count ?? 0,
+          s?.todayCount ?? 0,
+          s?.dateSet.size ?? 0
+        );
+
         userMap.set(u.id, {
           id: u.id,
           email,
-          plan: isAdminEmail(email) ? "pro" : "free",
+          plan: effectivePlan,
           created_at: u.created_at || new Date().toISOString(),
           tickets_used: t?.tickets_used ?? 0,
           pro_trials_used: t?.pro_trials_used ?? 0,
           practice_count: s?.count ?? 0,
           last_practiced_at: s?.lastPracticedAt ?? null,
+          ...metrics,
         });
       }
     });
@@ -211,6 +321,25 @@ export async function GET(req: NextRequest) {
       (c) => c.plan === "pro" || c.plan === "base"
     ).length;
 
+    const activeUsers = customers.filter((c) => c.practice_count > 0);
+    const overallDailyAverage =
+      activeUsers.length > 0
+        ? Math.round(
+            (activeUsers.reduce((sum, c) => sum + c.daily_average_practice, 0) /
+              activeUsers.length) *
+              10
+          ) / 10
+        : 0;
+
+    const topUserDailyCount =
+      customers.length > 0
+        ? Math.max(...customers.map((c) => c.daily_average_practice), 0)
+        : 0;
+
+    const warningAccountCount = customers.filter(
+      (c) => c.cost_risk_status === "warning" || c.cost_risk_status === "danger"
+    ).length;
+
     const responseData: AdminCustomerResponse = {
       customers,
       kpi: {
@@ -218,6 +347,9 @@ export async function GET(req: NextRequest) {
         newCustomersThisWeek,
         totalPracticeSessions,
         paidOrProCount,
+        overallDailyAverage,
+        topUserDailyCount,
+        warningAccountCount,
       },
     };
 

@@ -114,7 +114,7 @@ export function getTicketStatus(emailOverride?: string | null): TicketStatus {
     };
   }
 
-  // If paid Base user (月500円 / 1日20回)
+  // If paid Base user (月500円 / 短文無制限)
   if (currentPlan === "base") {
     return {
       isVip: false,

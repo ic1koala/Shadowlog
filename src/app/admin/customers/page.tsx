@@ -17,13 +17,23 @@ import {
   Check,
   Copy,
   Sparkles,
+  TrendingUp,
+  Flame,
+  AlertTriangle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import { AdminCustomerResponse } from "@/app/api/admin/customers/route";
 
 type PlanFilter = "all" | "free" | "base" | "pro";
-type SortOption = "newest" | "oldest" | "practice_desc" | "last_active";
+type SortOption =
+  | "newest"
+  | "oldest"
+  | "practice_desc"
+  | "daily_desc"
+  | "risk_desc"
+  | "cost_desc"
+  | "last_active";
 
 export default function AdminCustomersPage() {
   const [loading, setLoading] = useState(true);
@@ -153,6 +163,16 @@ export default function AdminCustomersPage() {
       if (sortBy === "practice_desc") {
         return b.practice_count - a.practice_count;
       }
+      if (sortBy === "daily_desc") {
+        return b.daily_average_practice - a.daily_average_practice;
+      }
+      if (sortBy === "cost_desc") {
+        return b.projected_monthly_cost - a.projected_monthly_cost;
+      }
+      if (sortBy === "risk_desc") {
+        const riskWeight: Record<string, number> = { danger: 4, warning: 3, safe: 2, free: 1 };
+        return (riskWeight[b.cost_risk_status] || 0) - (riskWeight[a.cost_risk_status] || 0);
+      }
       if (sortBy === "last_active") {
         const timeA = a.last_practiced_at ? new Date(a.last_practiced_at).getTime() : 0;
         const timeB = b.last_practiced_at ? new Date(b.last_practiced_at).getTime() : 0;
@@ -183,20 +203,41 @@ export default function AdminCustomersPage() {
       "メールアドレス",
       "プラン",
       "登録日時",
+      "本日の利用数",
+      "1日平均練習数",
+      "アクティブ日数",
+      "月間想定練習数",
+      "月間想定原価(円)",
+      "損益分岐限界(回/日)",
+      "採算リスク",
+      "累計練習セッション数",
       "チケット消化数",
       "Pro味見枠消化数",
-      "累計練習セッション数",
       "最終練習日時",
     ];
+
+    const riskLabelMap: Record<string, string> = {
+      safe: "安全",
+      warning: "注意",
+      danger: "赤字警戒",
+      free: "無料体験",
+    };
 
     const rows = filteredCustomers.map((c) => [
       `"${c.id}"`,
       `"${c.email.replace(/"/g, '""')}"`,
       `"${c.plan}"`,
       `"${formatDate(c.created_at)}"`,
+      c.today_practice_count,
+      c.daily_average_practice,
+      c.active_days,
+      c.projected_monthly_practices,
+      c.projected_monthly_cost,
+      c.breakeven_daily_limit,
+      `"${riskLabelMap[c.cost_risk_status] || c.cost_risk_status}"`,
+      c.practice_count,
       c.tickets_used,
       c.pro_trials_used,
-      c.practice_count,
       `"${c.last_practiced_at ? formatDate(c.last_practiced_at) : "未練習"}"`,
     ]);
 
@@ -341,7 +382,7 @@ export default function AdminCustomersPage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-        {/* KPI Cards Section */}
+        {/* KPI Cards Section - Growth & Scale */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {/* Card 1: Total Users */}
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs flex flex-col justify-between">
@@ -412,6 +453,80 @@ export default function AdminCustomersPage() {
           </div>
         </div>
 
+        {/* Cost & Usage Monitoring KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+          {/* Card 5: Overall Daily Average */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between text-muted-foreground mb-2">
+              <span className="text-xs font-medium">平均利用頻度</span>
+              <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+                {data?.kpi.overallDailyAverage ?? 0}
+                <span className="text-sm font-normal text-muted-foreground ml-1">回 / 日</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">全アクティブユーザー平均</p>
+            </div>
+          </div>
+
+          {/* Card 6: Top User Daily Practice */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between text-muted-foreground mb-2">
+              <span className="text-xs font-medium">最高負荷ユーザー</span>
+              <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                <Flame className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+                {data?.kpi.topUserDailyCount ?? 0}
+                <span className="text-sm font-normal text-muted-foreground ml-1">回 / 日</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">最大利用者のペース</p>
+            </div>
+          </div>
+
+          {/* Card 7: Warning Account Count */}
+          <div
+            className={`p-4 sm:p-5 rounded-2xl border shadow-xs flex flex-col justify-between transition ${
+              (data?.kpi.warningAccountCount ?? 0) > 0
+                ? "bg-rose-500/5 border-rose-500/30"
+                : "bg-card border-border"
+            }`}
+          >
+            <div className="flex items-center justify-between text-muted-foreground mb-2">
+              <span className="text-xs font-medium">採算リスク警戒数</span>
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  (data?.kpi.warningAccountCount ?? 0) > 0
+                    ? "bg-rose-500/20 text-rose-600 dark:text-rose-400"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                <span
+                  className={
+                    (data?.kpi.warningAccountCount ?? 0) > 0
+                      ? "text-rose-600 dark:text-rose-400"
+                      : "text-foreground"
+                  }
+                >
+                  {data?.kpi.warningAccountCount ?? 0}
+                </span>
+                <span className="text-sm font-normal text-muted-foreground ml-1">件</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">損益分岐接近（Base&gt;25回, Pro&gt;73回）</p>
+            </div>
+          </div>
+        </div>
+
         {/* Filter and Search Bar */}
         <div className="p-4 rounded-2xl bg-card border border-border shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
           {/* Search Box */}
@@ -460,7 +575,10 @@ export default function AdminCustomersPage() {
             >
               <option value="newest">登録が新しい順</option>
               <option value="oldest">登録が古い順</option>
-              <option value="practice_desc">練習セッション数が多い順</option>
+              <option value="practice_desc">累計練習数が多い順</option>
+              <option value="daily_desc">1日平均利用が多い順</option>
+              <option value="risk_desc">採算リスクが高い順</option>
+              <option value="cost_desc">月間想定原価が高い順</option>
               <option value="last_active">最近練習した順</option>
             </select>
           </div>
@@ -506,11 +624,11 @@ export default function AdminCustomersPage() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    <th className="py-3 px-4 sm:px-6">メールアドレス</th>
+                    <th className="py-3 px-4 sm:px-6">顧客情報</th>
                     <th className="py-3 px-4">プラン</th>
-                    <th className="py-3 px-4">登録日時</th>
-                    <th className="py-3 px-4">チケット消化</th>
-                    <th className="py-3 px-4">累計練習数</th>
+                    <th className="py-3 px-4">利用回数 (本日 / 平均)</th>
+                    <th className="py-3 px-4">採算限界 & リスク診断</th>
+                    <th className="py-3 px-4">累計練習 / チケット</th>
                     <th className="py-3 px-4">最新練習日時</th>
                     <th className="py-3 px-4 text-right">アクション</th>
                   </tr>
@@ -519,6 +637,14 @@ export default function AdminCustomersPage() {
                   {filteredCustomers.map((customer) => {
                     const isCopied = copiedEmail === customer.email;
                     const isIdCopied = copiedId === customer.id;
+
+                    const loadPercent =
+                      customer.breakeven_daily_limit > 0
+                        ? Math.round(
+                            (customer.daily_average_practice / customer.breakeven_daily_limit) * 100
+                          )
+                        : 0;
+                    const marginPercent = Math.max(0, 100 - loadPercent);
 
                     return (
                       <tr
@@ -577,51 +703,101 @@ export default function AdminCustomersPage() {
                           )}
                         </td>
 
-                        {/* Registration Date */}
-                        <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">
-                          {formatDate(customer.created_at)}
+                        {/* Usage Counts: Today & Daily Average */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex flex-col text-xs space-y-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-muted-foreground">本日:</span>
+                              <span
+                                className={`font-bold px-1.5 py-0.5 rounded-md ${
+                                  customer.today_practice_count > 0
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                {customer.today_practice_count} 回
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              1日平均: <strong className="text-foreground">{customer.daily_average_practice}</strong> 回/日
+                              <span className="text-[10px] text-muted-foreground/70 ml-1">
+                                ({customer.active_days}日稼働)
+                              </span>
+                            </div>
+                          </div>
                         </td>
 
-                        {/* Tickets Used */}
+                        {/* Breakeven Limit & Risk Diagnosis */}
                         <td className="py-3.5 px-4">
-                          <div className="flex flex-col text-xs">
-                            <span className="font-medium text-foreground">
-                              {customer.tickets_used} 枚消化
-                            </span>
-                            {customer.pro_trials_used > 0 && (
-                              <span className="text-[11px] text-amber-500">
-                                Pro味見: {customer.pro_trials_used}回
+                          <div className="flex flex-col gap-1 text-xs">
+                            {customer.cost_risk_status === "danger" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 w-fit">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                                赤字警戒 ({loadPercent}%)
+                              </span>
+                            ) : customer.cost_risk_status === "warning" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 w-fit">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                注意 ({loadPercent}%)
+                              </span>
+                            ) : customer.cost_risk_status === "safe" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 w-fit">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                安全 (余裕率 {marginPercent}%)
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border w-fit">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                無料体験
                               </span>
                             )}
+
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                              <span>
+                                想定原価: <strong className="text-foreground">¥{customer.projected_monthly_cost.toLocaleString()}</strong>/月
+                              </span>
+                              {customer.breakeven_daily_limit > 0 ? (
+                                <span className="text-[10px] text-muted-foreground/80">
+                                  (限界: 1日{customer.breakeven_daily_limit}回)
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground/80">(体験枠消化)</span>
+                              )}
+                            </div>
                           </div>
                         </td>
 
-                        {/* Practice Count */}
+                        {/* Cumulative Practice & Tickets */}
                         <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                                customer.practice_count > 10
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                  : customer.practice_count > 0
-                                  ? "bg-primary/10 text-primary"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
-                            >
-                              {customer.practice_count} 回
+                          <div className="flex flex-col text-xs">
+                            <span className="font-semibold text-foreground">
+                              累計 {customer.practice_count} 回
+                            </span>
+                            <span className="text-[11px] text-muted-foreground mt-0.5">
+                              {customer.tickets_used} 枚消化
+                              {customer.pro_trials_used > 0 && (
+                                <span className="text-amber-600 dark:text-amber-400 ml-1">
+                                  (Pro: {customer.pro_trials_used}回)
+                                </span>
+                              )}
                             </span>
                           </div>
                         </td>
 
-                        {/* Last Practiced At */}
+                        {/* Last Practiced / Registration */}
                         <td className="py-3.5 px-4 text-xs whitespace-nowrap">
-                          {customer.last_practiced_at ? (
-                            <span className="text-foreground">
-                              {formatDate(customer.last_practiced_at)}
+                          <div className="flex flex-col">
+                            {customer.last_practiced_at ? (
+                              <span className="text-foreground font-medium">
+                                {formatDate(customer.last_practiced_at)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground/60 italic">未練習</span>
+                            )}
+                            <span className="text-[10px] text-muted-foreground mt-0.5">
+                              登録: {formatDate(customer.created_at)}
                             </span>
-                          ) : (
-                            <span className="text-muted-foreground/60 italic">未練習</span>
-                          )}
+                          </div>
                         </td>
 
                         {/* Actions */}
