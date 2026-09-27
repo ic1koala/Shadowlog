@@ -14,13 +14,25 @@ import {
   AlertCircle,
   Loader2,
   ChevronDown,
+  ChevronUp,
+  Clock,
+  Trash2,
+  Paperclip,
+  Mail,
+  Hash,
 } from "lucide-react";
 import { collectClientEnvironmentInfo } from "@/lib/feedback/env-collector";
-
-type CategoryType = "bug" | "audio_mic" | "feature_request" | "question" | "other";
+import {
+  FeedbackCategoryType,
+  FeedbackHistoryItem,
+  getFeedbackHistory,
+  addFeedbackHistoryItem,
+  deleteFeedbackHistoryItem,
+  clearFeedbackHistory,
+} from "@/lib/feedback/feedback-history-store";
 
 interface CategoryOption {
-  key: CategoryType;
+  key: FeedbackCategoryType;
   label: string;
   icon: typeof Bug;
   desc: string;
@@ -36,7 +48,7 @@ const CATEGORIES: CategoryOption[] = [
 
 export function FeedbackForm() {
   const [isOpen, setIsOpen] = useState(false);
-  const [category, setCategory] = useState<CategoryType>("bug");
+  const [category, setCategory] = useState<FeedbackCategoryType>("bug");
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [content, setContent] = useState("");
@@ -46,23 +58,46 @@ export function FeedbackForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-fill logged in user email
+  // 送信履歴ステート
+  const [history, setHistory] = useState<FeedbackHistoryItem[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
+
+  // 履歴の初期ロードとイベント同期
+  useEffect(() => {
+    const loadHistory = () => {
+      setHistory(getFeedbackHistory());
+    };
+    loadHistory();
+
+    const handleUpdate = () => {
+      loadHistory();
+    };
+    window.addEventListener("shadowlog:feedback-history-update", handleUpdate);
+    return () => {
+      window.removeEventListener("shadowlog:feedback-history-update", handleUpdate);
+    };
+  }, []);
+
+  // ログインユーザーのメール自動補完
   useEffect(() => {
     if (typeof window !== "undefined") {
-      import("@/lib/storage/sync-service").then(async ({ getAuthenticatedUser }) => {
-        const user = await getAuthenticatedUser();
-        if (user) {
-          if (user.email) setEmail(user.email);
-          if (user.id) setUserId(user.id);
-        } else {
-          // Check ticket store guest email
-          try {
-            const { getCurrentUserEmail } = await import("@/lib/storage/ticket-store");
-            const guestEmail = getCurrentUserEmail();
-            if (guestEmail) setEmail(guestEmail);
-          } catch {}
-        }
-      }).catch(() => {});
+      import("@/lib/storage/sync-service")
+        .then(async ({ getAuthenticatedUser }) => {
+          const user = await getAuthenticatedUser();
+          if (user) {
+            if (user.email) setEmail(user.email);
+            if (user.id) setUserId(user.id);
+          } else {
+            // Check ticket store guest email
+            try {
+              const { getCurrentUserEmail } = await import("@/lib/storage/ticket-store");
+              const guestEmail = getCurrentUserEmail();
+              if (guestEmail) setEmail(guestEmail);
+            } catch {}
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -74,7 +109,6 @@ export function FeedbackForm() {
   };
 
   const processImageFile = (file: File) => {
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert("画像サイズは5MB以下にしてください。");
       return;
@@ -145,6 +179,24 @@ export function FeedbackForm() {
         throw new Error(data.error || "送信に失敗しました。");
       }
 
+      // カテゴリ表示名を取得
+      const matchedCategory = CATEGORIES.find((c) => c.key === category);
+      const catLabel = matchedCategory ? matchedCategory.label : category;
+
+      // 送信履歴を端末（LocalStorage）に保存
+      const updatedHistory = addFeedbackHistoryItem({
+        category,
+        categoryLabel: catLabel,
+        email: email.trim(),
+        content: content.trim(),
+        hasScreenshot: !!screenshotBase64,
+        ticketId: data.ticketId,
+      });
+      setHistory(updatedHistory);
+      if (updatedHistory.length > 0) {
+        setExpandedId(updatedHistory[0].id); // 最新の履歴を自動展開
+      }
+
       setIsSuccess(true);
       setContent("");
       setScreenshotBase64(null);
@@ -160,10 +212,166 @@ export function FeedbackForm() {
     }
   };
 
-  // Collapsed state — just a button
+  const handleDeleteHistoryItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("このお問い合わせ履歴を削除しますか？")) {
+      const updated = deleteFeedbackHistoryItem(id);
+      setHistory(updated);
+      if (expandedId === id) setExpandedId(null);
+    }
+  };
+
+  const handleClearAllHistory = () => {
+    if (window.confirm("送信履歴をすべて削除しますか？")) {
+      clearFeedbackHistory();
+      setHistory([]);
+      setExpandedId(null);
+    }
+  };
+
+  const toggleExpandHistory = (id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  // ── 送信履歴アコーディオンカード（共通コンポーネント） ──
+  const renderHistorySection = () => {
+    if (history.length === 0) return null;
+
+    return (
+      <div className="mt-4 pt-4 border-t border-border/80 space-y-3">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setIsHistoryOpen((prev) => !prev)}
+            className="flex items-center gap-2 text-xs font-bold text-foreground hover:text-primary transition"
+          >
+            <Clock className="w-3.5 h-3.5 text-primary" />
+            <span>送信したお問い合わせ履歴 ({history.length}件)</span>
+            {isHistoryOpen ? (
+              <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            )}
+          </button>
+
+          {isHistoryOpen && history.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAllHistory}
+              className="text-[11px] text-muted-foreground hover:text-destructive transition flex items-center gap-1"
+              title="すべての履歴を消去"
+            >
+              <Trash2 className="w-3 h-3" />
+              <span>全消去</span>
+            </button>
+          )}
+        </div>
+
+        {isHistoryOpen && (
+          <div className="space-y-2.5">
+            {history.map((item) => {
+              const isExpanded = expandedId === item.id;
+              const dateStr = new Date(item.createdAt).toLocaleString("ja-JP", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+
+              return (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-border bg-card/80 shadow-2xs overflow-hidden transition"
+                >
+                  {/* アコーディオン見出しヘッダー */}
+                  <div
+                    onClick={() => toggleExpandHistory(item.id)}
+                    className="p-3 sm:p-3.5 cursor-pointer flex items-center justify-between gap-3 hover:bg-muted/40 transition select-none"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-bold bg-primary/10 text-primary shrink-0">
+                        {item.categoryLabel}
+                      </span>
+                      {item.hasScreenshot && (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+                          <Paperclip className="w-2.5 h-2.5" />
+                          画像あり
+                        </span>
+                      )}
+                      <span className="text-xs text-foreground font-medium truncate max-w-[200px] sm:max-w-md">
+                        {item.content.replace(/\n/g, " ")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">
+                        {dateStr}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteHistoryItem(item.id, e)}
+                        className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
+                        title="この履歴を削除"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 展開時：詳細内容 */}
+                  {isExpanded && (
+                    <div className="px-3.5 pb-3.5 pt-1 border-t border-border/50 bg-muted/20 text-xs space-y-2.5 animate-in fade-in duration-150">
+                      <div className="flex items-center gap-4 text-muted-foreground text-[11px] flex-wrap pt-1">
+                        <span className="flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-primary/70" />
+                          返信先: <strong className="text-foreground font-medium">{item.email}</strong>
+                        </span>
+                        {item.ticketId && (
+                          <span className="flex items-center gap-1 font-mono">
+                            <Hash className="w-3 h-3 text-primary/70" />
+                            番号: {item.ticketId.slice(0, 8)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="bg-background rounded-lg p-3 border border-border/80 text-foreground leading-relaxed whitespace-pre-wrap word-break-break-word">
+                        {item.content}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-muted-foreground">
+                          ※ この内容は端末内に安全に記録されています
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteHistoryItem(item.id, e)}
+                          className="inline-flex items-center gap-1 text-[11px] text-destructive hover:underline font-medium"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          この履歴を削除
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── 折りたたみ時（Collapsed state） ──
   if (!isOpen) {
     return (
-      <div className="pt-2">
+      <div className="pt-2 space-y-3">
         <button
           type="button"
           onClick={() => setIsOpen(true)}
@@ -175,11 +383,14 @@ export function FeedbackForm() {
           <span>不具合報告・お問い合わせ</span>
           <ChevronDown className="w-4 h-4 text-muted-foreground ml-auto" />
         </button>
+
+        {/* 折りたたみ時でも送信履歴があればコンパクトに表示 */}
+        {history.length > 0 && renderHistorySection()}
       </div>
     );
   }
 
-  // Expanded state — full form
+  // ── 展開時（Expanded state） ──
   return (
     <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="flex items-center justify-between">
@@ -191,7 +402,11 @@ export function FeedbackForm() {
         </div>
         <button
           type="button"
-          onClick={() => { setIsOpen(false); setIsSuccess(false); setErrorMessage(null); }}
+          onClick={() => {
+            setIsOpen(false);
+            setIsSuccess(false);
+            setErrorMessage(null);
+          }}
           className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition"
           title="閉じる"
         >
@@ -210,7 +425,9 @@ export function FeedbackForm() {
           </div>
           <h3 className="font-bold text-base text-foreground">送信が完了いたしました</h3>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-            貴重なご報告・ご意見をありがとうございます。受付確認メールを送信いたしました。内容を確認のうえ、必要に応じて順次ご連絡いたします。
+            貴重なご報告・ご意見をありがとうございます。管理者へ正常に送信されました。
+            送信いただいた内容は下記の「送信履歴」にていつでもご確認いただけます。
+            内容を確認のうえ、ご登録のメールアドレスへ順次手動にてご連絡いたします。
           </p>
           <div className="pt-2 flex items-center justify-center gap-3">
             <button
@@ -222,7 +439,10 @@ export function FeedbackForm() {
             </button>
             <button
               type="button"
-              onClick={() => { setIsOpen(false); setIsSuccess(false); }}
+              onClick={() => {
+                setIsOpen(false);
+                setIsSuccess(false);
+              }}
               className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground transition"
             >
               閉じる
@@ -381,6 +601,9 @@ export function FeedbackForm() {
           </div>
         </form>
       )}
+
+      {/* 送信履歴アコーディオンセクション */}
+      {renderHistorySection()}
     </div>
   );
 }
