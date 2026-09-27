@@ -22,9 +22,9 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Top Navbar — hidden on mobile, visible on sm+ */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-lg glass-header shadow-2xs hidden sm:block">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
+      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-lg glass-header shadow-2xs hidden sm:block isolate">
+        <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between [transform:translateZ(0)]">
+          <Link href="/" className="flex items-center gap-2.5 group relative z-20">
             <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm group-hover:scale-105 transition">
               <Sparkles className="w-5 h-5" />
             </div>
@@ -33,7 +33,7 @@ export default function DashboardLayout({
             </span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 relative z-20">
             <nav className="flex items-center gap-1 sm:gap-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -62,9 +62,9 @@ export default function DashboardLayout({
       </header>
 
       {/* Mobile Top Bar — visible only on mobile */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-lg glass-header shadow-2xs sm:hidden safe-top">
-        <div className="px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
+      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-lg glass-header shadow-2xs sm:hidden safe-top isolate">
+        <div className="relative z-20 px-4 h-12 flex items-center justify-between [transform:translateZ(0)]">
+          <Link href="/" className="flex items-center gap-2 group relative z-20">
             <div className="w-7 h-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
               <Sparkles className="w-4 h-4" />
             </div>
@@ -72,7 +72,9 @@ export default function DashboardLayout({
               Shadow<span className="text-primary">Log</span>
             </span>
           </Link>
-          <TicketBadge />
+          <div className="relative z-20">
+            <TicketBadge />
+          </div>
         </div>
       </header>
 
