@@ -5,17 +5,24 @@ import { createClient } from "@supabase/supabase-js";
 // Lazy initialization helpers
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
-  return apiKey ? new Resend(apiKey) : null;
+  if (!apiKey) {
+    console.error("[Feedback] RESEND_API_KEY is not configured in environment variables. Email sending will be skipped.");
+    return null;
+  }
+  return new Resend(apiKey);
 }
 
 function getSupabaseAdmin() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "https://placeholder-project.supabase.co";
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "placeholder-key";
   return createClient(supabaseUrl, supabaseServiceKey);
 }
@@ -83,16 +90,17 @@ export async function POST(req: NextRequest) {
               .getPublicUrl(fileName);
             screenshotUrl = publicUrlData.publicUrl;
           } else {
-            console.error("Supabase Storage upload error:", uploadError);
+            console.error("[Feedback] Supabase Storage upload error:", uploadError);
           }
         }
       } catch (err) {
-        console.error("Screenshot process error:", err);
+        console.error("[Feedback] Screenshot process error:", err);
       }
     }
 
     // 2. Persist feedback ticket into Supabase DB
     let ticketId: string | null = null;
+    let dbSaved = false;
     try {
       // Validate UUID format for userId, or null
       const isValidUUID =
@@ -115,20 +123,23 @@ export async function POST(req: NextRequest) {
         .single();
 
       if (dbError) {
-        console.error("Supabase DB insert error:", dbError);
+        console.error("[Feedback] Supabase DB insert error:", dbError);
       } else if (insertedData) {
         ticketId = insertedData.id;
+        dbSaved = true;
       }
     } catch (err) {
-      console.error("Database persistence error:", err);
+      console.error("[Feedback] Database persistence error:", err);
     }
 
     // 3. Send email via Resend
     let adminEmailSent = false;
     let userEmailSent = false;
+    let adminError: string | undefined;
+    let userError: string | undefined;
 
     if (resend) {
-      // A. Admin notification email
+      // A. Admin notification email — MUST succeed (recipient is the Resend account owner)
       try {
         const envDetails = environmentInfo
           ? Object.entries(environmentInfo)
@@ -200,7 +211,7 @@ export async function POST(req: NextRequest) {
             ]
           : undefined;
 
-        await resend.emails.send({
+        const { data: adminData, error: adminResendError } = await resend.emails.send({
           from: FROM_EMAIL,
           to: ADMIN_EMAIL,
           replyTo: email,
@@ -208,12 +219,23 @@ export async function POST(req: NextRequest) {
           html: adminHtml,
           attachments,
         });
-        adminEmailSent = true;
+
+        if (adminResendError) {
+          adminError = adminResendError.message || JSON.stringify(adminResendError);
+          console.error("[Feedback] Resend admin email error:", adminResendError);
+        } else {
+          adminEmailSent = true;
+          console.log("[Feedback] Admin email sent successfully. ID:", adminData?.id);
+        }
       } catch (err) {
-        console.error("Resend admin email notification error:", err);
+        adminError = err instanceof Error ? err.message : String(err);
+        console.error("[Feedback] Resend admin email exception:", err);
       }
 
-      // B. User confirmation auto-reply email (wrapped safely for sandbox limitations)
+      // B. User confirmation auto-reply email
+      // NOTE: With Resend's test domain (onboarding@resend.dev), emails can only be sent
+      // to the account owner's email. Sends to other addresses will be rejected with 403.
+      // This is safely handled so it never blocks the admin notification above.
       try {
         const userHtml = `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
@@ -250,25 +272,37 @@ export async function POST(req: NextRequest) {
           </div>
         `;
 
-        await resend.emails.send({
+        const { data: userData, error: userResendError } = await resend.emails.send({
           from: FROM_EMAIL,
           to: email,
           subject: `【ShadowLog】お問い合わせを受け付けました`,
           html: userHtml,
         });
-        userEmailSent = true;
+
+        if (userResendError) {
+          userError = userResendError.message || JSON.stringify(userResendError);
+          console.warn("[Feedback] User auto-reply blocked (expected with sandbox domain):", userResendError);
+        } else {
+          userEmailSent = true;
+          console.log("[Feedback] User auto-reply sent successfully. ID:", userData?.id);
+        }
       } catch (err) {
-        // In free sandbox Resend environments, emails to unverified recipients may be blocked
-        console.warn("User auto-reply email was skipped or blocked by sandbox:", err);
+        userError = err instanceof Error ? err.message : String(err);
+        console.warn("[Feedback] User auto-reply exception (non-critical):", err);
       }
+    } else {
+      console.warn("[Feedback] Resend client is null — RESEND_API_KEY not set. Skipping all emails.");
     }
 
     return NextResponse.json({
       success: true,
       ticketId,
+      dbSaved,
       screenshotUrl,
       adminEmailSent,
       userEmailSent,
+      adminError,
+      userError,
       message: "お問い合わせ・ご報告を受け付けました。",
     });
   } catch (error: unknown) {
