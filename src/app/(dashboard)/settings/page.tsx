@@ -176,9 +176,9 @@ export default function SettingsPage() {
         </div>
 
         <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-          10問のシャドーイングテストで、あなたの英語力を自動測定。
-          初級→中級→上級の例文に段階的に挑戦し、最適な難易度を判定します。
-          所要時間は約5〜10分です。
+          アダプティブ方式で最大5問のシャドーイングテストを実施。
+          正確性と話速追従度の総合スコアからA1〜C1の5段階であなたの実力を判定します。
+          所要時間は約2〜3分です。
         </p>
 
         {/* Previous result */}
@@ -198,22 +198,43 @@ export default function SettingsPage() {
               </p>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              <span className={`px-3 py-1 rounded-lg border text-sm font-bold ${
-                assessmentResult.recommendedLevel === "beginner"
-                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600"
-                  : assessmentResult.recommendedLevel === "intermediate"
-                  ? "bg-blue-500/15 border-blue-500/30 text-blue-600"
-                  : "bg-purple-500/15 border-purple-500/30 text-purple-600"
-              }`}>
-                {assessmentResult.recommendedLevel === "beginner" ? "初級" :
-                 assessmentResult.recommendedLevel === "intermediate" ? "中級" : "上級"}
-              </span>
+              {/* New: use levelInfo from result, with fallback for legacy data */}
+              {assessmentResult.levelInfo ? (
+                <span className={`px-3 py-1 rounded-lg border text-sm font-bold ${assessmentResult.levelInfo.bg} ${assessmentResult.levelInfo.color}`}>
+                  {assessmentResult.levelInfo.label}
+                </span>
+              ) : (
+                // Legacy fallback for old 3-level results
+                <span className={`px-3 py-1 rounded-lg border text-sm font-bold ${
+                  (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner"
+                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600"
+                    : (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate"
+                    ? "bg-blue-500/15 border-blue-500/30 text-blue-600"
+                    : "bg-purple-500/15 border-purple-500/30 text-purple-600"
+                }`}>
+                  {(assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner" ? "初級" :
+                   (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate" ? "中級" : "上級"}
+                </span>
+              )}
               <div className="flex items-center gap-2 text-[11px] sm:text-xs text-muted-foreground">
-                <span>初級 {assessmentResult.beginnerAvg}%</span>
-                <span className="text-border">|</span>
-                <span>中級 {assessmentResult.intermediateAvg}%</span>
-                <span className="text-border">|</span>
-                <span>上級 {assessmentResult.advancedAvg}%</span>
+                {assessmentResult.overallComposite !== undefined ? (
+                  <>
+                    <span>総合 {assessmentResult.overallComposite}%</span>
+                    <span className="text-border">|</span>
+                    <span>正確性 {assessmentResult.overallAccuracy}%</span>
+                    <span className="text-border">|</span>
+                    <span>話速 {assessmentResult.overallWPMFollowRate}%</span>
+                  </>
+                ) : (
+                  // Legacy fallback
+                  <>
+                    <span>初級 {(assessmentResult as unknown as Record<string, unknown>).beginnerAvg as number}%</span>
+                    <span className="text-border">|</span>
+                    <span>中級 {(assessmentResult as unknown as Record<string, unknown>).intermediateAvg as number}%</span>
+                    <span className="text-border">|</span>
+                    <span>上級 {(assessmentResult as unknown as Record<string, unknown>).advancedAvg as number}%</span>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -1,101 +1,208 @@
 import { describe, it, expect } from "vitest";
 import {
+  getInitialQuestion,
+  getNextQuestion,
+  calculateWPMFollowRate,
+  calculateCompositeScore,
   calculateAssessmentResult,
+  assessmentLevelToDifficulty,
+  ASSESSMENT_LEVELS,
   AssessmentAnswer,
-  ASSESSMENT_PLAN,
 } from "@/lib/assessment/assessment-engine";
 
-describe("Assessment Engine", () => {
-  describe("ASSESSMENT_PLAN", () => {
-    it("has exactly 10 questions", () => {
-      expect(ASSESSMENT_PLAN).toHaveLength(10);
+describe("Adaptive Assessment Engine", () => {
+  describe("getInitialQuestion", () => {
+    it("starts at B1 (intermediate)", () => {
+      const q = getInitialQuestion();
+      expect(q.questionNumber).toBe(1);
+      expect(q.assessmentLevel).toBe("B1");
+      expect(q.difficultyLevel).toBe("intermediate");
+    });
+  });
+
+  describe("getNextQuestion (Adaptive routing)", () => {
+    function makeAnswer(
+      qNum: number,
+      level: "A1" | "A2" | "B1" | "B2" | "C1",
+      compositeScore: number
+    ): AssessmentAnswer {
+      return {
+        questionNumber: qNum,
+        assessmentLevel: level,
+        accuracyScore: compositeScore,
+        wpmFollowRate: compositeScore,
+        compositeScore,
+        userWPM: 100,
+        durationSeconds: 5,
+        wordCount: 10,
+      };
+    }
+
+    it("moves up one level when score >= 75%", () => {
+      const answers = [makeAnswer(1, "B1", 80)];
+      const nextQ = getNextQuestion(answers);
+      expect(nextQ).not.toBeNull();
+      expect(nextQ?.questionNumber).toBe(2);
+      expect(nextQ?.assessmentLevel).toBe("B2");
+      expect(nextQ?.difficultyLevel).toBe("intermediate");
     });
 
-    it("has 3 beginner, 4 intermediate, 3 advanced questions", () => {
-      const beginner = ASSESSMENT_PLAN.filter((q) => q.level === "beginner");
-      const intermediate = ASSESSMENT_PLAN.filter((q) => q.level === "intermediate");
-      const advanced = ASSESSMENT_PLAN.filter((q) => q.level === "advanced");
-      expect(beginner).toHaveLength(3);
-      expect(intermediate).toHaveLength(4);
-      expect(advanced).toHaveLength(3);
+    it("moves down one level when score < 50%", () => {
+      const answers = [makeAnswer(1, "B1", 40)];
+      const nextQ = getNextQuestion(answers);
+      expect(nextQ).not.toBeNull();
+      expect(nextQ?.questionNumber).toBe(2);
+      expect(nextQ?.assessmentLevel).toBe("A2");
+      expect(nextQ?.difficultyLevel).toBe("beginner");
     });
 
-    it("questions are numbered 1-10 in order", () => {
-      ASSESSMENT_PLAN.forEach((q, i) => {
-        expect(q.questionNumber).toBe(i + 1);
-      });
+    it("stays at current level when score is between 50% and 74%", () => {
+      const answers = [makeAnswer(1, "B1", 65)];
+      const nextQ = getNextQuestion(answers);
+      expect(nextQ).not.toBeNull();
+      expect(nextQ?.questionNumber).toBe(2);
+      expect(nextQ?.assessmentLevel).toBe("B1");
+    });
+
+    it("caps at C1 and does not exceed it", () => {
+      const answers = [
+        makeAnswer(1, "B1", 85),
+        makeAnswer(2, "B2", 90),
+      ];
+      const nextQ = getNextQuestion(answers);
+      expect(nextQ?.assessmentLevel).toBe("C1");
+      expect(nextQ?.difficultyLevel).toBe("advanced");
+
+      const answersAtC1 = [...answers, makeAnswer(3, "C1", 95)];
+      const q4 = getNextQuestion(answersAtC1);
+      // Since C1 + 95% stays at C1, and previous was B2 (not consecutive C1 yet), next is C1
+      expect(q4?.assessmentLevel).toBe("C1");
+    });
+
+    it("floors at A1 and does not go below it", () => {
+      const answers = [
+        makeAnswer(1, "B1", 30),
+        makeAnswer(2, "A2", 30),
+      ];
+      const nextQ = getNextQuestion(answers);
+      expect(nextQ?.assessmentLevel).toBe("A1");
+      expect(nextQ?.difficultyLevel).toBe("beginner");
+    });
+
+    it("stops early after 3 questions if level stabilizes for 2 consecutive questions", () => {
+      // Q1: B1 (60% -> stays B1)
+      // Q2: B1 (60% -> stays B1)
+      // Q3: B1 (60% -> stays B1) -> stabilized!
+      const answers = [
+        makeAnswer(1, "B1", 60),
+        makeAnswer(2, "B1", 60),
+        makeAnswer(3, "B1", 60),
+      ];
+      const nextQ = getNextQuestion(answers);
+      expect(nextQ).toBeNull(); // Test complete
+    });
+
+    it("stops at hard cap of 5 questions", () => {
+      // Alternating scores so it doesn't stabilize early
+      const answers = [
+        makeAnswer(1, "B1", 80), // -> B2
+        makeAnswer(2, "B2", 40), // -> B1
+        makeAnswer(3, "B1", 80), // -> B2
+        makeAnswer(4, "B2", 40), // -> B1
+        makeAnswer(5, "B1", 80), // -> 5 questions reached
+      ];
+      const nextQ = getNextQuestion(answers);
+      expect(nextQ).toBeNull(); // Complete at max 5
+    });
+  });
+
+  describe("calculateWPMFollowRate", () => {
+    it("calculates correct percentage against target WPM", () => {
+      // B1 target is 120 WPM
+      expect(calculateWPMFollowRate(60, "B1")).toBe(50);
+      expect(calculateWPMFollowRate(120, "B1")).toBe(100);
+    });
+
+    it("caps at 100% even if user speaks faster", () => {
+      // A1 target is 80 WPM, user at 120 WPM
+      expect(calculateWPMFollowRate(120, "A1")).toBe(100);
+    });
+  });
+
+  describe("calculateCompositeScore", () => {
+    it("averages accuracy and WPM follow rate equally", () => {
+      // accuracy 80, wpmFollowRate 60 -> average 70
+      expect(calculateCompositeScore(80, 60)).toBe(70);
+      expect(calculateCompositeScore(95, 85)).toBe(90);
+    });
+  });
+
+  describe("assessmentLevelToDifficulty", () => {
+    it("maps A1 and A2 to beginner", () => {
+      expect(assessmentLevelToDifficulty("A1")).toBe("beginner");
+      expect(assessmentLevelToDifficulty("A2")).toBe("beginner");
+    });
+
+    it("maps B1 and B2 to intermediate", () => {
+      expect(assessmentLevelToDifficulty("B1")).toBe("intermediate");
+      expect(assessmentLevelToDifficulty("B2")).toBe("intermediate");
+    });
+
+    it("maps C1 to advanced", () => {
+      expect(assessmentLevelToDifficulty("C1")).toBe("advanced");
     });
   });
 
   describe("calculateAssessmentResult", () => {
-    function makeAnswers(scores: number[]): AssessmentAnswer[] {
-      return scores.map((score, i) => ({
-        questionNumber: i + 1,
-        level: ASSESSMENT_PLAN[i]!.level,
-        accuracyScore: score,
-        matchedWordCount: Math.round((score / 100) * 10),
-        wordCount: 10,
-      }));
-    }
+    it("returns correct result for stabilized intermediate user", () => {
+      const answers: AssessmentAnswer[] = [
+        {
+          questionNumber: 1,
+          assessmentLevel: "B1",
+          accuracyScore: 80,
+          wpmFollowRate: 70,
+          compositeScore: 75,
+          userWPM: 90,
+          durationSeconds: 6,
+          wordCount: 12,
+        },
+        {
+          questionNumber: 2,
+          assessmentLevel: "B2",
+          accuracyScore: 60,
+          wpmFollowRate: 60,
+          compositeScore: 60,
+          userWPM: 100,
+          durationSeconds: 7,
+          wordCount: 14,
+        },
+        {
+          questionNumber: 3,
+          assessmentLevel: "B2",
+          accuracyScore: 65,
+          wpmFollowRate: 65,
+          compositeScore: 65,
+          userWPM: 105,
+          durationSeconds: 7,
+          wordCount: 14,
+        },
+      ];
 
-    it("recommends beginner when beginner accuracy is low", () => {
-      // All scores low
-      const answers = makeAnswers([30, 40, 50, 20, 30, 25, 35, 10, 15, 20]);
       const result = calculateAssessmentResult(answers);
-      expect(result.recommendedLevel).toBe("beginner");
-      expect(result.beginnerAvg).toBe(40); // (30+40+50)/3
+      expect(result.recommendedLevel).toBe("B2");
+      expect(result.levelInfo.label).toBe("中上級 (B2)");
+      expect(result.levelInfo.difficultyLevel).toBe("intermediate");
+      expect(result.overallAccuracy).toBe(68); // (80+60+65)/3 = 68.33 -> 68
+      expect(result.overallWPMFollowRate).toBe(65); // (70+60+65)/3 = 65
+      expect(result.overallComposite).toBe(67); // (75+60+65)/3 = 66.67 -> 67
+      expect(result.answers).toHaveLength(3);
     });
 
-    it("recommends beginner when intermediate accuracy is low", () => {
-      // Good beginner, bad intermediate
-      const answers = makeAnswers([80, 90, 70, 30, 40, 35, 45, 20, 15, 25]);
-      const result = calculateAssessmentResult(answers);
-      expect(result.recommendedLevel).toBe("beginner");
-      expect(result.beginnerAvg).toBe(80);
-      expect(result.intermediateAvg).toBe(38); // (30+40+35+45)/4
-    });
-
-    it("recommends intermediate when intermediate is ok but advanced is low", () => {
-      // Good beginner and intermediate, bad advanced
-      const answers = makeAnswers([90, 85, 80, 70, 65, 75, 60, 30, 25, 40]);
-      const result = calculateAssessmentResult(answers);
-      expect(result.recommendedLevel).toBe("intermediate");
-    });
-
-    it("recommends advanced when all levels are high", () => {
-      const answers = makeAnswers([95, 90, 85, 80, 75, 85, 70, 65, 55, 60]);
-      const result = calculateAssessmentResult(answers);
-      expect(result.recommendedLevel).toBe("advanced");
-      expect(result.advancedAvg).toBe(60); // (65+55+60)/3
-    });
-
-    it("calculates correct overall average", () => {
-      const answers = makeAnswers([100, 100, 100, 100, 100, 100, 100, 100, 100, 100]);
-      const result = calculateAssessmentResult(answers);
-      expect(result.overallAvg).toBe(100);
-      expect(result.recommendedLevel).toBe("advanced");
-    });
-
-    it("handles perfect beginner with borderline intermediate", () => {
-      const answers = makeAnswers([100, 95, 90, 55, 56, 57, 55, 30, 20, 40]);
-      const result = calculateAssessmentResult(answers);
-      expect(result.recommendedLevel).toBe("intermediate");
-      expect(result.intermediateAvg).toBe(56); // (55+56+57+55)/4 = 55.75 → 56
-    });
-
-    it("returns all tier averages and answers array", () => {
-      const answers = makeAnswers([70, 80, 90, 60, 70, 50, 55, 40, 30, 35]);
-      const result = calculateAssessmentResult(answers);
-      expect(result.beginnerAvg).toBe(80);
-      expect(result.intermediateAvg).toBe(59);
-      expect(result.advancedAvg).toBe(35);
-      expect(result.answers).toHaveLength(10);
-    });
-
-    it("handles empty answers gracefully", () => {
+    it("handles empty answers gracefully with B1 fallback", () => {
       const result = calculateAssessmentResult([]);
-      expect(result.recommendedLevel).toBe("beginner");
-      expect(result.overallAvg).toBe(0);
+      expect(result.recommendedLevel).toBe("B1");
+      expect(result.overallComposite).toBe(0);
+      expect(result.answers).toHaveLength(0);
     });
   });
 });

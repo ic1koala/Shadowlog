@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Users,
   UserPlus,
@@ -17,21 +16,16 @@ import {
   Mail,
   Check,
   Copy,
-  Calendar,
-  Ticket,
-  ChevronDown,
   Sparkles,
-  ExternalLink,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
-import { CustomerSummary, AdminCustomerResponse } from "@/app/api/admin/customers/route";
+import { AdminCustomerResponse } from "@/app/api/admin/customers/route";
 
 type PlanFilter = "all" | "free" | "base" | "pro";
 type SortOption = "newest" | "oldest" | "practice_desc" | "last_active";
 
 export default function AdminCustomersPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [authChecking, setAuthChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);

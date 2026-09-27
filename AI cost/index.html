@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShadowLog AIコスト・収益試算シミュレーター</title>
+  <title>ShadowLog 総合収支試算シミュレーター（GMO固定費連動版）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     input[type=range] {
@@ -24,10 +24,10 @@
       <div class="flex items-center gap-2">
         <span class="font-bold text-slate-700">ShadowLog 管理コンソール</span>
         <span>/</span>
-        <span class="text-blue-600 font-semibold">収益試算シミュレーター</span>
+        <span class="text-blue-600 font-semibold">総合収支・損益シミュレーター</span>
       </div>
       <div class="flex items-center gap-3">
-        <a href="../public/management.html" class="hover:text-blue-600 underline font-medium">
+        <a href="javascript:void(0)" onclick="openManagement()" class="hover:text-blue-600 underline font-medium cursor-pointer">
           📋 推進マネジメントダッシュボードへ
         </a>
         <button onclick="window.print()" class="px-2.5 py-1 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition shadow-xs">
@@ -40,22 +40,25 @@
     <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div class="flex items-center gap-2 mb-2">
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
             <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
               実測データ連動型シミュレーター
             </span>
             <span class="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
               アプリ仕様改善（コスト抑制）反映済
             </span>
+            <span class="inline-block px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-bold">
+              🏢 GMOバーチャルオフィス固定費連動
+            </span>
           </div>
           <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            ShadowLog 有料化・AIコスト収益試算ツール
+            ShadowLog 総合収支試算シミュレーター
           </h1>
           <p class="text-sm text-slate-500 mt-1">
-            OpenAI API（GPT-4o-mini / TTS-1 / Whisper-1）の実績消費 ＆ アプリ内リトライ再利用に基づく収支シミュレーション
+            OpenAI API（GPT-4o-mini / TTS-1 / Whisper-1）の実績原価 ＋ GMOバーチャルオフィス固定費に基づく事業損益モデル
           </p>
         </div>
-        <div class="text-right bg-blue-50/60 p-4 rounded-xl border border-blue-100">
+        <div class="text-right bg-blue-50/60 p-4 rounded-xl border border-blue-100 shrink-0">
           <p class="text-xs text-slate-500">1回の練習あたりのAI原価</p>
           <p class="text-2xl font-black text-blue-600 font-mono" id="unitCostBadge">0.32 円</p>
           <p class="text-[11px] text-slate-500" id="unitCostUsdBadge">($0.00214 / 回)</p>
@@ -72,23 +75,23 @@
           <span class="text-[11px] text-slate-400">※ボタンを押すと全パラメーターが即座に切り替わります</span>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="applyPreset(50, 20, 500, 'optimized')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold transition text-white shadow-xs">
-            📘 【初期設定】ベースプラン (50人 × 20回 × 500円)
+          <button onclick="applyPreset(50, 20, 500, 1650, 'optimized')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold transition text-white shadow-xs">
+            📘 【初期設定】ベースプラン (50人 × 20回 × 500円 / GMO代込)
           </button>
-          <button onclick="applyPreset(50, 40, 1480, 'optimized')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold transition text-white shadow-xs">
-            👑 Proプラン標準 (50人 × 40回 × 1,480円)
+          <button onclick="applyPreset(50, 40, 1480, 1650, 'optimized')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold transition text-white shadow-xs">
+            👑 Proプラン標準 (50人 × 40回 × 1,480円 / GMO代込)
           </button>
-          <button onclick="applyPreset(50, 50, 1480, 'optimized')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition text-amber-800 border border-amber-200">
+          <button onclick="applyPreset(50, 50, 1480, 1650, 'optimized')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition text-amber-800 border border-amber-200">
             🔥 Proプラン・ヘビー利用 (50人 × 50回 × 1,480円)
           </button>
-          <button onclick="applyPreset(200, 20, 500, 'optimized')" class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-xs font-semibold transition text-purple-700 border border-purple-200">
+          <button onclick="applyPreset(6, 20, 500, 1650, 'optimized')" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-semibold transition text-rose-700 border border-rose-200">
+            🎯 損益分岐点（わずか6名でGMO固定費完全回収）
+          </button>
+          <button onclick="applyPreset(200, 20, 500, 1650, 'optimized')" class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-xs font-semibold transition text-purple-700 border border-purple-200">
             🚀 成長期ベース (200人 × 20回 × 500円)
           </button>
-          <button onclick="applyPreset(100, 40, 1480, 'optimized')" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold transition text-indigo-700 border border-indigo-200">
+          <button onclick="applyPreset(100, 40, 1480, 1650, 'optimized')" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold transition text-indigo-700 border border-indigo-200">
             💎 成長期Pro (100人 × 40回 × 1,480円)
-          </button>
-          <button onclick="applyPreset(50, 20, 500, 'standard')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-medium transition text-slate-600">
-            📦 従来試算 (リトライ抑制なし・0.48円)
           </button>
         </div>
       </div>
@@ -160,8 +163,38 @@
           </div>
         </div>
 
+        <!-- Fixed Costs Section: Virtual Office -->
+        <div class="pt-4 border-t border-slate-100 space-y-3">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <span>🏢</span> 固定費設定（バーチャルオフィス等）
+            </span>
+            <span class="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded">GMO想定</span>
+          </h3>
+
+          <div class="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <label class="block text-xs font-medium text-slate-700">GMOオフィスサポート プラン</label>
+            <select id="gmoPlanSelect" onchange="handleGmoPlanChange()" class="w-full text-xs font-semibold p-2 rounded-lg border border-slate-300 bg-white text-slate-800">
+              <option value="1650" selected>月1転送プラン (法人登記・特商法可): ¥1,650/月</option>
+              <option value="660">転送なしプラン (登記不可/Web表記のみ): ¥660/月</option>
+              <option value="2200">隔週転送プラン: ¥2,200/月</option>
+              <option value="2750">週1転送プラン: ¥2,750/月</option>
+              <option value="custom">カスタム固定費を入力</option>
+            </select>
+
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-xs text-slate-600">月額固定費合計:</span>
+              <div class="flex items-center gap-1 font-mono font-bold text-slate-800">
+                <input type="number" id="fixedOfficeCost" value="1650" min="0" step="50" oninput="calculate()" class="w-24 px-2 py-1 text-right border rounded-lg text-xs" />
+                <span class="text-xs">円/月</span>
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-400">※入会金・保証金は0円。特商法住所およびStripe登録に使用可能。</p>
+          </div>
+        </div>
+
         <!-- Advanced parameters accordion -->
-        <div class="pt-4 border-t border-slate-100 space-y-4">
+        <div class="pt-4 border-t border-slate-100 space-y-3">
           <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">為替・手数料設定</h3>
           
           <div class="grid grid-cols-2 gap-3">
@@ -195,69 +228,80 @@
       <!-- Right Column: Simulation Output (7 cols) -->
       <div class="lg:col-span-7 space-y-6">
 
-        <!-- KPI Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <!-- 4 KPI Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
             <p class="text-xs text-slate-500 font-medium">月間総売上</p>
-            <p class="text-xl sm:text-2xl font-black font-mono text-slate-900 mt-1" id="kpiRevenue">¥25,000</p>
+            <p class="text-lg sm:text-xl font-black font-mono text-slate-900 mt-1" id="kpiRevenue">¥25,000</p>
             <p class="text-[10px] text-slate-400 mt-0.5" id="kpiRevenueSub">50人 × 500円</p>
           </div>
 
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
             <p class="text-xs text-slate-500 font-medium">月間AI原価</p>
-            <p class="text-xl sm:text-2xl font-black font-mono text-rose-600 mt-1" id="kpiAiCost">¥9,649</p>
-            <p class="text-[10px] text-slate-400 mt-0.5" id="kpiAiCostSub">1人あたり ¥193/月</p>
+            <p class="text-lg sm:text-xl font-black font-mono text-rose-600 mt-1" id="kpiAiCost">¥9,674</p>
+            <p class="text-[10px] text-slate-400 mt-0.5" id="kpiAiCostSub">1人あたり ¥193</p>
           </div>
 
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-medium">GMO固定費</p>
+            <p class="text-lg sm:text-xl font-black font-mono text-purple-700 mt-1" id="kpiFixedCost">¥1,650</p>
+            <p class="text-[10px] text-purple-600 font-medium mt-0.5" id="kpiFixedCostSub">月1転送プラン</p>
+          </div>
+
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
             <p class="text-xs text-slate-500 font-medium">月間総練習回数</p>
-            <p class="text-xl sm:text-2xl font-black font-mono text-slate-800 mt-1" id="kpiPractices">30,000</p>
+            <p class="text-lg sm:text-xl font-black font-mono text-slate-800 mt-1" id="kpiPractices">30,000</p>
             <p class="text-[10px] text-slate-400 mt-0.5">回 / 月</p>
           </div>
         </div>
 
-        <!-- Profit / Loss Hero Card -->
+        <!-- Profit / Loss Hero Card: Operating Profit -->
         <div id="profitHeroCard" class="p-6 sm:p-8 rounded-2xl border text-white shadow-md bg-gradient-to-r from-emerald-600 to-teal-700 transition-all duration-300">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p class="text-xs font-bold uppercase tracking-wider opacity-90" id="profitStatusBadge">🟢 月間最終損益（黒字達成）</p>
+              <p class="text-xs font-bold uppercase tracking-wider opacity-90" id="profitStatusBadge">🟢 月間営業利益（固定費控除後・黒字達成）</p>
               <div class="flex items-baseline gap-2 mt-1">
-                <span class="text-3xl sm:text-4xl font-black font-mono tracking-tight" id="kpiProfit">+¥14,451</span>
-                <span class="text-sm font-bold opacity-90" id="kpiProfitMargin">(利益率: +57.8%)</span>
+                <span class="text-3xl sm:text-4xl font-black font-mono tracking-tight" id="kpiProfit">+¥12,776</span>
+                <span class="text-sm font-bold opacity-90" id="kpiProfitMargin">(営業利益率: +51.1%)</span>
               </div>
             </div>
             <div class="text-right sm:border-l sm:border-white/20 sm:pl-6">
-              <p class="text-xs opacity-80">1人あたりの月間収支</p>
-              <p class="text-xl sm:text-2xl font-black font-mono" id="kpiProfitPerUser">+¥289 /人</p>
-              <p class="text-[11px] opacity-75 mt-0.5" id="kpiProfitPerUserBreakdown">手取¥482 - 原価¥193</p>
+              <p class="text-xs opacity-80">1人あたり手残り利益</p>
+              <p class="text-xl sm:text-2xl font-black font-mono" id="kpiProfitPerUser">+¥256 /人</p>
+              <p class="text-[11px] opacity-75 mt-0.5" id="kpiGrossProfit">粗利手取 ¥14,426 - 固定費¥1,650</p>
             </div>
           </div>
-          <div class="mt-4 pt-4 border-t border-white/15 text-xs opacity-95" id="profitHeroAdvice">
-            健全な黒字運営です！ベースプラン（500円）で毎日20回練習しても、1人あたり毎月 <strong>約 ¥289（利益率 57.8%）</strong> の安定した粗利を確保できます。
+          <div class="mt-4 pt-4 border-t border-white/15 text-xs opacity-95 leading-relaxed" id="profitHeroAdvice">
+            健全な黒字運営です！GMOオフィスサポート代（月額1,650円）を全額差し引いても、毎月 <strong>約 ¥12,776（営業利益率 51.1%）</strong> の手残り利益をしっかり確保できます。
           </div>
         </div>
 
-        <!-- Strategic Break-Even Analysis Table -->
+        <!-- Strategic Break-Even Analysis Table (GMO Included) -->
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
           <h3 class="text-sm font-bold text-slate-900 flex items-center justify-between">
-            <span class="flex items-center gap-2"><span>🎯</span> 損益分岐点 & 収益化アドバイス</span>
+            <span class="flex items-center gap-2"><span>🎯</span> 損益分岐点 & GMO固定費回収シミュレーション</span>
             <span class="text-xs font-normal text-slate-400">リアルタイム算出</span>
           </h3>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-              <p class="text-xs font-bold text-slate-600">① 今の料金（<span id="labelCurrPrice">500</span>円）での上限回数</p>
-              <p class="text-xl font-extrabold text-blue-600 font-mono" id="valBreakEvenDaily">1日 49.9 回まで</p>
-              <p class="text-[11px] text-slate-500 leading-relaxed" id="valBreakEvenDailyNote">
-                1日20回制限のベースプランなら余裕を持って黒字です。49回を超えない限り原価割れしません。
+            <!-- Break-even 1: Fixed Cost Recovery Users -->
+            <div class="p-4 rounded-xl bg-purple-50/70 border border-purple-200/80 space-y-1">
+              <p class="text-xs font-bold text-purple-900 flex items-center justify-between">
+                <span>① GMOオフィス代回収に必要な会員数</span>
+                <span class="px-2 py-0.5 rounded bg-purple-200 text-purple-900 text-[10px] font-bold">重要指標</span>
+              </p>
+              <p class="text-2xl font-black text-purple-700 font-mono" id="valBreakEvenUsers">わずか 6 名</p>
+              <p class="text-[11px] text-purple-800 leading-relaxed" id="valBreakEvenUsersNote">
+                ベースプラン（500円）なら<strong>たった6人</strong>、Proプラン（1,480円）なら<strong>わずか2人</strong>の有料会員で、GMOオフィス代（¥1,650）を含めた全固定費が完全ペイされます。
               </p>
             </div>
 
+            <!-- Break-even 2: Daily Practices limit -->
             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-              <p class="text-xs font-bold text-slate-600">② 毎日 <span id="labelCurrUses">20</span> 回使う場合の推奨料金</p>
-              <p class="text-xl font-extrabold text-emerald-600 font-mono" id="valRecPrice">月額 400 円〜</p>
-              <p class="text-[11px] text-slate-500 leading-relaxed" id="valRecPriceNote">
-                最低200円でトントン、粗利率50%を確保する場合は400円〜500円が最適価格です。
+              <p class="text-xs font-bold text-slate-600">② 月額料金（<span id="labelCurrPrice">500</span>円）での練習上限</p>
+              <p class="text-2xl font-black text-blue-600 font-mono" id="valBreakEvenDaily">1日 49.8 回まで</p>
+              <p class="text-[11px] text-slate-500 leading-relaxed" id="valBreakEvenDailyNote">
+                ベースプラン（1日20回制限）なら原価割れリスクは皆無です。50回近く使われない限り赤字になりません。
               </p>
             </div>
           </div>
@@ -265,12 +309,11 @@
           <!-- Optimization notes -->
           <div class="p-4 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-950 space-y-1.5 leading-relaxed">
             <p class="font-bold flex items-center gap-1.5 text-blue-900">
-              <span>💡</span> 今回の試算見直しポイント（アプリ仕様変更によるコスト削減）
+              <span>💡</span> 収益構造の総合サマリー（変動費＋固定費の完全掌握）
             </p>
             <ul class="list-disc pl-4 space-y-1 text-[11px] text-blue-800">
-              <li><strong>手動フレーズ生成への移行:</strong> 画面を開いた時の自動無駄打ちを完全に排除。</li>
-              <li><strong>リトライ時のTTS・英文再利用:</strong> 1つのフレーズを繰り返し発話・練習する際、模範音声（TTS-1）は初回取得の音声をメモリ再利用するため、2回目以降のTTSコストは <strong>0円</strong>。</li>
-              <li>これにより1回の練習あたり原価が従来の <strong>約0.48円 → 約0.32円へ約31%圧縮</strong> され、ベースプラン500円でも粗利率57%以上の高収益が実現します。</li>
+              <li><strong>低リスクな固定費設計:</strong> GMOオフィスサポートの月1転送プラン（¥1,650/月）は初期投資0円で法人登記・特商法表記が可能。有料会員が数名集まるだけで即座に黒字転換します。</li>
+              <li><strong>高収益な変動費設計:</strong> アプリ仕様改善（手動生成化＋リトライ時のTTS音声再利用）により、練習1回あたりの原価を <strong>約0.32円</strong> に抑制。会員が増えるほど利益率が向上します。</li>
             </ul>
           </div>
         </div>
@@ -483,11 +526,11 @@
           </p>
         </div>
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <p class="font-bold text-slate-800 mb-1">📈 登録者数ごとの売上試算（ベース:Pro = 7:3想定）</p>
+          <p class="font-bold text-slate-800 mb-1">📈 登録者数ごとの営業利益（GMO代¥1,650控除後）</p>
           <p class="text-slate-600 leading-relaxed">
-            ・50名: 月商 約3.9万円 (月粗利 約2.4万円)<br>
-            ・200名: 月商 約15.8万円 (月粗利 約9.8万円)<br>
-            ・500名: 月商 約39.5万円 (月粗利 約24.5万円)
+            ・<strong>6名（損益分岐点）</strong>: 月商 約3,000円 ➔ <strong>固定費完全回収・黒字化</strong><br>
+            ・<strong>50名（初期目標）</strong>: 月商 約3.9万円 ➔ <strong>営業利益 +¥2.2万円/月</strong><br>
+            ・<strong>200名（成長期）</strong>: 月商 約15.8万円 ➔ <strong>営業利益 +¥9.6万円/月</strong>
           </p>
         </div>
       </div>
@@ -515,6 +558,8 @@
     const usdJpy = document.getElementById('usdJpy');
     const feePct = document.getElementById('feePct');
     const apiModeSelect = document.getElementById('apiModeSelect');
+    const gmoPlanSelect = document.getElementById('gmoPlanSelect');
+    const fixedOfficeCost = document.getElementById('fixedOfficeCost');
 
     function syncInputs(numInput, rangeInput) {
       numInput.addEventListener('input', () => {
@@ -533,17 +578,34 @@
     usdJpy.addEventListener('input', calculate);
     feePct.addEventListener('input', calculate);
 
-    function resetDefaults() {
-      applyPreset(50, 20, 500, 'optimized');
+    function handleGmoPlanChange() {
+      const val = gmoPlanSelect.value;
+      if (val !== 'custom') {
+        fixedOfficeCost.value = val;
+      }
+      calculate();
     }
 
-    function applyPreset(users, dailyUses, price, mode = 'optimized') {
+    function resetDefaults() {
+      applyPreset(50, 20, 500, 1650, 'optimized');
+    }
+
+    function applyPreset(users, dailyUses, price, officeFee = 1650, mode = 'optimized') {
       numUsers.value = users;
       rangeUsers.value = users;
       numDailyUses.value = dailyUses;
       rangeDailyUses.value = dailyUses;
       numPrice.value = price;
       rangePrice.value = price;
+      fixedOfficeCost.value = officeFee;
+      
+      // sync dropdown
+      if ([660, 1650, 2200, 2750].includes(officeFee)) {
+        gmoPlanSelect.value = String(officeFee);
+      } else {
+        gmoPlanSelect.value = 'custom';
+      }
+
       if (mode) {
         apiModeSelect.value = mode;
       }
@@ -556,6 +618,7 @@
       const price = parseFloat(numPrice.value) || 100;
       const rate = parseFloat(usdJpy.value) || 150;
       const fee = parseFloat(feePct.value) || 3.6;
+      const fixedOffice = parseFloat(fixedOfficeCost.value) || 0;
       const mode = apiModeSelect.value;
 
       // Base component costs
@@ -621,28 +684,36 @@
       const paymentFee = totalRev * (fee / 100);
       const netRev = totalRev - paymentFee;
 
-      // AI Cost
+      // AI Cost (Variable Cost)
       const costPerUserJpy = monthlyUsesPerUser * unitJpy;
       const totalAiCostJpy = totalPractices * unitJpy;
 
-      // Profit
-      const profitJpy = netRev - totalAiCostJpy;
-      const profitPerUser = (price * (1 - fee / 100)) - costPerUserJpy;
-      const margin = (profitJpy / totalRev) * 100;
+      // Gross Profit
+      const grossProfitJpy = netRev - totalAiCostJpy;
+      const profitPerUserGross = (price * (1 - fee / 100)) - costPerUserJpy;
 
-      // Break-even
+      // Operating Profit (after fixed GMO Office fee)
+      const operatingProfitJpy = grossProfitJpy - fixedOffice;
+      const operatingMargin = (operatingProfitJpy / totalRev) * 100;
+      const netProfitPerUser = operatingProfitJpy / users;
+
+      // Break-even users needed to cover GMO Office Fee
+      const breakEvenUsers = profitPerUserGross > 0 ? Math.ceil(fixedOffice / profitPerUserGross) : Infinity;
+
+      // Break-even daily practices
       const netRevPerUser = price * (1 - fee / 100);
       const breakEvenMonthly = netRevPerUser / unitJpy;
       const breakEvenDaily = breakEvenMonthly / 30;
-      const breakEvenPrice = costPerUserJpy / (1 - fee / 100);
-      const recPrice50 = (costPerUserJpy / 0.5) / (1 - fee / 100);
 
       // Render KPIs
       document.getElementById('kpiRevenue').innerText = `¥${Math.round(totalRev).toLocaleString()}`;
       document.getElementById('kpiRevenueSub').innerText = `${users}人 × ${price}円 (手取 ¥${Math.round(netRev).toLocaleString()})`;
 
       document.getElementById('kpiAiCost').innerText = `¥${Math.round(totalAiCostJpy).toLocaleString()}`;
-      document.getElementById('kpiAiCostSub').innerText = `1人あたり ¥${Math.round(costPerUserJpy).toLocaleString()}/月`;
+      document.getElementById('kpiAiCostSub').innerText = `1人あたり ¥${Math.round(costPerUserJpy).toLocaleString()}`;
+
+      document.getElementById('kpiFixedCost').innerText = `¥${Math.round(fixedOffice).toLocaleString()}`;
+      document.getElementById('kpiFixedCostSub').innerText = fixedOffice === 1650 ? '月1転送プラン' : '固定費設定額';
 
       document.getElementById('kpiPractices').innerText = Math.round(totalPractices).toLocaleString();
 
@@ -651,42 +722,46 @@
       const kpiProfit = document.getElementById('kpiProfit');
       const kpiProfitMargin = document.getElementById('kpiProfitMargin');
       const kpiProfitPerUser = document.getElementById('kpiProfitPerUser');
-      const kpiProfitPerUserBreakdown = document.getElementById('kpiProfitPerUserBreakdown');
+      const kpiGrossProfit = document.getElementById('kpiGrossProfit');
       const advice = document.getElementById('profitHeroAdvice');
       const statusBadge = document.getElementById('profitStatusBadge');
 
-      kpiProfitPerUserBreakdown.innerText = `手取¥${Math.round(netRevPerUser).toLocaleString()} - 原価¥${Math.round(costPerUserJpy).toLocaleString()}`;
+      kpiGrossProfit.innerText = `粗利手取 ¥${Math.round(grossProfitJpy).toLocaleString()} - 固定費¥${Math.round(fixedOffice).toLocaleString()}`;
 
-      if (profitJpy >= 0) {
+      if (operatingProfitJpy >= 0) {
         hero.className = 'p-6 sm:p-8 rounded-2xl border text-white shadow-md bg-gradient-to-r from-emerald-600 to-teal-700 transition-all duration-300';
-        statusBadge.innerText = '🟢 月間最終損益（黒字達成）';
-        kpiProfit.innerText = `+¥${Math.round(profitJpy).toLocaleString()}`;
-        kpiProfitMargin.innerText = `(利益率: +${margin.toFixed(1)}%)`;
-        kpiProfitPerUser.innerText = `+¥${Math.round(profitPerUser).toLocaleString()} /人`;
-        if (price === 500 && dailyUses <= 20) {
-          advice.innerHTML = `健全な高収益です！ベースプラン（500円）で毎日20回練習しても、1人あたり毎月 <strong>約 ¥${Math.round(profitPerUser).toLocaleString()}（粗利率 ${margin.toFixed(1)}%）</strong> の安定した利益が出ます。`;
-        } else if (price >= 1480) {
-          advice.innerHTML = `極めて高い収益性です！Proプラン（¥${price}）なら、1人あたり毎月 <strong>約 ¥${Math.round(profitPerUser).toLocaleString()}（粗利率 ${margin.toFixed(1)}%）</strong> の粗利が生まれます。`;
-        } else {
-          advice.innerHTML = `黒字運営です！1人あたり毎月 <strong>約 ¥${Math.round(profitPerUser).toLocaleString()}</strong> の粗利が生まれます。`;
-        }
+        statusBadge.innerText = '🟢 月間営業利益（固定費控除後・黒字達成）';
+        kpiProfit.innerText = `+¥${Math.round(operatingProfitJpy).toLocaleString()}`;
+        kpiProfitMargin.innerText = `(営業利益率: +${operatingMargin.toFixed(1)}%)`;
+        kpiProfitPerUser.innerText = `+¥${Math.round(netProfitPerUser).toLocaleString()} /人`;
+        advice.innerHTML = `健全な営業黒字です！GMOオフィス代（¥${Math.round(fixedOffice).toLocaleString()}/月）を全額差し引いても、毎月 <strong>約 ¥${Math.round(operatingProfitJpy).toLocaleString()}（営業利益率 ${operatingMargin.toFixed(1)}%）</strong> の手残り利益をしっかり確保できます。`;
       } else {
         hero.className = 'p-6 sm:p-8 rounded-2xl border text-white shadow-md bg-gradient-to-r from-rose-600 to-red-700 transition-all duration-300';
-        statusBadge.innerText = '🔴 月間最終損益（原価割れ・赤字）';
-        kpiProfit.innerText = `-¥${Math.round(Math.abs(profitJpy)).toLocaleString()}`;
-        kpiProfitMargin.innerText = `(利益率: ${margin.toFixed(1)}%)`;
-        kpiProfitPerUser.innerText = `-¥${Math.round(Math.abs(profitPerUser)).toLocaleString()} /人`;
-        advice.innerHTML = `⚠️ 1人のAI原価（¥${Math.round(costPerUserJpy)}）が月額料金（¥${price}）を超えています。1日の練習上限を設けるか、月額料金の見直しを推奨します。`;
+        statusBadge.innerText = '🔴 月間営業赤字（固定費未達）';
+        kpiProfit.innerText = `-¥${Math.round(Math.abs(operatingProfitJpy)).toLocaleString()}`;
+        kpiProfitMargin.innerText = `(営業利益率: ${operatingMargin.toFixed(1)}%)`;
+        kpiProfitPerUser.innerText = `-¥${Math.round(Math.abs(netProfitPerUser)).toLocaleString()} /人`;
+        advice.innerHTML = `⚠️ 現在の会員数（${users}名）ではGMOオフィス代（¥${Math.round(fixedOffice).toLocaleString()}）をカバーできていません。<strong>あと ${breakEvenUsers - users} 名（合計 ${breakEvenUsers} 名）</strong> の会員獲得で完全黒字化します！`;
       }
 
-      // Render Break-even
+      // Render Break-even Section
+      document.getElementById('valBreakEvenUsers').innerText = `わずか ${breakEvenUsers} 名`;
+      document.getElementById('valBreakEvenUsersNote').innerHTML = `
+        1人あたり粗利（¥${Math.round(profitPerUserGross).toLocaleString()}）に基づき、<strong>わずか ${breakEvenUsers} 名</strong>の有料会員でGMOオフィス代（¥${Math.round(fixedOffice).toLocaleString()}）を含めた全固定費が完全ペイされます。
+      `;
+
       document.getElementById('labelCurrPrice').innerText = price;
       document.getElementById('valBreakEvenDaily').innerText = `1日 ${breakEvenDaily.toFixed(1)} 回まで`;
+    }
 
-      document.getElementById('labelCurrUses').innerText = dailyUses;
-      const recP = Math.round(recPrice50 / 10) * 10;
-      document.getElementById('valRecPrice').innerText = `月額 ${recP} 円〜`;
-      document.getElementById('valRecPriceNote').innerText = `最低${Math.round(breakEvenPrice)}円でトントン、粗利率50%を確保する場合は${recP}円が適正水準です。`;
+    function openManagement() {
+      if (window.location.protocol === 'file:') {
+        const isAiCostDir = window.location.pathname.includes('/AI cost/');
+        const targetUrl = isAiCostDir ? '../management/checklist.html' : './management.html';
+        window.location.href = targetUrl;
+      } else {
+        window.location.href = '/management.html';
+      }
     }
 
     // Initial run

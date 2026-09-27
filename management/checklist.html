@@ -33,7 +33,7 @@
       </div>
 
       <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-        <a href="/simulation.html" target="_blank" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold hover:bg-emerald-100 transition shadow-xs flex items-center gap-1.5">
+        <a href="javascript:void(0)" onclick="openSimulation()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold hover:bg-emerald-100 transition shadow-xs flex items-center gap-1.5 cursor-pointer">
           <span>💰</span> 収益試算シミュレーター
         </a>
         <div class="text-right">
@@ -66,8 +66,8 @@
 
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">目標有料会員 (3ヶ月後)</div>
-        <div class="mt-1 text-xl font-bold text-indigo-600">100 名</div>
-        <div class="text-xs text-slate-500 mt-1">目標MRR: 約10万〜14.8万円/月</div>
+        <div class="mt-1 text-xl font-bold text-indigo-600">50 名</div>
+        <div class="text-xs text-slate-500 mt-1">Basic 45名 / Pro 5名 (MRR ¥29,900)</div>
       </div>
 
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -157,6 +157,142 @@
       </div>
     </div>
 
+    <!-- PR & CRM (Threads API & Customer Support) Section -->
+    <div class="bg-white p-5 sm:p-6 rounded-xl border border-indigo-200 shadow-sm mb-8 bg-gradient-to-br from-white via-indigo-50/20 to-purple-50/20">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200/80 gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-200">
+            📣
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-bold text-slate-900">広報 ＆ 顧客管理 (PR / CRM / Threads)</h2>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-300">
+                Threads API 連携中
+              </span>
+            </div>
+            <p class="text-xs text-slate-500">Threads投稿パフォーマンス・リアルタイムインプレッション・VoC顧客対応一元ビュー</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-500">アカウント: <strong class="text-slate-800">@shadowlog_official</strong></span>
+          <a href="https://www.threads.net/@shadowlog_official" target="_blank" class="text-xs px-2.5 py-1 rounded-lg bg-slate-900 text-white font-medium hover:bg-slate-800 transition shadow-xs">
+            Threadsを開く ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- PR & CRM KPI Row -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 my-4">
+        <div class="bg-white p-3.5 rounded-xl border border-purple-100 shadow-xs">
+          <div class="text-[11px] text-slate-500 font-medium">累計 Threads インプレ数</div>
+          <div class="text-2xl font-bold font-mono text-purple-700 mt-0.5">84 <span class="text-xs font-normal text-slate-500">回</span></div>
+          <div class="text-[10px] text-purple-600 font-semibold mt-1">最高 78 回 / 1投稿</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-indigo-100 shadow-xs">
+          <div class="text-[11px] text-slate-500 font-medium">Threads 投稿数</div>
+          <div class="text-2xl font-bold font-mono text-indigo-600 mt-0.5">2 <span class="text-xs font-normal text-slate-500">件</span></div>
+          <div class="text-[10px] text-emerald-600 font-semibold mt-1">初動公開完了</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-[11px] text-slate-500 font-medium">顧客対応 (VoC)</div>
+          <div class="text-2xl font-bold font-mono text-emerald-600 mt-0.5">100<span class="text-xs font-normal text-slate-500">%</span></div>
+          <div class="text-[10px] text-emerald-600 font-semibold mt-1">返信完了ステータス</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-[11px] text-slate-500 font-medium">API自動計測機能</div>
+          <div class="text-sm font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            無償Graph API設定済
+          </div>
+          <div class="text-[10px] text-slate-500 mt-1">.env.local トークン有効</div>
+        </div>
+      </div>
+
+      <!-- Threads Posts Performance & CRM quick template -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-1">
+        <!-- Posts List (2 cols) -->
+        <div class="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+          <div class="flex items-center justify-between mb-2.5">
+            <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <span>📈</span> Threads 投稿パフォーマンス（リアルタイムAPI計測）
+            </h3>
+            <span class="text-[10px] text-slate-400">更新: 2026-09-25 23:37</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left text-slate-700">
+              <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] border-y border-slate-100">
+                <tr>
+                  <th class="px-3 py-2">日時</th>
+                  <th class="px-3 py-2 text-right">閲覧数 (Views)</th>
+                  <th class="px-3 py-2 text-center">いいね</th>
+                  <th class="px-3 py-2">投稿内容（抜粋）</th>
+                  <th class="px-3 py-2 text-center">リンク</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr class="hover:bg-purple-50/30 transition">
+                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">09/24 22:53</td>
+                  <td class="px-3 py-2.5 font-bold font-mono text-purple-700 text-right">78 回 🔥</td>
+                  <td class="px-3 py-2.5 text-center font-mono">0</td>
+                  <td class="px-3 py-2.5 text-slate-800 font-medium">シャドーイングは家で朝、寝る前とか車の中とか...（生活スタイル）</td>
+                  <td class="px-3 py-2.5 text-center">
+                    <a href="https://www.threads.com/@shadowlog_official/post/DdsAMe1E-Zq" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">09/24 15:45</td>
+                  <td class="px-3 py-2.5 font-bold font-mono text-slate-700 text-right">6 回</td>
+                  <td class="px-3 py-2.5 text-center font-mono">0</td>
+                  <td class="px-3 py-2.5 text-slate-800">はじめまして！英語発声の習慣化をサポートする...（立ち上げ）</td>
+                  <td class="px-3 py-2.5 text-center">
+                    <a href="https://www.threads.com/@shadowlog_official/post/DdrPK2-mTTA" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CRM Quick Action & Guidelines (1 col) -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          <div>
+            <h3 class="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+              <span>💬</span> 顧客管理 (CRM) クイック導線
+            </h3>
+            <p class="text-[11px] text-slate-500 mb-3">ユーザーからの問い合わせ・コメントへの返信テンプレートと管理ログ</p>
+
+            <div class="space-y-2">
+              <a href="/management/CUSTOMER_FEEDBACK.md" target="_blank" class="block p-2.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-300 transition text-xs">
+                <div class="font-bold text-slate-800 flex items-center justify-between">
+                  <span>📋 返信テンプレート & VoCログ</span>
+                  <span class="text-[10px] text-indigo-600 font-semibold">開く ↗</span>
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">初回フォロー・機能質問・要望への定型文</div>
+              </a>
+
+              <a href="/management/PR_CRM_OPERATIONS.md" target="_blank" class="block p-2.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-purple-50/50 hover:border-purple-300 transition text-xs">
+                <div class="font-bold text-slate-800 flex items-center justify-between">
+                  <span>📘 広報・顧客管理 運用計画書</span>
+                  <span class="text-[10px] text-purple-600 font-semibold">開く ↗</span>
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">全体の連携サイクル ＆ 初期5日間の投稿ロードマップ</div>
+              </a>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between">
+            <span>広報 & CRM 連携体制稼働中</span>
+            <span class="text-emerald-600 font-bold">● Active</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Filter & Add Task Bar -->
     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <!-- Filter Tabs -->
@@ -240,7 +376,10 @@
           { id: "s2-3", text: "習慣化リマインド通知（ストリーク途切れ防止のメール/Web通知）", done: false },
           { id: "s2-4", text: "SNSシェア用OGP画像自動生成機能（「#今日のシャドーイング」拡散用）", done: false },
           { id: "s2-5", text: "テスターへの1on1インタビュー・価格納得感（月1,480円）の検証", done: false },
-          { id: "s2-6", text: "【実務担当】弱点単語組み込み生成アルゴリズム ＆ オフライン閲覧キャッシュ同期", done: false }
+          { id: "s2-6", text: "【実務担当】弱点単語組み込み生成アルゴリズム ＆ オフライン閲覧キャッシュ同期", done: true },
+          { id: "s2-7", text: "Supabase DB（profiles, practice_sessions, weak_words, user_tickets）本番開通", done: true },
+          { id: "s2-8", text: "Googleワンクリックログイン ＆ ゲストデータ自動引き継ぎ処理の実装", done: true },
+          { id: "s2-9", text: "不具合報告・お問い合わせフォーム（Resendメール通知・スクショ添付・環境収集）", done: true }
         ]
       },
       {
@@ -484,6 +623,18 @@
         }
       } catch (e) {
         console.warn("Analytics fetch error:", e);
+      }
+    }
+
+    function openSimulation() {
+      if (window.location.protocol === "file:") {
+        // When opened directly as a file from Finder
+        const isManagementDir = window.location.pathname.includes("/management/");
+        const targetUrl = isManagementDir ? "../AI cost/index.html" : "./simulation.html";
+        window.open(targetUrl, "_blank");
+      } else {
+        // When running on Next.js local server or Vercel
+        window.open("/simulation.html", "_blank");
       }
     }
 
