@@ -126,6 +126,7 @@ export interface RecordPracticeParams {
 export function recordPracticeSession(params: RecordPracticeParams): {
   session: StoredSession;
   newWeakWords: WeakWord[];
+  autoMasteredWords?: string[];
 } {
   const isCleared = params.accuracyScore >= 80;
   const now = new Date().toISOString();
@@ -157,12 +158,27 @@ export function recordPracticeSession(params: RecordPracticeParams): {
   // 2. Extract and Update Weak Words
   const allWeakWords = loadAllWeakWords();
   const newlyAdded: WeakWord[] = [];
+  const autoMasteredWords: string[] = [];
 
-  // Extract mistakes from tokens
+  // A. Collect all mistakes in this session
+  const mistakeCleanWords = new Set<string>();
+  for (const token of params.diff.tokens) {
+    if (token.status === "missing" || token.status === "mismatch") {
+      const cleanWord = normalizeWord(token.word);
+      if (cleanWord && cleanWord.length > 1) {
+        mistakeCleanWords.add(cleanWord);
+      }
+    }
+  }
+
+  // B. Process mistakes: register or update error count and re-open
   for (const token of params.diff.tokens) {
     if (token.status === "missing" || token.status === "mismatch") {
       const cleanWord = normalizeWord(token.word);
       if (!cleanWord || cleanWord.length <= 1) continue; // skip single letters like 'a'
+
+      // Clean display word: remove surrounding punctuation like "charge." -> "charge"
+      const cleanDisplayWord = token.word.replace(/^[^\w]+|[^\w]+$/g, "").trim() || token.word;
 
       const existingIndex = allWeakWords.findIndex(
         (w) => normalizeWord(w.word) === cleanWord
@@ -183,10 +199,10 @@ export function recordPracticeSession(params: RecordPracticeParams): {
           existing.spokenWord = token.spokenWord;
         }
       } else {
-        // Add new weak word
+        // Add new weak word with clean display name
         const newWord: WeakWord = {
           id: `weak-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-          word: token.word,
+          word: cleanDisplayWord,
           type: token.status,
           spokenWord: token.spokenWord,
           sentence: params.sentence,
@@ -203,11 +219,36 @@ export function recordPracticeSession(params: RecordPracticeParams): {
     }
   }
 
+  // C. Auto-convert to mastered:
+  // If words in the user's weak words list were correctly spoken ("match")
+  // and were not missed elsewhere in the same session, mark them as mastered!
+  for (const token of params.diff.tokens) {
+    if (token.status === "match") {
+      const cleanWord = normalizeWord(token.word);
+      if (!cleanWord || cleanWord.length <= 1) continue;
+      if (mistakeCleanWords.has(cleanWord)) continue; // Missed elsewhere in this sentence
+
+      const existingIndex = allWeakWords.findIndex(
+        (w) => normalizeWord(w.word) === cleanWord
+      );
+
+      if (existingIndex !== -1) {
+        const targetWord = allWeakWords[existingIndex]!;
+        if (!targetWord.mastered) {
+          targetWord.mastered = true;
+          targetWord.lastPracticedAt = now;
+          autoMasteredWords.push(targetWord.word);
+        }
+      }
+    }
+  }
+
   saveAllWeakWords(allWeakWords);
 
   return {
     session: newSession,
     newWeakWords: newlyAdded,
+    autoMasteredWords,
   };
 }
 

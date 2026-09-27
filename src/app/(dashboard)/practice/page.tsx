@@ -130,6 +130,10 @@ export default function PracticePage() {
 
       const requestId = ++activeRequestIdRef.current;
       setIsLoadingSentence(true);
+      // Fully reset audio recorder and floating button state
+      recorderControlsRef.current?.reset?.();
+      setFloatHasBlob(false);
+      setFloatIsRecording(false);
       setDiffResult(null);
       setTranscription("");
       setCoachFeedback(undefined);
@@ -422,8 +426,13 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       });
 
       // 3. Asynchronously sync to Supabase DB if logged in
-      import("@/lib/storage/sync-service").then(({ savePracticeSessionToSupabase }) => {
+      import("@/lib/storage/sync-service").then(({ savePracticeSessionToSupabase, updateWeakWordMasteredInSupabase }) => {
         savePracticeSessionToSupabase(saved.session).catch(() => {});
+        if (saved.autoMasteredWords && saved.autoMasteredWords.length > 0) {
+          for (const w of saved.autoMasteredWords) {
+            updateWeakWordMasteredInSupabase(w, true).catch(() => {});
+          }
+        }
       });
 
       if (!res.ok) {
@@ -682,6 +691,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           )}
 
           <AudioRecorder
+            key={sentence.id}
             onAudioReady={handleAudioReady}
             isTranscribing={isTranscribing}
             onRecordingStateChange={(rec, hasBlob) => {

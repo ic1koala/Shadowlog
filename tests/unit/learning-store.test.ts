@@ -195,4 +195,82 @@ describe("User Learning Store (Weak Words & Sessions)", () => {
     deleteWeakWord(initial.id);
     expect(getWeakWords().totalCount).toBe(0);
   });
+
+  it("automatically converts previously missed words to mastered when matched in a subsequent practice", () => {
+    // Session 1: Miss "infrastructure." and "latency"
+    const diff1: DiffResult = {
+      tokens: [
+        { word: "Our", status: "match" },
+        { word: "infrastructure.", status: "missing" },
+        { word: "has", status: "match" },
+        { word: "high", status: "match" },
+        { word: "latency", spokenWord: "latesy", status: "mismatch" },
+      ],
+      originalText: "Our infrastructure. has high latency",
+      spokenText: "Our has high latesy",
+      originalWordCount: 5,
+      spokenWordCount: 4,
+      matchedWordCount: 3,
+      accuracyScore: 60,
+    };
+
+    recordPracticeSession({
+      sentence: "Our infrastructure. has high latency",
+      transcription: "Our has high latesy",
+      industry: "tech",
+      level: "advanced",
+      wordCount: 5,
+      matchedWordCount: 3,
+      accuracyScore: 60,
+      retryCount: 0,
+      diff: diff1,
+    });
+
+    const wordsAfterFirst = getWeakWords().words;
+    expect(wordsAfterFirst).toHaveLength(2);
+    // Punctuation stripped in display word
+    const infraWord = wordsAfterFirst.find((w) => normalizeWord(w.word) === "infrastructure")!;
+    const latencyWord = wordsAfterFirst.find((w) => normalizeWord(w.word) === "latency")!;
+    expect(infraWord.word).toBe("infrastructure");
+    expect(infraWord.mastered).toBe(false);
+    expect(latencyWord.mastered).toBe(false);
+
+    // Session 2: Retest the sentence and correctly pronounce "infrastructure", but still miss "latency"
+    const diff2: DiffResult = {
+      tokens: [
+        { word: "Our", status: "match" },
+        { word: "infrastructure", status: "match" }, // Correctly spoken!
+        { word: "has", status: "match" },
+        { word: "high", status: "match" },
+        { word: "latency", spokenWord: "latesy", status: "mismatch" },
+      ],
+      originalText: "Our infrastructure has high latency",
+      spokenText: "Our infrastructure has high latesy",
+      originalWordCount: 5,
+      spokenWordCount: 5,
+      matchedWordCount: 4,
+      accuracyScore: 80,
+    };
+
+    const { autoMasteredWords } = recordPracticeSession({
+      sentence: "Our infrastructure has high latency",
+      transcription: "Our infrastructure has high latesy",
+      industry: "tech",
+      level: "advanced",
+      wordCount: 5,
+      matchedWordCount: 4,
+      accuracyScore: 80,
+      retryCount: 1,
+      diff: diff2,
+    });
+
+    expect(autoMasteredWords).toContain("infrastructure");
+
+    const wordsAfterSecond = getWeakWords().words;
+    const updatedInfra = wordsAfterSecond.find((w) => normalizeWord(w.word) === "infrastructure")!;
+    const updatedLatency = wordsAfterSecond.find((w) => normalizeWord(w.word) === "latency")!;
+
+    expect(updatedInfra.mastered).toBe(true); // Automatically mastered!
+    expect(updatedLatency.mastered).toBe(false); // Still unmastered
+  });
 });

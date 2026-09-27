@@ -34,6 +34,7 @@ import {
   Lightbulb,
   Check,
 } from "lucide-react";
+import { playWordAudio, initSpeechVoices } from "@/lib/audio/word-speaker";
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -58,6 +59,8 @@ export default function ReviewPage() {
   const [expandedSentenceIds, setExpandedSentenceIds] = useState<Record<string, boolean>>({});
   const [expandedWordSentenceIds, setExpandedWordSentenceIds] = useState<Record<string, boolean>>({});
 
+  const [playingWordId, setPlayingWordId] = useState<string | null>(null);
+
   // Pro modal state
   const [showProModal, setShowProModal] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -65,6 +68,7 @@ export default function ReviewPage() {
 
   useEffect(() => {
     setMounted(true);
+    initSpeechVoices();
     // Detect initial offline state and listen for changes
     setIsOffline(!navigator.onLine);
     const handleOffline = () => setIsOffline(true);
@@ -126,8 +130,15 @@ export default function ReviewPage() {
 
   // Toggle master status
   const handleToggleMastered = (id: string) => {
-    toggleMasteredWeakWord(id);
+    const targetWord = weakWords.find((w) => w.id === id);
+    const isMastered = toggleMasteredWeakWord(id);
     loadData();
+
+    if (targetWord) {
+      import("@/lib/storage/sync-service").then(({ updateWeakWordMasteredInSupabase }) => {
+        updateWeakWordMasteredInSupabase(targetWord.word, isMastered).catch(() => {});
+      });
+    }
   };
 
   // Delete word
@@ -160,14 +171,20 @@ export default function ReviewPage() {
     }));
   };
 
-  // Play audio of a word or sentence
-  const handleSpeak = (text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
+  // Play audio of a word or sentence using high-quality TTS with SpeechSynthesis fallback
+  const handleSpeak = (text: string, wordId?: string) => {
+    if (wordId) setPlayingWordId(wordId);
+    playWordAudio(text, {
+      onStart: () => {
+        if (wordId) setPlayingWordId(wordId);
+      },
+      onEnd: () => {
+        if (wordId) setPlayingWordId(null);
+      },
+      onError: () => {
+        if (wordId) setPlayingWordId(null);
+      },
+    });
   };
 
   // Start practice with specific sentence
@@ -402,16 +419,29 @@ export default function ReviewPage() {
                     {/* Header Row: Word, Audio icon, Actions (Mastered, Practice) & Badges/Delete */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 flex-wrap flex-1">
-                        <span className="text-base sm:text-lg font-bold font-mono tracking-tight text-foreground">
-                          {word.word}
-                        </span>
-                        <button
-                          onClick={() => handleSpeak(word.word)}
-                          className="p-1 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition shrink-0"
-                          title="発音を聴く"
-                        >
-                          <Volume2 className="w-4 h-4" />
-                        </button>
+                        {(() => {
+                          const displayWord = word.word.replace(/^[^\w]+|[^\w]+$/g, "").trim() || word.word;
+                          const isPlayingThis = playingWordId === word.id;
+                          return (
+                            <>
+                              <span className="text-base sm:text-lg font-bold font-mono tracking-tight text-foreground">
+                                {displayWord}
+                              </span>
+                              <button
+                                onClick={() => handleSpeak(displayWord, word.id)}
+                                className={`p-1 rounded-lg transition shrink-0 ${
+                                  isPlayingThis
+                                    ? "text-primary bg-primary/15 animate-pulse scale-110"
+                                    : "text-muted-foreground hover:text-primary hover:bg-muted"
+                                }`}
+                                title="発音を聴く"
+                                aria-label={`${displayWord}の発音を聴く`}
+                              >
+                                <Volume2 className={`w-4 h-4 ${isPlayingThis ? "stroke-[2.5]" : ""}`} />
+                              </button>
+                            </>
+                          );
+                        })()}
 
                         {/* Action buttons directly next to speaker icon */}
                         <button

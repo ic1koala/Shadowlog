@@ -241,3 +241,39 @@ export async function syncWeakWordsFromSupabase(): Promise<WeakWord[]> {
     return local;
   }
 }
+
+/**
+ * Updates a weak word's mastered status in Supabase DB if logged in and online.
+ */
+export async function updateWeakWordMasteredInSupabase(
+  word: string,
+  isMastered: boolean
+): Promise<boolean> {
+  if (typeof window === "undefined" || !navigator.onLine) return false;
+
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return false;
+
+    const supabase = createClient();
+    const cleanWord = word.replace(/^[^\w]+|[^\w]+$/g, "").trim();
+
+    const { error } = await supabase
+      .from("weak_words")
+      .update({
+        is_mastered: isMastered,
+        last_practiced_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .ilike("word", cleanWord);
+
+    if (error) {
+      console.warn("Failed to update weak word mastered in Supabase:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Error updating weak word mastered in Supabase:", err);
+    return false;
+  }
+}
