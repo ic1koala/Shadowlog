@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { DifficultyLevel, Industry } from "@/types";
 import { AssessmentResult } from "@/lib/assessment/assessment-engine";
 import {
@@ -17,8 +18,24 @@ import {
   Mic,
   RotateCcw,
   Trash2,
+  User,
+  Mail,
+  Lock,
+  Loader2,
+  ShieldCheck,
+  AlertCircle,
+  KeyRound,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import {
+  getAuthenticatedUser,
+  fetchUserNickname,
+  updateUserNickname,
+  getStoredNickname,
+} from "@/lib/storage/sync-service";
+import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
 import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
+import { PlanComparisonSection } from "@/components/features/settings/PlanComparisonSection";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -30,12 +47,36 @@ export default function SettingsPage() {
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedMicId, setSelectedMicId] = useState<string>("");
 
+  // Account State
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+  const [nickname, setNickname] = useState("");
+  const [isSavingNickname, setIsSavingNickname] = useState(false);
+  const [nicknameSaved, setNicknameSaved] = useState(false);
+
+  // Password Change State
+  const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Plan State
+  const [ticketStatus, setTicketStatus] = useState<TicketStatus | null>(null);
+
   useEffect(() => {
     // Load audio devices
     if (typeof window !== "undefined" && navigator.mediaDevices?.enumerateDevices) {
-      navigator.mediaDevices.enumerateDevices().then((devices) => {
-        setAudioDevices(devices.filter((d) => d.kind === "audioinput"));
-      }).catch(() => {});
+      navigator.mediaDevices
+        .enumerateDevices()
+        .then((devices) => {
+          setAudioDevices(devices.filter((d) => d.kind === "audioinput"));
+        })
+        .catch(() => {});
     }
 
     try {
@@ -61,13 +102,13 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
+    // 1. Load preferences
     try {
       const savedIndustry = localStorage.getItem("shadowlog_industry") as Industry;
       const savedLevel = localStorage.getItem("shadowlog_level") as DifficultyLevel;
       if (savedIndustry) setIndustry(savedIndustry);
       if (savedLevel) setLevel(savedLevel);
 
-      // Load assessment result if exists
       const savedResult = localStorage.getItem("shadowlog_assessment_result");
       const savedDate = localStorage.getItem("shadowlog_assessment_date");
       if (savedResult) {
@@ -76,9 +117,37 @@ export default function SettingsPage() {
       if (savedDate) {
         setAssessmentDate(savedDate);
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
+
+    // 2. Load Nickname & Account info
+    const cachedNick = getStoredNickname();
+    if (cachedNick) setNickname(cachedNick);
+
+    fetchUserNickname().then((name) => {
+      if (name) setNickname(name);
+    });
+
+    getAuthenticatedUser().then((user) => {
+      if (user) {
+        setIsLoggedIn(true);
+        setUserEmail(user.email || null);
+        const provider = user.app_metadata?.provider;
+        setIsGoogleUser(provider === "google");
+      } else {
+        setIsLoggedIn(false);
+        setUserEmail(null);
+      }
+    });
+
+    // 3. Ticket Status
+    setTicketStatus(getTicketStatus());
+    const handleTicketUpdate = () => {
+      setTicketStatus(getTicketStatus());
+    };
+    window.addEventListener("shadowlog:ticket-update", handleTicketUpdate);
+    return () => {
+      window.removeEventListener("shadowlog:ticket-update", handleTicketUpdate);
+    };
   }, []);
 
   const handleSave = () => {
@@ -87,36 +156,100 @@ export default function SettingsPage() {
       localStorage.setItem("shadowlog_level", level);
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
-    } catch {
-      alert("設定の保存に失敗しました。");
+    } catch {}
+  };
+
+  const handleSaveNickname = async () => {
+    setIsSavingNickname(true);
+    setNicknameSaved(false);
+    try {
+      await updateUserNickname(nickname);
+      setNicknameSaved(true);
+      setTimeout(() => setNicknameSaved(false), 2500);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingNickname(false);
     }
   };
 
-  const handleResetData = async () => {
-    if (!window.confirm("累計発話単語数、学習履歴、苦手単語帳の記録をリセットしますか？この操作は取り消せません。")) {
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordMessage(null);
+
+    if (newPassword.length < 6) {
+      setPasswordMessage({
+        type: "error",
+        text: "新しいパスワードは6文字以上で入力してください。",
+      });
       return;
     }
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage({
+        type: "error",
+        text: "確認用パスワードが一致しません。",
+      });
+      return;
+    }
+
+    setIsSubmittingPassword(true);
     try {
-      // Clear server stats
-      try {
-        await fetch("/api/stats", { method: "DELETE" });
-      } catch (e) {
-        console.warn("Failed to reset API stats:", e);
-      }
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
 
-      // Clear local storage
-      localStorage.removeItem("shadowlog_stored_sessions");
-      localStorage.removeItem("shadowlog_weak_words");
-      window.dispatchEvent(new Event("shadowlog:session-update"));
+      if (error) throw error;
 
-      alert("学習データをリセットしました。単語数とセッション履歴が0になりました。");
-    } catch {
-      alert("リセットに失敗しました。");
+      setPasswordMessage({
+        type: "success",
+        text: "パスワードを正常に変更しました。",
+      });
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => {
+        setIsPasswordSectionOpen(false);
+        setPasswordMessage(null);
+      }, 3000);
+    } catch (err: unknown) {
+      console.error(err);
+      setPasswordMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "パスワードの変更に失敗しました。",
+      });
+    } finally {
+      setIsSubmittingPassword(false);
     }
   };
 
   const handleStartAssessment = () => {
     router.push("/settings/assessment");
+  };
+
+  const handleResetData = () => {
+    if (
+      window.confirm(
+        "学習履歴、発話単語数、苦手単語帳の記録をリセットしますか？\nこの操作は取り消せません。"
+      )
+    ) {
+      try {
+        localStorage.removeItem("shadowlog_stats");
+        localStorage.removeItem("shadowlog_sessions");
+        localStorage.removeItem("shadowlog_words");
+        localStorage.removeItem("shadowlog_weak_words");
+        localStorage.removeItem("shadowlog_level");
+        localStorage.removeItem("shadowlog_industry");
+        localStorage.removeItem("shadowlog_assessment_result");
+        localStorage.removeItem("shadowlog_assessment_date");
+
+        fetch("/api/stats", { method: "DELETE" }).catch(() => {});
+
+        alert("学習データをリセットしました。初期状態に戻ります。");
+        window.location.reload();
+      } catch {
+        alert("リセットに失敗しました。");
+      }
+    }
   };
 
   const industries: Array<{ key: Industry; label: string; desc: string }> = [
@@ -150,18 +283,211 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5 sm:space-y-8 pb-16 sm:pb-8">
+    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 pb-16 sm:pb-8">
       <div>
         <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <Settings className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
-          学習設定
+          設定・アカウント
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-          あなたの業種や目標レベルに合わせて、AIが生成するシャドーイング英文を最適化します。
+          アカウント情報の管理や学習分野・難易度レベル、マイク設定を行います。
         </p>
       </div>
 
-      {/* Auto-Assessment Section */}
+      {/* ── 1. アカウント情報セクション ── */}
+      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-foreground font-bold text-base sm:text-lg">
+            <User className="w-5 h-5 text-primary" />
+            <span>アカウント情報</span>
+          </div>
+          {isLoggedIn ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              会員登録済み
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border">
+              未登録（ゲスト体験中）
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-4 pt-1">
+          {/* Email Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-xl bg-muted/40 border border-border/60">
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                登録メールアドレス
+              </span>
+              <p className="text-xs text-muted-foreground">
+                {userEmail || "アカウント未作成（ゲスト利用中）"}
+              </p>
+            </div>
+            {!isLoggedIn && (
+              <Link
+                href="/login?mode=signup"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition shadow-xs shrink-0"
+              >
+                <span>無料アカウント作成</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
+
+          {/* Nickname Row */}
+          <div className="space-y-1.5">
+            <label htmlFor="settings-nickname" className="text-xs font-bold text-foreground block">
+              ニックネーム（表示名）
+            </label>
+            <p className="text-[11px] text-muted-foreground">
+              ダッシュボードの挨拶や学習レポートで使用されるあなたのお名前です。
+            </p>
+            <div className="flex items-center gap-2 pt-0.5">
+              <input
+                id="settings-nickname"
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="例: ヒデ、Alex、英語がんばるマン"
+                className="flex-1 p-2.5 sm:p-3 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                maxLength={30}
+              />
+              <button
+                type="button"
+                onClick={handleSaveNickname}
+                disabled={isSavingNickname}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 sm:py-3 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 active:scale-95 transition shadow-xs disabled:opacity-50 min-h-[42px] shrink-0"
+              >
+                {isSavingNickname ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : nicknameSaved ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>保存完了</span>
+                  </>
+                ) : (
+                  <span>保存する</span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Password Row */}
+          {isLoggedIn && (
+            <div className="pt-2 border-t border-border/60">
+              {isGoogleUser ? (
+                <div className="p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/15 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🌐</span>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">
+                        Googleアカウント連携中
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Googleアカウントで安全にログイン中のため、パスワードの変更は不要です。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                        パスワード
+                      </span>
+                      <p className="text-xs text-muted-foreground tracking-widest mt-0.5">
+                        ••••••••••••
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsPasswordSectionOpen((prev) => !prev)}
+                      className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      {isPasswordSectionOpen ? "閉じる" : "パスワードを変更する"}
+                    </button>
+                  </div>
+
+                  {/* Password Change Form */}
+                  {isPasswordSectionOpen && (
+                    <form
+                      onSubmit={handleChangePassword}
+                      className="p-4 rounded-xl bg-muted/40 border border-border/80 space-y-3 animate-in fade-in-50 duration-200"
+                    >
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground">
+                          新しいパスワード (6文字以上)
+                        </label>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          minLength={6}
+                          className="w-full p-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground">
+                          新しいパスワード（確認用）
+                        </label>
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          minLength={6}
+                          className="w-full p-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+
+                      {passwordMessage && (
+                        <div
+                          className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
+                            passwordMessage.type === "success"
+                              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                              : "bg-destructive/10 text-destructive border border-destructive/20"
+                          }`}
+                        >
+                          {passwordMessage.type === "success" ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          ) : (
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          )}
+                          <span>{passwordMessage.text}</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end pt-1">
+                        <button
+                          type="submit"
+                          disabled={isSubmittingPassword}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 disabled:opacity-50 transition shadow-xs"
+                        >
+                          {isSubmittingPassword ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <span>パスワードを更新</span>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 2. Auto-Assessment Section ── */}
       <div className="bg-card rounded-2xl p-5 sm:p-8 border-2 border-primary/20 shadow-sm space-y-4 sm:space-y-5 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-5">
           <Target className="w-24 h-24 text-primary" />
@@ -169,9 +495,9 @@ export default function SettingsPage() {
 
         <div className="flex items-center gap-2 text-foreground font-semibold">
           <Sparkles className="w-5 h-5 text-primary" />
-          <span>レベル自動判定</span>
-          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] sm:text-xs font-bold rounded-full">
-            おすすめ
+          <span className="text-base sm:text-lg font-bold">レベル判定テスト</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+            アダプティブ (3〜5問)
           </span>
         </div>
 
@@ -198,22 +524,27 @@ export default function SettingsPage() {
               </p>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              {/* New: use levelInfo from result, with fallback for legacy data */}
               {assessmentResult.levelInfo ? (
-                <span className={`px-3 py-1 rounded-lg border text-sm font-bold ${assessmentResult.levelInfo.bg} ${assessmentResult.levelInfo.color}`}>
+                <span
+                  className={`px-3 py-1 rounded-lg border text-sm font-bold ${assessmentResult.levelInfo.bg} ${assessmentResult.levelInfo.color}`}
+                >
                   {assessmentResult.levelInfo.label}
                 </span>
               ) : (
-                // Legacy fallback for old 3-level results
-                <span className={`px-3 py-1 rounded-lg border text-sm font-bold ${
-                  (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner"
-                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600"
+                <span
+                  className={`px-3 py-1 rounded-lg border text-sm font-bold ${
+                    (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner"
+                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600"
+                      : (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate"
+                      ? "bg-blue-500/15 border-blue-500/30 text-blue-600"
+                      : "bg-purple-500/15 border-purple-500/30 text-purple-600"
+                  }`}
+                >
+                  {(assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner"
+                    ? "初級"
                     : (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate"
-                    ? "bg-blue-500/15 border-blue-500/30 text-blue-600"
-                    : "bg-purple-500/15 border-purple-500/30 text-purple-600"
-                }`}>
-                  {(assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner" ? "初級" :
-                   (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate" ? "中級" : "上級"}
+                    ? "中級"
+                    : "上級"}
                 </span>
               )}
               <div className="flex items-center gap-2 text-[11px] sm:text-xs text-muted-foreground">
@@ -226,7 +557,6 @@ export default function SettingsPage() {
                     <span>話速 {assessmentResult.overallWPMFollowRate}%</span>
                   </>
                 ) : (
-                  // Legacy fallback
                   <>
                     <span>初級 {(assessmentResult as unknown as Record<string, unknown>).beginnerAvg as number}%</span>
                     <span className="text-border">|</span>
@@ -250,7 +580,7 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* Industry Selection */}
+      {/* ── 3. Industry Selection ── */}
       <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
           <Briefcase className="w-5 h-5 text-primary" />
@@ -270,24 +600,19 @@ export default function SettingsPage() {
               }`}
             >
               <p className="font-bold text-sm text-foreground">{item.label}</p>
-              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                {item.desc}
+              </p>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Difficulty Level Selection (Manual) */}
+      {/* ── 4. Difficulty Level Selection (Manual) ── */}
       <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
-            <BarChart className="w-5 h-5 text-primary" />
-            <span>難易度レベル</span>
-          </div>
-          {assessmentResult && (
-            <span className="text-[10px] sm:text-xs text-primary font-medium">
-              ※ 自動判定で設定済み
-            </span>
-          )}
+        <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
+          <BarChart className="w-5 h-5 text-primary" />
+          <span>難易度レベルの手動選択</span>
         </div>
 
         <div className="space-y-2.5 sm:space-y-3">
@@ -296,45 +621,53 @@ export default function SettingsPage() {
               key={item.key}
               type="button"
               onClick={() => setLevel(item.key)}
-              className={`w-full p-3.5 sm:p-4 rounded-xl border text-left flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 transition min-h-[56px] ${
+              className={`w-full p-3.5 sm:p-4 rounded-xl border text-left transition min-h-[64px] flex items-center justify-between ${
                 level === item.key
                   ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                   : "border-border hover:border-primary/40 bg-card"
               }`}
             >
-              <div className="space-y-0.5 sm:space-y-1">
+              <div className="space-y-1 pr-2">
                 <div className="flex items-center gap-2">
                   <p className="font-bold text-sm text-foreground">{item.label}</p>
-                  <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium">
-                    {item.words}
+                  <span className="text-[11px] text-muted-foreground font-medium">
+                    ({item.words})
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-muted-foreground">{item.desc}</p>
+                <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+              <div
+                className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                  level === item.key ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
+                }`}
+              >
+                {level === item.key && <div className="w-2 h-2 rounded-full bg-white" />}
               </div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Microphone Input Device Selection */}
+      {/* ── 5. Microphone Selection ── */}
       <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
           <Mic className="w-5 h-5 text-primary" />
-          <span>録音マイクの設定 (Bluetooth / 外部マイク)</span>
+          <span>録音マイクの設定</span>
         </div>
 
         <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-          シャドーイング録音で使用するマイクを選択します。Bluetoothヘッドセットや外部マイクを優先設定でき、次回以降の練習時にも自動で引き継がれます。
+          AirPodsなどのBluetoothイヤホンや外付けマイクを明示的に指定できます。ブラウザの標準マイクで問題ない場合は「システム既定」のままで動作します。
         </p>
 
         <div className="space-y-2">
           <select
             value={selectedMicId}
             onChange={(e) => handleMicChange(e.target.value)}
-            className="w-full p-3.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition cursor-pointer"
-            aria-label="優先マイクを選択"
+            className="w-full p-3 rounded-xl border border-border bg-background text-foreground text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition min-h-[44px]"
           >
-            <option value="">システムのデフォルトマイク</option>
+            <option value="">システム既定（自動選択）</option>
             {audioDevices.map((device, idx) => (
               <option key={device.deviceId || idx} value={device.deviceId}>
                 {device.label || `マイク ${idx + 1}`}
@@ -349,7 +682,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Learning Data Management */}
+      {/* ── 6. Learning Data Reset ── */}
       <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
           <RotateCcw className="w-5 h-5 text-muted-foreground" />
@@ -372,12 +705,12 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Save Button */}
+      {/* ── Save Settings Button ── */}
       <div className="flex items-center justify-end gap-3 pt-1 sm:pt-2">
         {isSaved && (
           <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4" />
-            設定を保存しました
+            学習設定を保存しました
           </span>
         )}
         <button
@@ -385,11 +718,18 @@ export default function SettingsPage() {
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-sm active:scale-95 min-h-[48px]"
         >
           <Save className="w-4 h-4" />
-          設定を保存する
+          学習設定を保存する
         </button>
       </div>
 
-      {/* Feedback & Bug Report Section */}
+      {/* ── 7. 料金プラン・コース案内セクション ── */}
+      <PlanComparisonSection
+        currentPlan={ticketStatus?.plan || "free"}
+        isRegistered={isLoggedIn}
+        userEmail={userEmail}
+      />
+
+      {/* ── 8. 不具合報告・お問い合わせ ── */}
       <FeedbackForm />
     </div>
   );

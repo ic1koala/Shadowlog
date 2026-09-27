@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Sparkles, Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, UserPlus, LogIn } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { migrateGuestDataToSupabase } from "@/lib/storage/sync-service";
 
-export default function LoginPage() {
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+function LoginContent() {
+  const searchParams = useSearchParams();
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const [authMode, setAuthMode] = useState<"login" | "signup">(initialMode);
+
+  useEffect(() => {
+    if (searchParams.get("mode") === "signup") {
+      setAuthMode("signup");
+    }
+  }, [searchParams]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -335,5 +345,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -85,6 +85,7 @@ export interface PracticeSession {
   wordCount: number;
   matchedWordCount: number;
   accuracyScore: number;
+  wpm?: number;
   createdAt: string;
 }
 

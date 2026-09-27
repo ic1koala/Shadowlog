@@ -277,3 +277,116 @@ export async function updateWeakWordMasteredInSupabase(
     return false;
   }
 }
+
+// ── Nickname & Profile Management ──
+
+const STORAGE_NICKNAME_KEY = "shadowlog_nickname";
+
+/**
+ * Returns cached nickname from LocalStorage.
+ */
+export function getStoredNickname(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(STORAGE_NICKNAME_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Saves nickname to LocalStorage and notifies active components.
+ */
+export function setStoredNickname(nickname: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (nickname.trim()) {
+      localStorage.setItem(STORAGE_NICKNAME_KEY, nickname.trim());
+    } else {
+      localStorage.removeItem(STORAGE_NICKNAME_KEY);
+    }
+    window.dispatchEvent(new Event("shadowlog:nickname-update"));
+  } catch (err) {
+    console.warn("Failed to save nickname locally:", err);
+  }
+}
+
+/**
+ * Fetches user nickname from Supabase profiles (or Google user metadata fallback),
+ * caching it to LocalStorage.
+ */
+export async function fetchUserNickname(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+
+  // Check local cache first
+  const localName = getStoredNickname();
+
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return localName;
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!error && data?.display_name) {
+      setStoredNickname(data.display_name);
+      return data.display_name;
+    }
+
+    // Fallback: Google name from OAuth metadata if no profile display_name
+    const googleName =
+      (user.user_metadata?.full_name as string) ||
+      (user.user_metadata?.name as string) ||
+      null;
+
+    if (googleName && !localName) {
+      setStoredNickname(googleName);
+      // Automatically save to Supabase profiles
+      await supabase
+        .from("profiles")
+        .update({ display_name: googleName })
+        .eq("id", user.id);
+      return googleName;
+    }
+
+    return localName;
+  } catch (err) {
+    console.warn("Failed to fetch user nickname:", err);
+    return localName;
+  }
+}
+
+/**
+ * Updates user nickname in both LocalStorage and Supabase DB.
+ */
+export async function updateUserNickname(nickname: string): Promise<boolean> {
+  const trimmed = nickname.trim();
+  setStoredNickname(trimmed);
+
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return true; // Local update is successful even if guest
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        display_name: trimmed,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      console.warn("Failed to update nickname in Supabase profiles:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Error updating nickname:", err);
+    return false;
+  }
+}

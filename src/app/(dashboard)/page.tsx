@@ -6,6 +6,9 @@ import { useStats } from "@/hooks/use-stats";
 import { WordStatsCard } from "@/components/features/dashboard/WordStatsCard";
 import { StreakBadge } from "@/components/features/dashboard/StreakBadge";
 import { ActivityHeatmap } from "@/components/features/dashboard/ActivityHeatmap";
+import { GreetingBanner } from "@/components/features/dashboard/GreetingBanner";
+import { GuestSignupBanner } from "@/components/features/dashboard/GuestSignupBanner";
+import { WpmTrendCard } from "@/components/features/dashboard/WpmTrendCard";
 import { Mic, ArrowRight, History, Sparkles, AlertCircle, GraduationCap } from "lucide-react";
 
 export default function DashboardPage() {
@@ -40,8 +43,14 @@ export default function DashboardPage() {
       : undefined;
 
   return (
-    <div className="space-y-5 sm:space-y-8 pb-4 sm:pb-12">
-      {/* Welcome Banner */}
+    <div className="space-y-5 sm:space-y-7 pb-4 sm:pb-12">
+      {/* 1. Time-based Personalized Greeting Banner */}
+      <GreetingBanner />
+
+      {/* 2. Guest Signup CTA Banner (Visible only for non-registered users) */}
+      <GuestSignupBanner />
+
+      {/* 3. Welcome Banner */}
       <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 p-6 sm:p-10 text-white shadow-xl relative overflow-hidden">
         {/* Subtle background decoration */}
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
@@ -91,7 +100,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Main KPI Cards */}
+      {/* 4. Main KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <WordStatsCard
           totalWords={totalWords}
@@ -105,7 +114,10 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Activity Heatmap */}
+      {/* 5. WPM Trend Card (Recent 3-day average & 7-day trend chart) */}
+      <WpmTrendCard sessions={sessions} />
+
+      {/* 6. Activity Heatmap */}
       <ActivityHeatmap dailyCounts={dailyCounts} />
 
       {/* Recent Sessions List */}
