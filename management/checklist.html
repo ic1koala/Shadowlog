@@ -50,8 +50,32 @@
     </div>
   </header>
 
+  <!-- Main Navigation Tabs -->
+  <div class="bg-white border-b border-slate-200 sticky top-[73px] z-20 shadow-xs">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <button onclick="switchMainTab('tasks')" id="tab-tasks-btn" class="py-3 text-xs sm:text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-2 transition">
+          <span>📊</span> 進捗 ＆ タスク管理
+        </button>
+        <button onclick="switchMainTab('spec')" id="tab-spec-btn" class="py-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition">
+          <span>📖</span> 基本仕様設計書
+          <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-indigo-50 text-indigo-700 border border-indigo-200">最新</span>
+        </button>
+      </div>
+
+      <div class="hidden sm:flex items-center gap-3">
+        <a href="/admin/customers" target="_blank" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition flex items-center gap-1.5">
+          <span>👥</span> 顧客管理画面 (/admin/customers) ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
   <!-- Main Container -->
-  <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-8">
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
+
+    <!-- TAB 1: Tasks & Overview View -->
+    <div id="main-tab-tasks">
 
     <!-- KPI / Status Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5 mb-8">
@@ -326,6 +350,294 @@
 
     <!-- Stage Sections -->
     <div id="stagesContainer" class="space-y-6"></div>
+
+    </div> <!-- End #main-tab-tasks -->
+
+    <!-- TAB 2: System Specification View -->
+    <div id="main-tab-spec" class="hidden space-y-8 pb-12">
+      <!-- Spec Header Banner -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base">
+              📖
+            </span>
+            <h2 class="text-xl font-bold text-slate-900">ShadowLog サービス ＆ システム基本仕様設計書</h2>
+            <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              最新版（2026/09/27）
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+            本プロダクトのビジョン、料金・制限体系（使い放題）、AI原価、DB設計、顧客管理の自動計算ロジック、および運用ルールを定義するマスター仕様書です。
+          </p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <a href="/management/SYSTEM_SPECIFICATION.md" target="_blank" class="text-xs px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition flex items-center gap-1.5 border border-slate-200">
+            <span>📄</span> Markdownファイルを開く ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- Section 1: Overview & Value Proposition -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+          <h3 class="text-base font-bold text-slate-900">1. プロダクト概要 ＆ バリュープロポジション</h3>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100 space-y-2">
+            <div class="font-bold text-indigo-900 flex items-center gap-1.5 text-sm">
+              <span>🎯</span> サービスビジョン
+            </div>
+            <p class="text-slate-700 leading-relaxed">
+              <strong>「英語を話したいすべての人が、挫折せず、圧倒的低価格で実践発話力を鍛えられるAIシャドーイング習慣化SaaS」</strong>
+            </p>
+            <p class="text-slate-500">
+              高額な人手添削（月2万円超）と発音修正のないフリートーク英会話の中間に位置する、最も効率的で安価な発話習熟トレーニングを提供。
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-2">
+            <div class="font-bold text-emerald-900 flex items-center gap-1.5 text-sm">
+              <span>⚡</span> コア差別化（独自の強み）
+            </div>
+            <ul class="text-slate-700 space-y-1.5 list-disc list-inside">
+              <li><strong>即時Diff判定</strong>: Whisper文字起こしで脱落単語・誤読単語を瞬時に赤字可視化。</li>
+              <li><strong>話速（WPM）解析</strong>: ネイティブ音声に対する追従スピードを客観評価。</li>
+              <li><strong>弱点克服パーソナライズ</strong>: 苦手単語（Weak Words）を次回以降のAI生成文に自動注入。</li>
+              <li><strong>圧倒的低価格 ＆ 使い放題</strong>: 月額500円（Base）/ 1,480円（Pro）で回数無制限。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Pricing & Ticket System -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <h3 class="text-base font-bold text-slate-900">2. 料金プラン ＆ チケット・利用制限体系</h3>
+          </div>
+          <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+            ★ 有料プラン 1日上限完全撤廃（使い放題）
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                <th class="p-3">プラン名</th>
+                <th class="p-3">月額料金</th>
+                <th class="p-3">短文シャドーイング</th>
+                <th class="p-3">長文スピーチ (60〜90語)</th>
+                <th class="p-3">カルテ & 弱点単語帳</th>
+                <th class="p-3">1日練習上限</th>
+                <th class="p-3">採算限界 (損益分岐)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr class="hover:bg-slate-50/60">
+                <td class="p-3 font-bold text-slate-800">無料体験 (ゲスト)</td>
+                <td class="p-3 font-mono">¥0</td>
+                <td class="p-3 text-slate-600">累計 5回</td>
+                <td class="p-3 text-slate-400">✕</td>
+                <td class="p-3 text-slate-400">✕ (端末保存のみ)</td>
+                <td class="p-3 text-slate-500">累計5回で終了</td>
+                <td class="p-3 text-slate-400">N/A</td>
+              </tr>
+              <tr class="hover:bg-slate-50/60">
+                <td class="p-3 font-bold text-slate-800">無料会員 (Free)</td>
+                <td class="p-3 font-mono">¥0</td>
+                <td class="p-3 text-slate-600">累計 20回 (+15回)</td>
+                <td class="p-3 text-indigo-600 font-semibold">2回 (味見枠)</td>
+                <td class="p-3 text-emerald-600 font-semibold">◯ (クラウド同期)</td>
+                <td class="p-3 text-slate-500">累計20回で終了</td>
+                <td class="p-3 text-slate-400">N/A</td>
+              </tr>
+              <tr class="bg-blue-50/30 hover:bg-blue-50/60">
+                <td class="p-3 font-bold text-blue-700 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  ベースプラン (Base)
+                </td>
+                <td class="p-3 font-mono font-bold text-blue-600">¥500 /月</td>
+                <td class="p-3 text-emerald-700 font-bold">無制限 (使い放題)</td>
+                <td class="p-3 text-slate-400">✕</td>
+                <td class="p-3 text-emerald-600 font-semibold">◯</td>
+                <td class="p-3 font-bold text-purple-700">上限なし (使い放題)</td>
+                <td class="p-3 font-mono font-bold text-slate-700">1日約50回 (月1,492回)</td>
+              </tr>
+              <tr class="bg-amber-50/30 hover:bg-amber-50/60">
+                <td class="p-3 font-bold text-amber-700 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Proプラン (Pro)
+                </td>
+                <td class="p-3 font-mono font-bold text-amber-600">¥1,480 /月</td>
+                <td class="p-3 text-emerald-700 font-bold">無制限 (使い放題)</td>
+                <td class="p-3 text-amber-700 font-bold">無制限 (業界別英文可)</td>
+                <td class="p-3 text-emerald-600 font-semibold">◯</td>
+                <td class="p-3 font-bold text-purple-700">上限なし (使い放題)</td>
+                <td class="p-3 font-mono font-bold text-slate-700">1日約147回 (月4,414回)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2.5">
+          <span class="text-indigo-600 font-bold">💡 方針確定メモ:</span>
+          <div>
+            ユーザーが「残回数」を気にせず継続できるよう、有料プランのデイリー上限は完全撤廃いたしました。
+            管理側（<code>/admin/customers</code>）で損益分岐点（Base: 1日50回、Pro: 1日147回）に対する利用ペースを自動監視するため、安全に使い放題を提供可能です。
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: AI Pipeline & Cost Structure -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+          <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+          <h3 class="text-base font-bold text-slate-900">3. AI・音響パイプライン ＆ コスト・キャパシティ構造</h3>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="text-slate-500 font-medium">1練習あたり実質原価</div>
+            <div class="text-2xl font-bold font-mono text-slate-900 mt-1">約 0.322 円</div>
+            <div class="text-[11px] text-slate-500 mt-2 space-y-1">
+              <div>・Whisper: 0.149 円 (約10秒録音)</div>
+              <div>・TTS-1: 0.150 円 (リトライ時0円)</div>
+              <div>・GPT-4o-mini: 0.024 円 (弱点注入)</div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-purple-50/50 border border-purple-200">
+            <div class="text-purple-800 font-medium">月間固定費（GMOオフィス）</div>
+            <div class="text-2xl font-bold font-mono text-purple-700 mt-1">¥1,650 <span class="text-xs font-normal">/月</span></div>
+            <div class="text-[11px] text-purple-700 mt-2">
+              ・特商法表記 ＆ 法人登記可能<br>
+              ・<strong>わずか 6名（Proなら2名）</strong> で固定費回収
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200">
+            <div class="text-emerald-800 font-medium">3ヶ月後目標 (50名) の手残り</div>
+            <div class="text-2xl font-bold font-mono text-emerald-600 mt-1">+¥16,532 <span class="text-xs font-normal">/月</span></div>
+            <div class="text-[11px] text-emerald-700 mt-2">
+              ・売上: ¥29,900 / 粗利: 60.8%<br>
+              ・全員毎日上限時でも <strong>+1.1万円黒字</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+          <div class="font-bold text-slate-800">📊 API限界・レートリミット（OpenAI Tier 1）検証結果</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div class="p-2.5 rounded-lg bg-white border border-slate-200">
+              <div class="font-semibold text-slate-700">Whisper-1 (STT / 主ボトルネック)</div>
+              <div class="text-indigo-600 font-mono font-bold text-sm mt-0.5">負荷率 3.0% 〜 4.6%</div>
+              <div class="text-[10px] text-slate-500">上限50 RPMに対し日次1.5〜2.3 RPM。安全率約25〜33倍。</div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-white border border-slate-200">
+              <div class="font-semibold text-slate-700">TTS-1 (模範音声合成)</div>
+              <div class="text-emerald-600 font-mono font-bold text-sm mt-0.5">負荷率 1.6% 〜 2.4%</div>
+              <div class="text-[10px] text-slate-500">同一文の再練習時は音声再利用。安全率約40〜60倍。</div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-white border border-slate-200">
+              <div class="font-semibold text-slate-700">GPT-4o-mini (文生成)</div>
+              <div class="text-slate-700 font-mono font-bold text-sm mt-0.5">負荷率 0.3% 以下</div>
+              <div class="text-[10px] text-slate-500">上限500 RPMに対し1.5 RPM。安全率300倍以上。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: System Architecture & DB Design -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+          <h3 class="text-base font-bold text-slate-900">4. システムアーキテクチャ ＆ データベース設計</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="space-y-3">
+            <div class="font-bold text-slate-800">💻 技術スタック</div>
+            <ul class="space-y-1.5 text-slate-600 list-disc list-inside">
+              <li><strong>Frontend</strong>: Next.js 14 (App Router), React 18, Tailwind CSS, Web Audio API</li>
+              <li><strong>Backend</strong>: Vercel Serverless Edge, Node.js API Routes</li>
+              <li><strong>Database / Auth</strong>: Supabase (PostgreSQL, Google OAuth / Email Auth, Row Level Security)</li>
+              <li><strong>Payment</strong>: Stripe Billing / Checkout / Customer Portal</li>
+              <li><strong>Email / CRM</strong>: Resend API (問い合わせ自動転送 & 自動返信)</li>
+              <li><strong>SNS Tracking</strong>: Meta Graph API (Threads インサイト自動集計)</li>
+            </ul>
+          </div>
+
+          <div class="space-y-3">
+            <div class="font-bold text-slate-800">🗄️ Supabase データベーステーブル一覧</div>
+            <div class="space-y-1.5 font-mono text-[11px]">
+              <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                <strong>profiles</strong>: ユーザー基本情報 (id, email, plan, nickname, stripe_id)
+              </div>
+              <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                <strong>user_tickets</strong>: チケット残数・日次利用カウンター (tickets_used, pro_trials_used)
+              </div>
+              <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                <strong>practice_sessions</strong>: 練習履歴・スコア・WPM・Diff結果
+              </div>
+              <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                <strong>weak_words</strong>: ユーザー別の苦手単語帳 (fail_count, is_mastered)
+              </div>
+              <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                <strong>feedback_tickets</strong>: 不具合報告・問い合わせログ・添付スクショ
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Operations & Monitoring -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+          <h3 class="text-base font-bold text-slate-900">5. 管理・運用・モニタリング体制</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-800 flex items-center justify-between">
+              <span>👥 顧客管理画面 (<code>/admin/customers</code>)</span>
+              <a href="/admin/customers" target="_blank" class="text-indigo-600 font-semibold hover:underline">開く ↗</a>
+            </div>
+            <p class="text-slate-600 leading-relaxed">
+              登録ユーザー一覧、本日の練習数、1日平均練習数、月間想定AI原価、および損益分岐点に対するリスクステータス（🟢安全 / 🟡注意 / 🔴警戒）を完全自動計算。CSV出力対応。
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-800 flex items-center justify-between">
+              <span>✉️ お問い合わせ ＆ 不具合対応窓口</span>
+              <span class="text-emerald-600 font-semibold">Resend 連携稼働中</span>
+            </div>
+            <p class="text-slate-600 leading-relaxed">
+              アプリ内設定画面最下部から送信された声が <code>shadowlog.app@gmail.com</code> に即時HTML通知。管理者はGmail上で「返信」ボタンを押すだけでユーザーへ直接回答可能。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6: Governance & Update Rule -->
+      <div class="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm space-y-3 bg-amber-50/20">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-600 font-bold text-base">⚠️</span>
+          <h3 class="text-sm font-bold text-amber-900">6. 仕様更新・管理ルール（恒久ルール）</h3>
+        </div>
+        <p class="text-xs text-amber-900/90 leading-relaxed">
+          今後、料金プラン、チケット体系、AIパイプライン、データベース設計、利用制限等に変更が発生した場合は、
+          <strong>必ず本画面（基本仕様設計書タブ）および <code>management/SYSTEM_SPECIFICATION.md</code> を即座に更新すること</strong>。
+          これにより、開発・運営・意思決定のすべてにおいて常に最新仕様が共有されます。
+        </p>
+      </div>
+    </div> <!-- End #main-tab-spec -->
 
   </main>
 
@@ -638,9 +950,35 @@
       }
     }
 
+    function switchMainTab(tab) {
+      const tasksView = document.getElementById("main-tab-tasks");
+      const specView = document.getElementById("main-tab-spec");
+      const tasksBtn = document.getElementById("tab-tasks-btn");
+      const specBtn = document.getElementById("tab-spec-btn");
+
+      if (tab === "spec") {
+        tasksView.classList.add("hidden");
+        specView.classList.remove("hidden");
+        specBtn.className = "py-3 text-xs sm:text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-2 transition";
+        tasksBtn.className = "py-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition";
+        window.location.hash = "spec";
+      } else {
+        specView.classList.add("hidden");
+        tasksView.classList.remove("hidden");
+        tasksBtn.className = "py-3 text-xs sm:text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-2 transition";
+        specBtn.className = "py-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition";
+        window.location.hash = "tasks";
+      }
+    }
+
     // Initialize
     init();
     fetchAnalytics();
+
+    // Check URL Hash for Tab selection
+    if (window.location.hash === "#spec") {
+      switchMainTab("spec");
+    }
   </script>
 </body>
 </html>
