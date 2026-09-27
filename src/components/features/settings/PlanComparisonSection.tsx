@@ -143,7 +143,7 @@ export function PlanComparisonSection({
             <ul className="space-y-2 text-xs text-muted-foreground pt-1">
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <span><strong>1日上限 30回</strong>（月間最大900回）の短文練習</span>
+                <span><strong>短文シャドーイング無制限</strong>（使い放題）</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />

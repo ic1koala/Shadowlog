@@ -36,6 +36,7 @@ import {
 import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
 import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
 import { PlanComparisonSection } from "@/components/features/settings/PlanComparisonSection";
+import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -293,6 +294,26 @@ export default function SettingsPage() {
           アカウント情報の管理や学習分野・難易度レベル、マイク設定を行います。
         </p>
       </div>
+
+      {/* ── 管理者専用導線 ── */}
+      {isAdminEmail(userEmail) && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
+              管理者アカウントとしてログイン中
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              登録ユーザーの学習状況や利用コスト試算を確認・管理できます。
+            </p>
+          </div>
+          <Link
+            href="/admin/customers"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors shrink-0"
+          >
+            🛡️ 管理者専用: 顧客管理ダッシュボード ↗
+          </Link>
+        </div>
+      )}
 
       {/* ── 1. アカウント情報セクション ── */}
       <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5">
