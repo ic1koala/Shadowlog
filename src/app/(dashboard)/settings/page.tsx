@@ -371,7 +371,7 @@ export default function SettingsPage() {
                 type="text"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                placeholder="例: ヒデ、Alex、英語がんばるマン"
+                placeholder="例: リョウ、Alex、英語がんばるマン"
                 className="flex-1 p-2.5 sm:p-3 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
                 maxLength={30}
               />

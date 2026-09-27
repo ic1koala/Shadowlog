@@ -30,8 +30,9 @@ function LoginContent() {
     setMessage(null);
     try {
       const supabase = createClient();
+      // SupabaseのRedirect URLs設定に完全一致させるため、クエリパラメータなしのクリーンなコールバックURLを指定
       const redirectUrl = typeof window !== "undefined"
-        ? `${window.location.origin}/auth/callback?next=/?auth=success`
+        ? `${window.location.origin}/auth/callback`
         : "/auth/callback";
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -43,7 +44,10 @@ function LoginContent() {
 
       if (error) throw error;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Googleログインの開始に失敗しました";
+      let msg = err instanceof Error ? err.message : "Googleログインの開始に失敗しました";
+      if (msg.toLowerCase().includes("validation failed")) {
+        msg = "Google認証エラー (400 validation failed): Supabaseの「Authentication > URL Configuration > Redirect URLs」に本アプリのURL（/auth/callback）が登録されているか、およびGoogle Provider設定をご確認ください。";
+      }
       setIsSuccess(false);
       setMessage(msg);
       setIsSubmitting(false);
@@ -62,7 +66,7 @@ function LoginContent() {
       if (authMode === "signup") {
         // Sign Up Flow
         const redirectUrl = typeof window !== "undefined"
-          ? `${window.location.origin}/auth/callback?next=/?auth=success`
+          ? `${window.location.origin}/auth/callback`
           : "/auth/callback";
 
         const { data, error } = await supabase.auth.signUp({
