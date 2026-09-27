@@ -28,7 +28,7 @@ function getSupabaseAdmin() {
 }
 
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || "shadowlog.app@gmail.com";
-const FROM_EMAIL = "ShadowLog Support <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "ShadowLog Support <onboarding@resend.dev>";
 
 const CATEGORY_LABELS: Record<string, string> = {
   bug: "🐛 不具合・エラー報告",
