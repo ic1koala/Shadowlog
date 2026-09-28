@@ -125,3 +125,19 @@ export interface UserStats {
   lastPracticedDate?: string;
   dailyCounts: Record<string, number>; // YYYY-MM-DD: count
 }
+
+export type AnnouncementCategory = "update" | "important" | "campaign" | "notice";
+
+export interface Announcement {
+  id: string;
+  title: string;
+  category: AnnouncementCategory;
+  tagText: string;
+  publishedAt: string;
+  coverImages?: string[];
+  summary: string;
+  content: string;
+  actionUrl?: string;
+  actionText?: string;
+}
+
