@@ -1,5 +1,10 @@
 import { UserPlanType } from "@/types";
-import { isVipEmail } from "@/lib/auth/vip-checker";
+import {
+  isVipEmail,
+  getVipType,
+  VipType,
+  CAMPAIGN_REGISTRATION_DEADLINE,
+} from "@/lib/auth/vip-checker";
 import { getPlanType, setPlanType } from "@/lib/storage/user-learning-store";
 
 // Ticket Configuration
@@ -13,9 +18,11 @@ const KEY_GUEST_TICKETS_USED = "shadowlog_guest_tickets_used";
 const KEY_USER_TICKETS_USED = "shadowlog_user_tickets_used";
 const KEY_PRO_TRIAL_USED = "shadowlog_pro_trial_used";
 const KEY_USER_EMAIL = "shadowlog_user_email";
+const KEY_USER_CREATED_AT = "shadowlog_user_created_at";
 
 export interface TicketStatus {
   isVip: boolean;
+  vipType?: VipType;
   isRegistered: boolean;
   plan: UserPlanType;
   availableTickets: number;
@@ -57,9 +64,41 @@ export function setCurrentUserEmail(email: string | null): void {
 }
 
 /**
+ * Gets the stored user registration timestamp if available
+ */
+export function getCurrentUserCreatedAt(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(KEY_USER_CREATED_AT);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sets current user registration timestamp
+ */
+export function setCurrentUserCreatedAt(createdAt: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (createdAt) {
+      localStorage.setItem(KEY_USER_CREATED_AT, createdAt);
+    } else {
+      localStorage.removeItem(KEY_USER_CREATED_AT);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+/**
  * Retrieves the comprehensive ticket status of the user
  */
-export function getTicketStatus(emailOverride?: string | null): TicketStatus {
+export function getTicketStatus(
+  emailOverride?: string | null,
+  registeredAtOverride?: string | null,
+  nowOverride?: Date
+): TicketStatus {
   if (typeof window === "undefined") {
     return {
       isVip: false,
@@ -77,13 +116,28 @@ export function getTicketStatus(emailOverride?: string | null): TicketStatus {
   }
 
   const email = emailOverride !== undefined ? emailOverride : getCurrentUserEmail();
-  const isVip = isVipEmail(email);
+  let registeredAt = registeredAtOverride !== undefined ? registeredAtOverride : getCurrentUserCreatedAt();
+  const now = nowOverride || new Date();
+
+  // If user is registered (email exists) but registeredAt isn't saved yet,
+  // and we're currently before the campaign registration deadline,
+  // record current time so they qualify for Campaign VIP.
+  if (email && !registeredAt && now <= new Date(CAMPAIGN_REGISTRATION_DEADLINE)) {
+    registeredAt = now.toISOString();
+    try {
+      localStorage.setItem(KEY_USER_CREATED_AT, registeredAt);
+    } catch {}
+  }
+
+  const vipType = getVipType({ email, registeredAt, now });
+  const isVip = vipType !== null;
   const currentPlan = getPlanType();
 
-  // If VIP, automatically grant unlimited Pro access
+  // If VIP (whitelist or campaign), automatically grant unlimited Pro access
   if (isVip) {
     return {
       isVip: true,
+      vipType,
       isRegistered: true,
       plan: "pro",
       availableTickets: Infinity,
@@ -148,6 +202,7 @@ export function getTicketStatus(emailOverride?: string | null): TicketStatus {
 
   return {
     isVip: false,
+    vipType: null,
     isRegistered,
     plan: isRegistered ? "free" : "guest",
     availableTickets,
@@ -202,13 +257,19 @@ export function consumeTicket(
 /**
  * Upgrades guest data to registered user (called after user signs in / signs up)
  */
-export function upgradeGuestToRegisteredUser(email: string): void {
+export function upgradeGuestToRegisteredUser(
+  email: string,
+  registeredAt?: string | null
+): void {
   if (typeof window === "undefined") return;
 
   setCurrentUserEmail(email);
-  const isVip = isVipEmail(email);
+  const effectiveCreatedAt = registeredAt || getCurrentUserCreatedAt() || new Date().toISOString();
+  setCurrentUserCreatedAt(effectiveCreatedAt);
 
-  if (isVip) {
+  const vipType = getVipType({ email, registeredAt: effectiveCreatedAt });
+
+  if (vipType === "whitelist") {
     setPlanType("pro");
   } else if (getPlanType() === "guest") {
     setPlanType("free");

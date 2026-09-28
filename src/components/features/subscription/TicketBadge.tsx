@@ -39,7 +39,13 @@ export function TicketBadge() {
         {status.isVip || status.plan === "pro" ? (
           <div className="relative z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-slate-800 text-indigo-950 dark:text-indigo-100 border border-indigo-200 dark:border-indigo-700 text-xs font-bold shadow-xs">
             <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <span>{status.isVip ? "👑 VIP Tester (無制限)" : "👑 Pro (無制限)"}</span>
+            <span>
+              {status.vipType === "campaign"
+                ? "👑 VIP (10/30迄)"
+                : status.isVip
+                ? "👑 VIP Tester (無制限)"
+                : "👑 Pro (無制限)"}
+            </span>
           </div>
         ) : status.plan === "base" ? (
           <div className="relative z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-slate-800 text-indigo-950 dark:text-indigo-100 border border-indigo-200 text-xs font-semibold shadow-xs">

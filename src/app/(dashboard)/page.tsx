@@ -19,7 +19,7 @@ export default function DashboardPage() {
         const user = await getAuthenticatedUser();
         if (user && user.email) {
           const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
-          upgradeGuestToRegisteredUser(user.email);
+          upgradeGuestToRegisteredUser(user.email, user.created_at);
           await migrateGuestDataToSupabase();
           window.dispatchEvent(new Event("shadowlog:ticket-update"));
         }

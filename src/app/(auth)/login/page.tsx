@@ -85,7 +85,7 @@ function LoginContent() {
           setMessage("会員登録が完了しました！ゲストデータを引き継いでダッシュボードへ移動します...");
           if (typeof window !== "undefined") {
             const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
-            upgradeGuestToRegisteredUser(email);
+            upgradeGuestToRegisteredUser(email, data.user?.created_at || new Date().toISOString());
             await migrateGuestDataToSupabase();
             window.dispatchEvent(new Event("shadowlog:ticket-update"));
           }
@@ -98,7 +98,7 @@ function LoginContent() {
         }
       } else {
         // Sign In Flow
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -110,7 +110,7 @@ function LoginContent() {
         // Upgrade guest state to registered user & grant +15 tickets
         if (typeof window !== "undefined") {
           const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
-          upgradeGuestToRegisteredUser(email);
+          upgradeGuestToRegisteredUser(email, signInData.user?.created_at);
           await migrateGuestDataToSupabase();
           window.dispatchEvent(new Event("shadowlog:ticket-update"));
         }

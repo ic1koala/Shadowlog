@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
+import { getVipType, VipType } from "@/lib/auth/vip-checker";
 
 function getSupabaseAdmin() {
   const supabaseUrl =
@@ -28,6 +29,7 @@ export interface CustomerSummary {
   id: string;
   email: string;
   plan: "free" | "base" | "pro";
+  vip_type?: VipType;
   created_at: string;
   tickets_used: number;
   pro_trials_used: number;
@@ -256,6 +258,10 @@ export async function GET(req: NextRequest) {
     (profiles || []).forEach((p) => {
       const t = ticketMap.get(p.id);
       const s = sessionStatsMap.get(p.id);
+      const vipType = getVipType({
+        email: p.email,
+        registeredAt: p.created_at,
+      });
       const planVal: "free" | "base" | "pro" =
         p.plan === "pro" || p.plan === "base" ? p.plan : "free";
       const effectivePlan = isAdminEmail(p.email) ? "pro" : planVal;
@@ -270,6 +276,7 @@ export async function GET(req: NextRequest) {
         id: p.id,
         email: p.email || "(メールアドレス未設定)",
         plan: effectivePlan,
+        vip_type: vipType,
         created_at: p.created_at || new Date().toISOString(),
         tickets_used: t?.tickets_used ?? 0,
         pro_trials_used: t?.pro_trials_used ?? 0,
@@ -285,7 +292,12 @@ export async function GET(req: NextRequest) {
         const t = ticketMap.get(u.id);
         const s = sessionStatsMap.get(u.id);
         const email = u.email || "(メールアドレス未設定)";
-        const effectivePlan = isAdminEmail(email) ? "pro" : "free";
+        const vipType = getVipType({
+          email,
+          registeredAt: u.created_at,
+        });
+        const isVip = vipType !== null;
+        const effectivePlan = isAdminEmail(email) || isVip ? "pro" : "free";
         const metrics = calculateUsageAndRisk(
           effectivePlan,
           s?.count ?? 0,
@@ -297,6 +309,7 @@ export async function GET(req: NextRequest) {
           id: u.id,
           email,
           plan: effectivePlan,
+          vip_type: vipType,
           created_at: u.created_at || new Date().toISOString(),
           tickets_used: t?.tickets_used ?? 0,
           pro_trials_used: t?.pro_trials_used ?? 0,
