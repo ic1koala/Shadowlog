@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Mic, BarChart2, Settings, Sparkles, GraduationCap } from "lucide-react";
 import { TicketBadge } from "@/components/features/subscription/TicketBadge";
-import { AnnouncementModal } from "@/components/features/announcements/AnnouncementModal";
-import { hasUnreadLaterAnnouncements } from "@/lib/storage/announcement-store";
 
 export default function DashboardLayout({
   children,
@@ -14,30 +11,16 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [hasRedDot, setHasRedDot] = useState(false);
-
-  useEffect(() => {
-    const updateRedDot = () => {
-      setHasRedDot(hasUnreadLaterAnnouncements());
-    };
-    updateRedDot();
-
-    window.addEventListener("shadowlog:announcements-update", updateRedDot);
-    return () => window.removeEventListener("shadowlog:announcements-update", updateRedDot);
-  }, []);
 
   const navItems = [
     { href: "/", label: "ダッシュボード", icon: BarChart2 },
     { href: "/practice", label: "練習", icon: Mic },
     { href: "/review", label: "復習カルテ", icon: GraduationCap },
-    { href: "/settings", label: "設定", icon: Settings, isSettings: true },
+    { href: "/settings", label: "設定", icon: Settings },
   ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Global Announcement Popup Modal */}
-      <AnnouncementModal />
-
       {/* Top Navbar — hidden on mobile, visible on sm+ */}
       <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background shadow-xs hidden sm:block">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -59,8 +42,7 @@ export default function DashboardLayout({
                   <Link
                     key={item.href}
                     href={item.href}
-                    id={item.isSettings ? "settings-nav-item" : undefined}
-                    className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition ${
                       isActive
                         ? "bg-primary/10 text-primary font-semibold"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -68,9 +50,6 @@ export default function DashboardLayout({
                   >
                     <Icon className="w-4 h-4" />
                     <span>{item.label}</span>
-                    {item.isSettings && hasRedDot && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
-                    )}
                   </Link>
                 );
               })}
@@ -83,13 +62,14 @@ export default function DashboardLayout({
       </header>
 
       {/* Mobile Top Bar — visible only on mobile */}
-      <header
-        className="sticky top-0 z-50 w-full border-b border-border/80 bg-background shadow-xs sm:hidden"
-        style={{
-          paddingTop: "max(env(safe-area-inset-top, 0px), 50px)",
-        }}
-      >
-        <div className="px-4 h-13 flex items-center justify-between bg-background">
+      <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background shadow-xs sm:hidden">
+        {/* iOS Safe Area Spacer (Dynamic Island / Notch safe area) */}
+        <div
+          style={{ height: "env(safe-area-inset-top, 0px)" }}
+          className="w-full bg-background"
+        />
+        {/* Mobile Header Bar */}
+        <div className="px-4 h-14 flex items-center justify-between bg-background">
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
               <Sparkles className="w-4 h-4" />
@@ -129,19 +109,13 @@ export default function DashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                id={item.isSettings ? "settings-nav-item-mobile" : undefined}
-                className={`relative flex flex-col items-center justify-center flex-1 gap-0.5 transition-colors min-h-[44px] ${
+                className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-colors min-h-[44px] ${
                   isActive
                     ? "text-primary"
                     : "text-muted-foreground active:text-foreground"
                 }`}
               >
-                <div className="relative">
-                  <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
-                  {item.isSettings && hasRedDot && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-                  )}
-                </div>
+                <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
                 <span className={`text-[10px] leading-tight ${isActive ? "font-bold" : "font-medium"}`}>
                   {item.label}
                 </span>

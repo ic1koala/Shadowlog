@@ -49,8 +49,6 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-feature-settings: "rlig" 1, "calt" 1;
-  /* Prevent pull-to-refresh on mobile */
-  overscroll-behavior-y: contain;
   /* Improve text rendering on mobile */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -37,7 +37,6 @@ import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
 import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
 import { PlanComparisonSection } from "@/components/features/settings/PlanComparisonSection";
 import { IPComplianceSection } from "@/components/features/settings/IPComplianceSection";
-import { AnnouncementHistorySection } from "@/components/features/announcements/AnnouncementHistorySection";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 
@@ -318,8 +317,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ── お知らせ・アップデート履歴 ── */}
-      <AnnouncementHistorySection />
 
 
       {/* ── 1. アカウント情報セクション ── */}

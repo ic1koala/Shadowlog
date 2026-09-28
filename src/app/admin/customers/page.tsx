@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Flame,
   AlertTriangle,
+  ArrowUp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
@@ -48,6 +49,16 @@ export default function AdminCustomersPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Monitor scroll for top-return button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 150);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // 1. Check Authentication on Mount
   useEffect(() => {
@@ -325,7 +336,9 @@ export default function AdminCustomersPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        {/* iOS Status Bar Safe Area Spacer */}
+        <div style={{ height: "env(safe-area-inset-top, 0px)" }} className="w-full bg-background" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -620,7 +633,7 @@ export default function AdminCustomersPage() {
               <p className="text-xs mt-1">検索条件を変更するか、クリアしてください。</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto touch-pan-y overscroll-x-contain">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -820,6 +833,18 @@ export default function AdminCustomersPage() {
           )}
         </div>
       </main>
+
+      {/* Floating Scroll to Top Button for Mobile/Desktop */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 right-6 z-50 p-3 rounded-full bg-primary text-primary-foreground shadow-xl hover:bg-primary/90 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-bold animate-in fade-in"
+          title="一番上に戻る"
+        >
+          <ArrowUp className="w-4 h-4" />
+          <span className="hidden sm:inline">トップへ</span>
+        </button>
+      )}
     </div>
   );
 }
