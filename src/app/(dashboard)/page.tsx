@@ -192,6 +192,26 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Footer Legal & Trademark Disclaimer (Rank A IP Compliance) */}
+      <div className="pt-8 pb-4 border-t border-border/40 text-center space-y-2">
+        <p className="text-[10px] sm:text-xs text-muted-foreground/70">
+          Powered by OpenAI API (GPT-4o-mini, Whisper, TTS-1)
+        </p>
+        <div className="flex items-center justify-center gap-3 text-[11px] text-muted-foreground/80">
+          <Link href="/terms" className="hover:underline hover:text-foreground transition-colors">
+            利用規約
+          </Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:underline hover:text-foreground transition-colors">
+            プライバシーポリシー
+          </Link>
+          <span>•</span>
+          <Link href="/tokushoho" className="hover:underline hover:text-foreground transition-colors">
+            特定商取引法に基づく表記
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

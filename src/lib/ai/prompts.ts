@@ -94,6 +94,7 @@ export function getSentenceGenerationPrompt(
 
   const systemPrompt = `You are an expert English language coach specializing in shadowing practice.
 Your task is to generate ONE fresh, authentic, contextually rich English sentence along with its natural Japanese translation.
+IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets (e.g., TOEIC, TOEFL), or copyrighted materials. All generated content must be 100% original and dynamically created.
 NEVER generate generic, repetitive, or cliché template sentences.${hasWeakWords ? `
 \nPersonalization: The learner struggles with these words: [${weakWordList}]. Naturally incorporate 1 to 2 of these words into the sentence without forcing them awkwardly.` : ""}
 
@@ -132,6 +133,7 @@ export function getPassageGenerationPrompt(
 
   const systemPrompt = `You are an elite executive speechwriter and English speaking coach.
 Your task is to generate ONE coherent, inspiring, and natural presentation/speech passage (paragraph of 3 to 5 sentences, 60 to 90 words total) along with its natural Japanese translation.
+IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets, or copyrighted materials. All generated content must be 100% original.
 Avoid formulaic openings like "Good morning everyone". Dive right into substantive, engaging speech content.
 
 Strict Output Format:

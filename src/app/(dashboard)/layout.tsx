@@ -22,10 +22,10 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Top Navbar — hidden on mobile, visible on sm+ */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-lg glass-header shadow-2xs hidden sm:block isolate">
-        <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between [transform:translateZ(0)]">
-          <Link href="/" className="flex items-center gap-2.5 group relative z-20">
-            <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm group-hover:scale-105 transition">
+      <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background shadow-xs hidden sm:block">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-xs group-hover:scale-105 transition">
               <Sparkles className="w-5 h-5" />
             </div>
             <span className="font-bold text-lg tracking-tight text-foreground">
@@ -33,7 +33,7 @@ export default function DashboardLayout({
             </span>
           </Link>
 
-          <div className="flex items-center gap-4 relative z-20">
+          <div className="flex items-center gap-4">
             <nav className="flex items-center gap-1 sm:gap-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -62,19 +62,19 @@ export default function DashboardLayout({
       </header>
 
       {/* Mobile Top Bar — visible only on mobile */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-lg glass-header shadow-2xs sm:hidden safe-top isolate">
-        <div className="relative z-20 px-4 h-12 flex items-center justify-between [transform:translateZ(0)]">
-          <Link href="/" className="flex items-center gap-2 group relative z-20">
-            <div className="w-7 h-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+      <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background shadow-xs sm:hidden">
+        {/* iOS Status Bar Safe Area Spacer (Notch / Dynamic Island) */}
+        <div className="h-[env(safe-area-inset-top,0px)] w-full bg-background" />
+        <div className="px-4 h-14 flex items-center justify-between bg-background">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
               <Sparkles className="w-4 h-4" />
             </div>
             <span className="font-bold text-base tracking-tight text-foreground">
               Shadow<span className="text-primary">Log</span>
             </span>
           </Link>
-          <div className="relative z-20">
-            <TicketBadge />
-          </div>
+          <TicketBadge />
         </div>
       </header>
 
@@ -96,7 +96,7 @@ export default function DashboardLayout({
       </footer>
 
       {/* Bottom Tab Navigation — mobile only */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-lg glass-header border-t border-border/60 sm:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/80 shadow-lg sm:hidden">
         <div className="flex items-stretch justify-around h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
