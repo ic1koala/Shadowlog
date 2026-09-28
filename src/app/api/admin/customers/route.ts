@@ -54,6 +54,7 @@ export interface AdminCustomerResponse {
     overallDailyAverage: number;
     topUserDailyCount: number;
     warningAccountCount: number;
+    waitlistCount?: number;
   };
 }
 
@@ -353,6 +354,24 @@ export async function GET(req: NextRequest) {
       (c) => c.cost_risk_status === "warning" || c.cost_risk_status === "danger"
     ).length;
 
+    // Fetch waitlist subscribers count
+    let waitlistCount = 0;
+    try {
+      const { count: wCount, data: wData, error: wError } = await supabaseAdmin
+        .from("waitlist_subscribers")
+        .select("id", { count: "exact" });
+      if (!wError) {
+        waitlistCount =
+          typeof wCount === "number"
+            ? wCount
+            : Array.isArray(wData)
+            ? wData.length
+            : 0;
+      }
+    } catch {
+      // Ignored if waitlist table is not yet created
+    }
+
     const responseData: AdminCustomerResponse = {
       customers,
       kpi: {
@@ -363,6 +382,7 @@ export async function GET(req: NextRequest) {
         overallDailyAverage,
         topUserDailyCount,
         warningAccountCount,
+        waitlistCount,
       },
     };
 

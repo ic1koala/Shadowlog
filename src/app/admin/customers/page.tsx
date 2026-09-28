@@ -21,6 +21,7 @@ import {
   Flame,
   AlertTriangle,
   ArrowUp,
+  Gift,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
@@ -396,7 +397,7 @@ export default function AdminCustomersPage() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         {/* KPI Cards Section - Growth & Scale */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5">
           {/* Card 1: Total Users */}
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-muted-foreground mb-2">
@@ -414,7 +415,24 @@ export default function AdminCustomersPage() {
             </div>
           </div>
 
-          {/* Card 2: New Users This Week */}
+          {/* Card 2: Waitlist Pre-subscribers */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-card border border-purple-500/20 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between text-muted-foreground mb-2">
+              <span className="text-xs font-medium text-purple-600 dark:text-purple-400">事前登録 (Waitlist)</span>
+              <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                <Gift className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+                {data?.kpi.waitlistCount ?? 0}
+                <span className="text-sm font-normal text-muted-foreground ml-1">人</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">11月ローンチ向けリード</p>
+            </div>
+          </div>
+
+          {/* Card 3: New Users This Week */}
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-muted-foreground mb-2">
               <span className="text-xs font-medium">今週の新規登録</span>
