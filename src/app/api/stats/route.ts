@@ -41,6 +41,7 @@ export async function GET() {
             wordCount: row.word_count,
             matchedWordCount: row.matched_word_count,
             accuracyScore: row.accuracy_score,
+            wpm: row.wpm !== null && row.wpm !== undefined ? Number(row.wpm) : undefined,
             createdAt: row.created_at,
           }));
         } else {
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
       wordCount?: number;
       matchedWordCount?: number;
       accuracyScore?: number;
+      wpm?: number;
     } = {};
 
     try {
@@ -91,6 +93,7 @@ export async function POST(req: NextRequest) {
       wordCount = 0,
       matchedWordCount = 0,
       accuracyScore = 0,
+      wpm,
     } = body;
 
     if (!sentence || typeof sentence !== "string") {
@@ -107,6 +110,7 @@ export async function POST(req: NextRequest) {
       wordCount,
       matchedWordCount,
       accuracyScore,
+      wpm: typeof wpm === "number" ? wpm : undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -127,6 +131,7 @@ export async function POST(req: NextRequest) {
           word_count: newSession.wordCount,
           matched_word_count: newSession.matchedWordCount,
           accuracy_score: newSession.accuracyScore,
+          wpm: typeof newSession.wpm === "number" ? newSession.wpm : 0,
           created_at: newSession.createdAt,
         };
 

@@ -14,6 +14,7 @@ export interface PracticeSessionRow {
   word_count: number;
   matched_word_count: number;
   accuracy_score: number;
+  wpm?: number | null;
   created_at: string;
 }
 
@@ -25,6 +26,7 @@ export interface PracticeSessionInsert {
   word_count: number;
   matched_word_count: number;
   accuracy_score: number;
+  wpm?: number | null;
   created_at?: string;
 }
 
@@ -36,6 +38,7 @@ export interface PracticeSessionUpdate {
   word_count?: number;
   matched_word_count?: number;
   accuracy_score?: number;
+  wpm?: number | null;
   created_at?: string;
 }
 

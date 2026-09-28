@@ -43,6 +43,7 @@ export function useStats() {
                   wordCount?: number;
                   matchedWordCount?: number;
                   accuracyScore?: number;
+                  wpm?: number;
                   createdAt?: string;
                 }) => ({
                   id: s.id,
@@ -51,6 +52,7 @@ export function useStats() {
                   wordCount: s.wordCount || 0,
                   matchedWordCount: s.matchedWordCount || 0,
                   accuracyScore: s.accuracyScore || 0,
+                  wpm: typeof s.wpm === "number" ? s.wpm : undefined,
                   createdAt: s.createdAt || new Date().toISOString(),
                 }));
             }

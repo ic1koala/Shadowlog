@@ -121,4 +121,39 @@ describe("API Routes Integration Tests", () => {
       expect(missing.some((m: { word: string }) => m.word.includes("security"))).toBe(true);
     });
   });
+
+  describe("POST & GET /api/stats with wpm", () => {
+    it("records and retrieves wpm in practice sessions", async () => {
+      const { POST: postStatsHandler, GET: getStatsHandler } = await import("@/app/api/stats/route");
+
+      const testSessionPayload = {
+        sentence: "Artificial intelligence empowers scalable cloud infrastructure.",
+        transcription: "Artificial intelligence empowers scalable cloud infrastructure.",
+        wordCount: 7,
+        matchedWordCount: 7,
+        accuracyScore: 100,
+        wpm: 135.5,
+      };
+
+      const postReq = new NextRequest("http://localhost:3000/api/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(testSessionPayload),
+      });
+
+      const postRes = await postStatsHandler(postReq);
+      expect(postRes.status).toBe(201);
+      const postJson = await postRes.json();
+      expect(postJson.success).toBe(true);
+      expect(postJson.session.wpm).toBe(135.5);
+
+      const getRes = await getStatsHandler();
+      expect(getRes.status).toBe(200);
+      const getJson = await getRes.json();
+      expect(Array.isArray(getJson.sessions)).toBe(true);
+      const matched = getJson.sessions.find((s: { sentence: string }) => s.sentence === testSessionPayload.sentence);
+      expect(matched).toBeDefined();
+      expect(matched.wpm).toBe(135.5);
+    });
+  });
 });

@@ -348,6 +348,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
             wordCount: data.diff.originalWordCount,
             matchedWordCount: data.diff.matchedWordCount,
             accuracyScore: data.diff.accuracyScore,
+            wpm: data.wpmInfo?.wpm,
           }),
         });
 
