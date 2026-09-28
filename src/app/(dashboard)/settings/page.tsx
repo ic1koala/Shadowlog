@@ -36,6 +36,7 @@ import {
 import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
 import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
 import { PlanComparisonSection } from "@/components/features/settings/PlanComparisonSection";
+import { IPComplianceSection } from "@/components/features/settings/IPComplianceSection";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 export default function SettingsPage() {
@@ -752,6 +753,9 @@ export default function SettingsPage() {
 
       {/* ── 8. 不具合報告・お問い合わせ ── */}
       <FeedbackForm />
+
+      {/* ── 9. IP（知財）コンプライアンス監査ログ ── */}
+      <IPComplianceSection />
     </div>
   );
 }

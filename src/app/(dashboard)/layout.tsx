@@ -62,11 +62,14 @@ export default function DashboardLayout({
       </header>
 
       {/* Mobile Top Bar — visible only on mobile */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background shadow-xs sm:hidden">
-        {/* iOS Status Bar Safe Area Spacer (Notch / Dynamic Island) */}
-        <div className="h-[env(safe-area-inset-top,0px)] w-full bg-background" />
-        <div className="px-4 h-14 flex items-center justify-between bg-background">
-          <Link href="/" className="flex items-center gap-2 group">
+      <header
+        className="sticky top-0 z-50 w-full border-b border-border/80 bg-background shadow-xs sm:hidden"
+        style={{
+          paddingTop: "max(env(safe-area-inset-top, 0px), 50px)",
+        }}
+      >
+        <div className="px-4 h-13 flex items-center justify-between bg-background">
+          <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
               <Sparkles className="w-4 h-4" />
             </div>

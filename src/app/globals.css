@@ -58,7 +58,7 @@ body {
 
 /* Safe area insets for notched devices (iPhone X+, etc.) */
 .safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: max(env(safe-area-inset-top, 0px), 48px);
 }
 
 .safe-bottom {
