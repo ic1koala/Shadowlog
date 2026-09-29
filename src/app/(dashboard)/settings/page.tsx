@@ -25,6 +25,10 @@ import {
   ShieldCheck,
   AlertCircle,
   KeyRound,
+  ChevronDown,
+  ArrowUp,
+  Megaphone,
+  MessageSquare,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -50,6 +54,13 @@ export default function SettingsPage() {
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedMicId, setSelectedMicId] = useState<string>("");
 
+  // Accordion States (initially collapsed as requested)
+  const [isIndustryOpen, setIsIndustryOpen] = useState(false);
+  const [isLevelOpen, setIsLevelOpen] = useState(false);
+
+  // Floating Back to Top State
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
   // Account State
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -70,6 +81,39 @@ export default function SettingsPage() {
 
   // Plan State
   const [ticketStatus, setTicketStatus] = useState<TicketStatus | null>(null);
+
+  // Scroll listener for Floating Back to Top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const yOffset = -75; // sticky header compensation
+      const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
+
+  const quickNavItems = [
+    { id: "section-account", label: "アカウント", icon: User },
+    { id: "section-announcements", label: "お知らせ", icon: Megaphone },
+    { id: "section-assessment", label: "レベル判定", icon: Target },
+    { id: "section-learning", label: "学習設定", icon: Briefcase },
+    { id: "section-mic", label: "マイク設定", icon: Mic },
+    { id: "section-feedback", label: "不具合報告", icon: MessageSquare },
+    { id: "section-plans", label: "料金プラン", icon: Sparkles },
+    { id: "section-reset", label: "初期化", icon: RotateCcw },
+  ];
 
   useEffect(() => {
     // Load audio devices
@@ -286,15 +330,36 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 pb-16 sm:pb-8">
-      <div>
-        <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Settings className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
-          設定・アカウント
-        </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-          アカウント情報の管理や学習分野・難易度レベル、マイク設定を行います。
-        </p>
+    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 pb-16 sm:pb-8 relative">
+      {/* Header */}
+      <div className="space-y-3">
+        <div>
+          <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Settings className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
+            設定・アカウント
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            アカウント情報の管理や学習分野・難易度レベル、マイク設定を行います。
+          </p>
+        </div>
+
+        {/* ── 目次クイックジャンプ・バー ── */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none no-scrollbar -mx-1 px-1">
+          {quickNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => scrollToSection(item.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/60 transition whitespace-nowrap active:scale-95 shrink-0"
+              >
+                <Icon className="w-3.5 h-3.5 text-primary/80" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── 管理者専用導線 ── */}
@@ -317,13 +382,8 @@ export default function SettingsPage() {
         </div>
       )}
 
-
-
-      {/* ── お知らせ・キャンペーン履歴 ── */}
-      <AnnouncementHistorySection />
-
       {/* ── 1. アカウント情報セクション ── */}
-      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5">
+      <div id="section-account" className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-foreground font-bold text-base sm:text-lg">
             <User className="w-5 h-5 text-primary" />
@@ -515,8 +575,13 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── 2. Auto-Assessment Section ── */}
-      <div className="bg-card rounded-2xl p-5 sm:p-8 border-2 border-primary/20 shadow-sm space-y-4 sm:space-y-5 relative overflow-hidden">
+      {/* ── 2. お知らせ・キャンペーン履歴 ── */}
+      <div id="section-announcements">
+        <AnnouncementHistorySection />
+      </div>
+
+      {/* ── 3. レベル判定テスト ── */}
+      <div id="section-assessment" className="bg-card rounded-2xl p-5 sm:p-8 border-2 border-primary/20 shadow-sm space-y-4 sm:space-y-5 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-5">
           <Target className="w-24 h-24 text-primary" />
         </div>
@@ -608,78 +673,167 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* ── 3. Industry Selection ── */}
-      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
-        <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
-          <Briefcase className="w-5 h-5 text-primary" />
-          <span>学習する業種・ドメイン</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-          {industries.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setIndustry(item.key)}
-              className={`p-3.5 sm:p-4 rounded-xl border text-left transition min-h-[56px] ${
-                industry === item.key
-                  ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                  : "border-border hover:border-primary/40 bg-card"
-              }`}
-            >
-              <p className="font-bold text-sm text-foreground">{item.label}</p>
-              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                {item.desc}
-              </p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 4. Difficulty Level Selection (Manual) ── */}
-      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
-        <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
-          <BarChart className="w-5 h-5 text-primary" />
-          <span>難易度レベルの手動選択</span>
-        </div>
-
-        <div className="space-y-2.5 sm:space-y-3">
-          {levels.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setLevel(item.key)}
-              className={`w-full p-3.5 sm:p-4 rounded-xl border text-left transition min-h-[64px] flex items-center justify-between ${
-                level === item.key
-                  ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                  : "border-border hover:border-primary/40 bg-card"
-              }`}
-            >
-              <div className="space-y-1 pr-2">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-sm text-foreground">{item.label}</p>
-                  <span className="text-[11px] text-muted-foreground font-medium">
-                    ({item.words})
+      {/* ── 4. 学習する業種・ドメイン（アコーディオン） ── */}
+      <div id="section-learning" className="space-y-3">
+        <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden transition-all duration-200">
+          <button
+            type="button"
+            onClick={() => setIsIndustryOpen((prev) => !prev)}
+            className="w-full p-4 sm:p-6 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors"
+            aria-expanded={isIndustryOpen}
+          >
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Briefcase className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-foreground font-bold text-sm sm:text-base">
+                    学習する業種・ドメイン
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                    現在: {industries.find((item) => item.key === industry)?.label || industry}
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-                  {item.desc}
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                  IT、ビジネス、金融など学習する業界特有の表現を選択
                 </p>
               </div>
-              <div
-                className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                  level === item.key ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0">
+              <span className="hidden sm:inline">{isIndustryOpen ? "閉じる" : "変更する"}</span>
+              <ChevronDown
+                className={`w-4 h-4 transition-transform duration-200 ${
+                  isIndustryOpen ? "rotate-180 text-primary" : "text-muted-foreground"
                 }`}
-              >
-                {level === item.key && <div className="w-2 h-2 rounded-full bg-white" />}
+              />
+            </div>
+          </button>
+
+          {isIndustryOpen && (
+            <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/60 space-y-3 animate-in fade-in-50 duration-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                {industries.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setIndustry(item.key)}
+                    className={`p-3.5 sm:p-4 rounded-xl border text-left transition min-h-[56px] ${
+                      industry === item.key
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                        : "border-border hover:border-primary/40 bg-card"
+                    }`}
+                  >
+                    <p className="font-bold text-sm text-foreground">{item.label}</p>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </button>
+                ))}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── 5. 難易度レベルの手動選択（アコーディオン） ── */}
+        <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden transition-all duration-200">
+          <button
+            type="button"
+            onClick={() => setIsLevelOpen((prev) => !prev)}
+            className="w-full p-4 sm:p-6 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors"
+            aria-expanded={isLevelOpen}
+          >
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <BarChart className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-foreground font-bold text-sm sm:text-base">
+                    難易度レベルの手動選択
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                    現在: {levels.find((item) => item.key === level)?.label || level}
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                  初級・中級・上級のセンテンス長さや難易度を手動変更
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0">
+              <span className="hidden sm:inline">{isLevelOpen ? "閉じる" : "変更する"}</span>
+              <ChevronDown
+                className={`w-4 h-4 transition-transform duration-200 ${
+                  isLevelOpen ? "rotate-180 text-primary" : "text-muted-foreground"
+                }`}
+              />
+            </div>
+          </button>
+
+          {isLevelOpen && (
+            <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/60 space-y-2.5 sm:space-y-3 animate-in fade-in-50 duration-200">
+              {levels.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setLevel(item.key)}
+                  className={`w-full p-3.5 sm:p-4 rounded-xl border text-left transition min-h-[64px] flex items-center justify-between ${
+                    level === item.key
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/40 bg-card"
+                  }`}
+                >
+                  <div className="space-y-1 pr-2">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-sm text-foreground">{item.label}</p>
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        ({item.words})
+                      </span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                      level === item.key ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
+                    }`}
+                  >
+                    {level === item.key && <div className="w-2 h-2 rounded-full bg-white" />}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── 6. 学習設定を保存するボタン ── */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
+          <div className="text-xs text-muted-foreground text-center sm:text-left">
+            <p className="font-semibold text-foreground">学習ドメイン・難易度設定の保存</p>
+            <p className="text-[11px] mt-0.5">変更した業種や難易度を次回の練習から適用します。</p>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            {isSaved && (
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                学習設定を保存しました
+              </span>
+            )}
+            <button
+              onClick={handleSave}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-sm active:scale-95 min-h-[44px] text-sm"
+            >
+              <Save className="w-4 h-4" />
+              学習設定を保存する
             </button>
-          ))}
+          </div>
         </div>
       </div>
 
-      {/* ── 5. Microphone Selection ── */}
-      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
+      {/* ── 7. 録音マイクの設定 ── */}
+      <div id="section-mic" className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
           <Mic className="w-5 h-5 text-primary" />
           <span>録音マイクの設定</span>
@@ -710,8 +864,22 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── 6. Learning Data Reset ── */}
-      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
+      {/* ── 8. 不具合報告・お問い合わせ ── */}
+      <div id="section-feedback">
+        <FeedbackForm />
+      </div>
+
+      {/* ── 9. 料金プラン・コース案内セクション ── */}
+      <div id="section-plans">
+        <PlanComparisonSection
+          currentPlan={ticketStatus?.plan || "free"}
+          isRegistered={isLoggedIn}
+          userEmail={userEmail}
+        />
+      </div>
+
+      {/* ── 10. 学習データ・記録の初期化 ── */}
+      <div id="section-reset" className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
           <RotateCcw className="w-5 h-5 text-muted-foreground" />
           <span>学習データ・記録の初期化</span>
@@ -733,32 +901,30 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── Save Settings Button ── */}
-      <div className="flex items-center justify-end gap-3 pt-1 sm:pt-2">
-        {isSaved && (
-          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4" />
-            学習設定を保存しました
-          </span>
-        )}
+      {/* ── ページ最下部 トップに戻る導線 ── */}
+      <div className="pt-2 pb-4 flex justify-center">
         <button
-          onClick={handleSave}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-sm active:scale-95 min-h-[48px]"
+          type="button"
+          onClick={scrollToTop}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-card/60 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-bold transition shadow-xs active:scale-95"
         >
-          <Save className="w-4 h-4" />
-          学習設定を保存する
+          <ArrowUp className="w-3.5 h-3.5 text-primary" />
+          <span>ページ最上部へ戻る</span>
         </button>
       </div>
 
-      {/* ── 7. 料金プラン・コース案内セクション ── */}
-      <PlanComparisonSection
-        currentPlan={ticketStatus?.plan || "free"}
-        isRegistered={isLoggedIn}
-        userEmail={userEmail}
-      />
-
-      {/* ── 8. 不具合報告・お問い合わせ ── */}
-      <FeedbackForm />
+      {/* ── スクロール検知型 フローティング「TOP」ボタン ── */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          aria-label="ページ最上部へ戻る"
+          className="fixed bottom-20 right-4 sm:bottom-8 sm:right-8 z-40 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-full bg-card/95 border border-border shadow-xl backdrop-blur-md hover:bg-primary hover:text-primary-foreground hover:border-primary text-foreground transition-all duration-300 active:scale-95 flex items-center gap-1.5 group animate-in fade-in slide-in-from-bottom-3"
+        >
+          <ArrowUp className="w-4 h-4 text-primary group-hover:text-primary-foreground group-hover:-translate-y-0.5 transition-transform" />
+          <span className="text-xs font-bold">TOP</span>
+        </button>
+      )}
     </div>
   );
 }
