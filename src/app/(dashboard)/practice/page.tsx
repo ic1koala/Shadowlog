@@ -36,6 +36,7 @@ import {
   Sparkles,
   Mic,
   Square,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function PracticePage() {
@@ -735,7 +736,8 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         <div className="flex justify-end pt-2">
           <button
             onClick={() => fetchNewSentence()}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-sm min-h-[48px] text-sm"
+            disabled={isLoadingSentence}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold rounded-xl transition shadow-lg shadow-orange-500/25 min-h-[48px] text-sm disabled:opacity-50 cursor-pointer"
           >
             <span>{practiceMode === "passage" ? "次の長文スピーチへ" : "次のフレーズへ"}</span>
             <ArrowRight className="w-4 h-4" />
@@ -806,6 +808,35 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                   録音を終了
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Floating Next Phrase Bar ── */}
+      {/* Shown after practice result is displayed, guiding user smoothly to the next phrase */}
+      {sentence && diffResult && !isTranscribing && (
+        <div className="fixed bottom-24 sm:bottom-10 left-1/2 -translate-x-1/2 flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
+          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-orange-500/30 shadow-2xl shadow-orange-500/20 ring-1 ring-white/20 w-full animate-in slide-in-from-bottom-5 duration-300">
+            {/* Status / Score Badge */}
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+                <CheckCircle2 className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                <span>判定完了</span>
+                <span className="font-extrabold ml-0.5">{diffResult.accuracyScore}%</span>
+              </span>
+            </div>
+
+            {/* Next phrase button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchNewSentence()}
+                disabled={isLoadingSentence}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-orange-500 hover:bg-orange-600 active:scale-95 text-white disabled:opacity-50 transition shadow-lg shadow-orange-500/25 min-h-[44px] cursor-pointer"
+              >
+                <span>{practiceMode === "passage" ? "次の長文スピーチへ" : "次のフレーズへ"}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
