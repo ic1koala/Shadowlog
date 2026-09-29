@@ -67,6 +67,48 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
   const rafIdRef = useRef<number | null>(null);
   const playDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Smooth sliding karaoke pill state & refs
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const prevWordIndexRef = useRef<number | null>(null);
+  const [isImmediate, setIsImmediate] = useState(true);
+  const [pillStyle, setPillStyle] = useState({
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
+    opacity: 0,
+  });
+
+  const updatePillPosition = useCallback(
+    (index: number | null, immediate = false) => {
+      if (index === null || !containerRef.current) {
+        setPillStyle((prev) => ({ ...prev, opacity: 0 }));
+        return;
+      }
+      const el = wordRefs.current[index];
+      const container = containerRef.current;
+      if (!el || !container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const wordRect = el.getBoundingClientRect();
+
+      // Pad around the word text to create a clean, comfortable pill
+      const padX = 5;
+      const padY = 2;
+
+      setIsImmediate(immediate);
+      setPillStyle({
+        left: wordRect.left - containerRect.left - padX,
+        top: wordRect.top - containerRect.top - padY,
+        width: wordRect.width + padX * 2,
+        height: wordRect.height + padY * 2,
+        opacity: 1,
+      });
+    },
+    []
+  );
+
   const stopAnimationLoop = useCallback(() => {
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
@@ -179,6 +221,9 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
   useEffect(() => {
     setIsPlaying(false);
     setActiveWordIndex(null);
+    prevWordIndexRef.current = null;
+    setPillStyle({ left: 0, top: 0, width: 0, height: 0, opacity: 0 });
+    wordRefs.current = [];
     clearPendingPlay();
     stopAnimationLoop();
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -202,6 +247,41 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
       }
     };
   }, [sentence?.id, clearPendingPlay, stopAnimationLoop]);
+
+  // Synchronize smooth sliding pill position with activeWordIndex
+  useEffect(() => {
+    if (activeWordIndex === null || !isPlaying) {
+      prevWordIndexRef.current = null;
+      setPillStyle((prev) => ({ ...prev, opacity: 0 }));
+      return;
+    }
+
+    const isFirstWord = prevWordIndexRef.current === null;
+    prevWordIndexRef.current = activeWordIndex;
+    updatePillPosition(activeWordIndex, isFirstWord);
+  }, [activeWordIndex, isPlaying, updatePillPosition]);
+
+  // Recalculate position on window resize so pill stays aligned with wrapped text
+  useEffect(() => {
+    const handleResize = () => {
+      if (activeWordIndex !== null && isPlaying) {
+        updatePillPosition(activeWordIndex, true);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [activeWordIndex, isPlaying, updatePillPosition]);
+
+  // Re-measure when web fonts finish loading
+  useEffect(() => {
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(() => {
+        if (activeWordIndex !== null && isPlaying) {
+          updatePillPosition(activeWordIndex, true);
+        }
+      });
+    }
+  }, [activeWordIndex, isPlaying, updatePillPosition]);
 
   const speakWithSpeechSynthesis = useCallback(
     (text: string) => {
@@ -376,6 +456,9 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
     );
   }
 
+  // Animation duration dynamically adjusted to playback speed for natural gliding
+  const animDuration = Math.round(240 / playbackSpeed);
+
   return (
     <div className="w-full bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
@@ -402,24 +485,42 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
       </div>
 
       <div className="space-y-2 sm:space-y-3">
-        {/* English sentence with karaoke-style real-time word highlighting */}
-        <p className="text-xl sm:text-3xl font-semibold leading-relaxed tracking-normal text-foreground flex flex-wrap gap-y-1.5 items-baseline">
-          {parsedWords.map((w, idx) => {
-            const isCurrent = activeWordIndex === idx;
-            return (
-              <span
-                key={w.id}
-                className={`transition-all duration-75 inline-block mr-1.5 ${
-                  isCurrent
-                    ? "bg-blue-600 text-white font-bold shadow-md scale-105 ring-2 ring-blue-400/40 px-1.5 py-0.5 rounded-md"
-                    : "text-foreground px-0.5"
-                }`}
-              >
-                {w.text}
-              </span>
-            );
-          })}
-        </p>
+        {/* English sentence with smooth sliding karaoke pill */}
+        <div ref={containerRef} className="relative p-1 -m-1">
+          {/* Smooth sliding karaoke highlight pill */}
+          <div
+            aria-hidden="true"
+            className="absolute rounded-lg bg-blue-600 shadow-sm pointer-events-none"
+            style={{
+              transform: `translate3d(${pillStyle.left}px, ${pillStyle.top}px, 0)`,
+              width: `${pillStyle.width}px`,
+              height: `${pillStyle.height}px`,
+              opacity: isPlaying && activeWordIndex !== null && pillStyle.width > 0 ? 1 : 0,
+              transition: isImmediate
+                ? "opacity 150ms ease"
+                : `transform ${animDuration}ms cubic-bezier(0.25, 1, 0.5, 1), width ${animDuration}ms cubic-bezier(0.25, 1, 0.5, 1), height ${animDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 150ms ease`,
+            }}
+          />
+
+          <p className="text-xl sm:text-3xl font-semibold leading-relaxed tracking-normal text-foreground flex flex-wrap gap-y-2 items-baseline relative z-10">
+            {parsedWords.map((w, idx) => {
+              const isCurrent = isPlaying && activeWordIndex === idx;
+              return (
+                <span
+                  key={w.id}
+                  ref={(el) => {
+                    wordRefs.current[idx] = el;
+                  }}
+                  className={`inline-block px-1 py-0.5 rounded-lg mr-1.5 select-none transition-colors duration-150 ${
+                    isCurrent ? "text-white" : "text-foreground"
+                  }`}
+                >
+                  {w.text}
+                </span>
+              );
+            })}
+          </p>
+        </div>
 
 
         {showJapanese && (

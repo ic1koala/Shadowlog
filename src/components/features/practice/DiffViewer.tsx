@@ -167,6 +167,22 @@ export function DiffViewer({
         </p>
       </div>
 
+      {/* Token status legend (positioned directly under transcription for clear visual context) */}
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-muted-foreground px-1 py-0.5">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> 一致
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> 脱落
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 余剰
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> ズレ
+        </span>
+      </div>
+
       {/* AI English Coach Review Section */}
       {coachFeedback && (
         <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/20 p-4 sm:p-6 space-y-4">
@@ -216,52 +232,33 @@ export function DiffViewer({
         </div>
       )}
 
-      {/* Legend & Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-3 border-t border-border">
-        {/* Token status legend */}
-        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-[11px] sm:text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> 一致
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> 脱落
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 余剰
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> ズレ
-          </span>
-        </div>
+      {/* Action Buttons: Retry / Save */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-border">
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl font-bold text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border transition shadow-xs active:scale-95 min-h-[48px] sm:min-h-0"
+            title="コーチのアドバイスを意識してもう一度発話する"
+          >
+            <RotateCcw className="w-4 h-4 text-primary" />
+            もう一度復習する
+          </button>
+        )}
 
-        {/* Action Buttons: Retry / Save */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-          {onRetry && (
-            <button
-              onClick={onRetry}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl font-bold text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border transition shadow-xs active:scale-95 min-h-[48px] sm:min-h-0"
-              title="コーチのアドバイスを意識してもう一度発話する"
-            >
-              <RotateCcw className="w-4 h-4 text-primary" />
-              もう一度復習する
-            </button>
-          )}
-
-          {onSaveSession && (
-            <button
-              onClick={onSaveSession}
-              disabled={isSaving || isSaved}
-              className={`inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl font-medium text-sm transition shadow-xs min-h-[48px] sm:min-h-0 ${
-                isSaved
-                  ? "bg-emerald-600 text-white cursor-default"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              }`}
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              {isSaved ? "実績に自動反映済み" : isSaving ? "記録中..." : "記録を保存する"}
-            </button>
-          )}
-        </div>
+        {onSaveSession && (
+          <button
+            onClick={onSaveSession}
+            disabled={isSaving || isSaved}
+            className={`inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl font-medium text-sm transition shadow-xs min-h-[48px] sm:min-h-0 ${
+              isSaved
+                ? "bg-emerald-600 text-white cursor-default"
+                : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            {isSaved ? "実績に自動反映済み" : isSaving ? "記録中..." : "記録を保存する"}
+          </button>
+        )}
       </div>
     </div>
   );
