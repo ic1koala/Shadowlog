@@ -51,6 +51,9 @@ export interface AdminCustomerResponse {
     newCustomersThisWeek: number;
     totalPracticeSessions: number;
     paidOrProCount: number;
+    proPlanCount: number;
+    basePlanCount: number;
+    freePlanCount: number;
     overallDailyAverage: number;
     topUserDailyCount: number;
     warningAccountCount: number;
@@ -334,6 +337,9 @@ export async function GET(req: NextRequest) {
     const paidOrProCount = customers.filter(
       (c) => c.plan === "pro" || c.plan === "base"
     ).length;
+    const proPlanCount = customers.filter((c) => c.plan === "pro").length;
+    const basePlanCount = customers.filter((c) => c.plan === "base").length;
+    const freePlanCount = customers.filter((c) => c.plan === "free").length;
 
     const activeUsers = customers.filter((c) => c.practice_count > 0);
     const overallDailyAverage =
@@ -379,6 +385,9 @@ export async function GET(req: NextRequest) {
         newCustomersThisWeek,
         totalPracticeSessions,
         paidOrProCount,
+        proPlanCount,
+        basePlanCount,
+        freePlanCount,
         overallDailyAverage,
         topUserDailyCount,
         warningAccountCount,
