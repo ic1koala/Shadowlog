@@ -103,13 +103,13 @@ export function AnnouncementModal() {
                 transition: "all 400ms cubic-bezier(0.4, 0, 0.2, 1)",
               }
         }
-        className="relative w-full max-w-lg bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[82dvh] sm:max-h-[85dvh] my-auto animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-lg bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[82dvh] sm:max-h-[85dvh] my-auto animate-in zoom-in-95 duration-200"
       >
         {/* 1. Header Bar (Fixed / Non-scrollable) */}
-        <div className="shrink-0 relative flex items-center justify-between p-3.5 sm:p-4 px-5 sm:px-6 border-b border-border bg-muted/40">
-          <div className="flex items-center gap-2">
+        <div className="shrink-0 relative flex items-center justify-between p-3.5 sm:p-4 px-4 sm:px-6 border-b border-border bg-muted/40">
+          <div className="flex items-center gap-2 min-w-0">
             <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+              className={`px-2.5 py-0.5 rounded-full text-xs font-bold shrink-0 ${
                 announcement.category === "campaign"
                   ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
                   : announcement.category === "update"
@@ -119,14 +119,14 @@ export function AnnouncementModal() {
             >
               {announcement.tagText}
             </span>
-            <span className="text-xs text-muted-foreground font-mono">
+            <span className="text-xs text-muted-foreground font-mono shrink-0">
               {announcement.publishedAt}
             </span>
           </div>
 
           <button
             onClick={() => handleDismiss("read")}
-            className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0 ml-2"
             title="閉じる（確認した）"
           >
             <X className="w-5 h-5" />
@@ -137,7 +137,7 @@ export function AnnouncementModal() {
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
           {/* Cover Image Carousel */}
           {images.length > 0 && (
-            <div className="relative w-full h-40 sm:h-48 bg-black/5 overflow-hidden shrink-0">
+            <div className="relative w-full h-36 sm:h-48 bg-black/5 overflow-hidden shrink-0">
               <img
                 src={images[currentImageIdx]}
                 alt="Cover Image"
@@ -180,17 +180,17 @@ export function AnnouncementModal() {
           )}
 
           {/* Text Content */}
-          <div className="p-5 sm:p-6 space-y-3.5">
-            <h2 className="text-base sm:text-lg font-bold text-foreground leading-snug flex items-start gap-2">
+          <div className="p-4 sm:p-6 space-y-3.5">
+            <h2 className="text-base sm:text-lg font-bold text-foreground leading-snug flex items-start gap-2.5 min-w-0">
               <Megaphone className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-              <span>{announcement.title}</span>
+              <span className="flex-1 min-w-0 break-words">{announcement.title}</span>
             </h2>
 
-            <p className="text-xs sm:text-sm font-semibold text-primary leading-relaxed bg-primary/5 p-3.5 rounded-2xl border border-primary/15">
+            <p className="text-xs sm:text-sm font-semibold text-primary leading-relaxed bg-primary/5 p-3.5 rounded-2xl border border-primary/15 break-words">
               {announcement.summary}
             </p>
 
-            <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed pt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed pt-1 break-words">
               {announcement.content}
             </p>
 
@@ -211,13 +211,13 @@ export function AnnouncementModal() {
         </div>
 
         {/* 3. Footer Actions (Always Anchored at Bottom, Never Pushed Off-Screen) */}
-        <div className="shrink-0 p-3 sm:p-4 px-5 sm:px-6 border-t border-border bg-card/95 backdrop-blur-xs flex items-center justify-between gap-2.5">
+        <div className="shrink-0 p-3 sm:p-4 px-4 sm:px-6 border-t border-border bg-card/95 backdrop-blur-xs flex items-center justify-between gap-2.5">
           <button
             onClick={() => handleDismiss("later")}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl border border-border text-xs sm:text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition min-h-[44px] active:scale-95"
           >
             <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-            <span className="truncate">⏱️ あとで読む</span>
+            <span className="whitespace-nowrap">⏱️ あとで読む</span>
           </button>
 
           <button
@@ -225,7 +225,7 @@ export function AnnouncementModal() {
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 sm:px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs sm:text-sm hover:bg-primary/90 transition shadow-sm min-h-[44px] active:scale-95"
           >
             <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span className="truncate">確認した</span>
+            <span className="whitespace-nowrap">確認した</span>
           </button>
         </div>
       </div>
