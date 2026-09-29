@@ -137,6 +137,80 @@ export async function savePracticeSessionToSupabase(session: StoredSession): Pro
 }
 
 /**
+ * Synchronizes unsaved local sessions to Supabase DB.
+ * Inspects all local sessions (loadAllSessions()), checks existing sessions in Supabase,
+ * and bulk inserts any missing sessions to recover and reconcile past practice data.
+ */
+export async function syncLocalSessionsToSupabase(): Promise<number> {
+  if (typeof window === "undefined" || !navigator.onLine) return 0;
+
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return 0;
+
+    const localSessions = loadAllSessions();
+    if (!localSessions || localSessions.length === 0) return 0;
+
+    const supabase = createClient();
+
+    // Query existing session identifiers for this user from Supabase
+    const { data: dbRecords, error: fetchError } = await supabase
+      .from("practice_sessions")
+      .select("id, sentence_id")
+      .eq("user_id", user.id);
+
+    if (fetchError) {
+      console.warn("Failed to fetch existing sessions for diff sync:", fetchError);
+      return 0;
+    }
+
+    const existingKeys = new Set<string>();
+    if (dbRecords) {
+      for (const row of dbRecords) {
+        if (row.sentence_id) existingKeys.add(row.sentence_id);
+        if (row.id) existingKeys.add(row.id);
+      }
+    }
+
+    // Filter local sessions that do not exist on Supabase
+    const unsyncedSessions = localSessions.filter(
+      (s) => !existingKeys.has(s.id)
+    );
+
+    if (unsyncedSessions.length === 0) {
+      return 0;
+    }
+
+    const sessionPayloads = unsyncedSessions.map((s) => ({
+      user_id: user.id,
+      sentence_id: s.id,
+      text_en: s.sentence,
+      text_jp: s.japanese || null,
+      transcribed_text: s.transcription || null,
+      accuracy_score: s.accuracyScore,
+      wpm: s.wpm || 0,
+      diff_result: s.diff || null,
+      coach_feedback: s.coachFeedback || null,
+      created_at: s.createdAt,
+    }));
+
+    const { error: insertError } = await supabase
+      .from("practice_sessions")
+      .insert(sessionPayloads);
+
+    if (insertError) {
+      console.warn("Failed to sync local sessions to Supabase:", insertError);
+      return 0;
+    }
+
+    return unsyncedSessions.length;
+  } catch (err) {
+    console.warn("Error during local sessions sync to Supabase:", err);
+    return 0;
+  }
+}
+
+/**
  * Synchronizes practice sessions from Supabase into local storage.
  */
 export async function syncSessionsFromSupabase(): Promise<StoredSession[]> {

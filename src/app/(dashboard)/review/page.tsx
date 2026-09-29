@@ -120,11 +120,16 @@ export default function ReviewPage() {
 
     // Background sync from Supabase if online
     if (typeof window !== "undefined" && navigator.onLine) {
-      import("@/lib/storage/sync-service").then(({ syncSessionsFromSupabase, syncWeakWordsFromSupabase }) => {
-        Promise.all([syncSessionsFromSupabase(), syncWeakWordsFromSupabase()]).then(() => {
-          loadData();
-        }).catch(() => {});
-      });
+      import("@/lib/storage/sync-service").then(
+        ({ syncLocalSessionsToSupabase, syncSessionsFromSupabase, syncWeakWordsFromSupabase }) => {
+          syncLocalSessionsToSupabase()
+            .then(() => Promise.all([syncSessionsFromSupabase(), syncWeakWordsFromSupabase()]))
+            .then(() => {
+              loadData();
+            })
+            .catch(() => {});
+        }
+      );
     }
   }, [loadData]);
 

@@ -78,6 +78,13 @@ export default function PracticePage() {
     setPlan(s.plan);
     setUserEmail(getCurrentUserEmail());
 
+    // Recover unsynced local sessions to Supabase on mount
+    if (typeof window !== "undefined" && navigator.onLine) {
+      import("@/lib/storage/sync-service").then(({ syncLocalSessionsToSupabase }) => {
+        syncLocalSessionsToSupabase().catch(() => {});
+      });
+    }
+
     // Load unmastered weak words (top 5) for personalized generation
     const wData = getWeakWords();
     const topWeak = wData.words
@@ -345,12 +352,25 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           body: JSON.stringify({
             id: saved.session.id,
             sentence: sentence.english,
+            japanese: sentence.japanese,
             transcription: data.transcription,
             wordCount: data.diff.originalWordCount,
             matchedWordCount: data.diff.matchedWordCount,
             accuracyScore: data.diff.accuracyScore,
             wpm: data.wpmInfo?.wpm,
+            diff: data.diff,
+            coachFeedback: data.coachFeedback,
           }),
+        });
+
+        // Asynchronously sync to Supabase DB if logged in
+        import("@/lib/storage/sync-service").then(({ savePracticeSessionToSupabase, updateWeakWordMasteredInSupabase }) => {
+          savePracticeSessionToSupabase(saved.session).catch(() => {});
+          if (saved.autoMasteredWords && saved.autoMasteredWords.length > 0) {
+            for (const w of saved.autoMasteredWords) {
+              updateWeakWordMasteredInSupabase(w, true).catch(() => {});
+            }
+          }
         });
 
         setIsSaved(true);
@@ -420,10 +440,14 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         body: JSON.stringify({
           id: saved.session.id,
           sentence: sentence.english,
+          japanese: sentence.japanese,
           transcription,
           wordCount: diffResult.originalWordCount,
           matchedWordCount: diffResult.matchedWordCount,
           accuracyScore: diffResult.accuracyScore,
+          wpm: wpmInfo?.wpm,
+          diff: diffResult,
+          coachFeedback,
         }),
       });
 

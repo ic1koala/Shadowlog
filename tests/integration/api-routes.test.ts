@@ -155,5 +155,41 @@ describe("API Routes Integration Tests", () => {
       expect(matched).toBeDefined();
       expect(matched.wpm).toBe(135.5);
     });
+
+    it("accepts production schema fields (text_en, text_jp, transcribed_text, diff, coachFeedback)", async () => {
+      const { POST: postStatsHandler, GET: getStatsHandler } = await import("@/app/api/stats/route");
+
+      const testPayload = {
+        id: "session-prod-test-01",
+        text_en: "Seamless synchronization ensures reliable user data persistence.",
+        text_jp: "シームレスな同期により確実なユーザーデータ永続化が保証されます。",
+        transcribed_text: "Seamless synchronization ensures reliable user data persistence.",
+        accuracy_score: 95,
+        wpm: 140,
+        diff: { originalWordCount: 8, matchedWordCount: 8, accuracyScore: 95 },
+        coachFeedback: { summary: "Excellent fluency!" },
+      };
+
+      const postReq = new NextRequest("http://localhost:3000/api/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(testPayload),
+      });
+
+      const postRes = await postStatsHandler(postReq);
+      expect(postRes.status).toBe(201);
+      const postJson = await postRes.json();
+      expect(postJson.success).toBe(true);
+      expect(postJson.session.id).toBe("session-prod-test-01");
+      expect(postJson.session.sentence).toBe(testPayload.text_en);
+      expect(postJson.session.accuracyScore).toBe(95);
+
+      const getRes = await getStatsHandler();
+      expect(getRes.status).toBe(200);
+      const getJson = await getRes.json();
+      const matched = getJson.sessions.find((s: { id: string }) => s.id === "session-prod-test-01");
+      expect(matched).toBeDefined();
+      expect(matched.sentence).toBe(testPayload.text_en);
+    });
   });
 });
