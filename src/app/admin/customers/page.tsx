@@ -26,7 +26,9 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import { AdminCustomerResponse } from "@/app/api/admin/customers/route";
+import { IPComplianceSection } from "@/components/features/settings/IPComplianceSection";
 
+type AdminTab = "customers" | "compliance";
 type PlanFilter = "all" | "free" | "base" | "pro";
 type SortOption =
   | "newest"
@@ -38,6 +40,7 @@ type SortOption =
   | "last_active";
 
 export default function AdminCustomersPage() {
+  const [activeTab, setActiveTab] = useState<AdminTab>("customers");
   const [loading, setLoading] = useState(true);
   const [authChecking, setAuthChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -354,13 +357,15 @@ export default function AdminCustomersPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg tracking-tight">ShadowLog</span>
+                  <span className="font-bold text-base sm:text-lg tracking-tight">
+                    管理者専用ダッシュボード
+                  </span>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-primary/10 text-primary border border-primary/20 tracking-wide uppercase">
                     Admin
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground hidden sm:block">
-                  顧客リスト & 進捗モニタリング
+                  顧客管理 & 知財コンプライアンス監査
                 </p>
               </div>
             </div>
@@ -382,21 +387,72 @@ export default function AdminCustomersPage() {
               <span className="hidden sm:inline">更新</span>
             </button>
 
-            <button
-              onClick={handleExportCSV}
-              disabled={!filteredCustomers.length}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-sm disabled:opacity-50"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>CSV出力</span>
-            </button>
+            {activeTab === "customers" && (
+              <button
+                onClick={handleExportCSV}
+                disabled={!filteredCustomers.length}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-sm disabled:opacity-50"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>CSV出力</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-        {/* KPI Cards Section - Growth & Scale */}
+        {/* Navigation Tabs: 顧客管理 vs コンプライアンス監査ログ */}
+        <div className="flex items-center gap-2 border-b border-border pb-3">
+          <button
+            onClick={() => setActiveTab("customers")}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs ${
+              activeTab === "customers"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>顧客管理</span>
+            {data?.kpi && (
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
+                  activeTab === "customers"
+                    ? "bg-white/20 text-white"
+                    : "bg-background text-foreground border border-border"
+                }`}
+              >
+                {data.kpi.totalCustomers}名
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("compliance")}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs ${
+              activeTab === "compliance"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>コンプライアンス監査ログ</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
+                activeTab === "compliance"
+                  ? "bg-white/20 text-white"
+                  : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+              }`}
+            >
+              安全 (PASS)
+            </span>
+          </button>
+        </div>
+
+        {activeTab === "customers" ? (
+          <>
+            {/* KPI Cards Section - Growth & Scale */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5">
           {/* Card 1: Total Users */}
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs flex flex-col justify-between">
@@ -866,6 +922,12 @@ export default function AdminCustomersPage() {
             </div>
           )}
         </div>
+          </>
+        ) : (
+          <div className="space-y-6">
+            <IPComplianceSection />
+          </div>
+        )}
       </main>
 
       {/* Floating Scroll to Top Button for Mobile/Desktop */}

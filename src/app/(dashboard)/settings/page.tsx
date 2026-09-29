@@ -36,7 +36,6 @@ import {
 import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
 import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
 import { PlanComparisonSection } from "@/components/features/settings/PlanComparisonSection";
-import { IPComplianceSection } from "@/components/features/settings/IPComplianceSection";
 import { AnnouncementHistorySection } from "@/components/features/announcements/AnnouncementHistorySection";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 
@@ -306,14 +305,14 @@ export default function SettingsPage() {
               管理者アカウントとしてログイン中
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              登録ユーザーの学習状況や利用コスト試算を確認・管理できます。
+              登録ユーザーの学習状況（顧客管理）や知財コンプライアンス監査ログを確認・管理できます。
             </p>
           </div>
           <Link
             href="/admin/customers"
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors shrink-0"
           >
-            🛡️ 管理者専用: 顧客管理ダッシュボード ↗
+            🛡️ 管理者専用ダッシュボード ↗
           </Link>
         </div>
       )}
@@ -760,9 +759,6 @@ export default function SettingsPage() {
 
       {/* ── 8. 不具合報告・お問い合わせ ── */}
       <FeedbackForm />
-
-      {/* ── 9. IP（知財）コンプライアンス監査ログ（管理者アカウントのみ表示） ── */}
-      {isAdminEmail(userEmail) && <IPComplianceSection />}
     </div>
   );
 }
