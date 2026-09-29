@@ -80,24 +80,24 @@ export function AnnouncementHistorySection() {
 
       {/* History Modal */}
       {isOpenModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="relative w-full max-w-2xl bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
+          <div className="relative w-full max-w-2xl bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[82dvh] sm:max-h-[85dvh] my-auto animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 px-6 border-b border-border bg-muted/30">
+            <div className="shrink-0 flex items-center justify-between p-4 px-6 border-b border-border bg-muted/30">
               <div className="flex items-center gap-2">
                 <Megaphone className="w-5 h-5 text-amber-500" />
                 <h2 className="text-base font-bold text-foreground">お知らせ・キャンペーン一覧</h2>
               </div>
               <button
                 onClick={() => setIsOpenModal(false)}
-                className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition"
+                className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition min-w-[36px] min-h-[36px] flex items-center justify-center"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* List */}
-            <div className="p-4 sm:p-6 space-y-3 overflow-y-auto">
+            <div className="flex-1 min-h-0 p-4 sm:p-6 space-y-3 overflow-y-auto overscroll-contain touch-pan-y">
               {allAnnouncements.map((ann) => {
                 const isRead = readIds.includes(ann.id);
                 const isLater = laterIds.includes(ann.id) && !isRead;
@@ -158,9 +158,9 @@ export function AnnouncementHistorySection() {
 
       {/* Detail Modal */}
       {selectedAnn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="relative w-full max-w-lg bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-4 px-6 border-b border-border bg-muted/30">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
+          <div className="relative w-full max-w-lg bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[82dvh] sm:max-h-[85dvh] my-auto animate-in zoom-in-95 duration-200">
+            <div className="shrink-0 flex items-center justify-between p-4 px-6 border-b border-border bg-muted/30">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30">
                   {selectedAnn.tagText}
@@ -171,13 +171,13 @@ export function AnnouncementHistorySection() {
               </div>
               <button
                 onClick={() => setSelectedAnn(null)}
-                className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition"
+                className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition min-w-[36px] min-h-[36px] flex items-center justify-center"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-3 overflow-y-auto">
+            <div className="flex-1 min-h-0 p-6 space-y-3 overflow-y-auto overscroll-contain touch-pan-y">
               <h2 className="text-lg font-bold text-foreground">{selectedAnn.title}</h2>
               <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
                 {selectedAnn.content}
@@ -196,10 +196,10 @@ export function AnnouncementHistorySection() {
               )}
             </div>
 
-            <div className="p-4 px-6 border-t border-border bg-muted/20 text-right">
+            <div className="shrink-0 p-4 px-6 border-t border-border bg-muted/20 text-right">
               <button
                 onClick={() => setSelectedAnn(null)}
-                className="px-5 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 transition"
+                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs sm:text-sm hover:bg-primary/90 transition shadow-sm active:scale-95"
               >
                 閉じる
               </button>
