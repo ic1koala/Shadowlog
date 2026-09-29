@@ -27,6 +27,11 @@ import {
   getCurrentUserEmail,
 } from "@/lib/storage/ticket-store";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
+import { isAdminEmail } from "@/lib/auth/admin-checker";
+import {
+  getAdminPreviewSettings,
+  setAdminPreviewSettings,
+} from "@/lib/storage/admin-preview-store";
 import {
   ArrowRight,
   BookOpen,
@@ -47,7 +52,16 @@ export default function PracticePage() {
   const [showProModal, setShowProModal] = useState(false);
   const [ticketStatus, setTicketStatus] = useState<TicketStatus | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [adminChunkSlash, setAdminChunkSlash] = useState<boolean>(false);
   const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
+
+  const isAdmin = isAdminEmail(userEmail);
+
+  const handleToggleChunkSlash = () => {
+    const next = !adminChunkSlash;
+    setAdminChunkSlash(next);
+    setAdminPreviewSettings({ chunkSlash: next });
+  };
 
   const [sentence, setSentence] = useState<SentenceResponse | null>(null);
   const [isLoadingSentence, setIsLoadingSentence] = useState(false);
@@ -77,12 +91,22 @@ export default function PracticePage() {
     setTicketStatus(s);
     setPlan(s.plan);
     setUserEmail(getCurrentUserEmail());
+    setAdminChunkSlash(getAdminPreviewSettings().chunkSlash);
 
-    // Recover unsynced local sessions to Supabase on mount
-    if (typeof window !== "undefined" && navigator.onLine) {
-      import("@/lib/storage/sync-service").then(({ syncLocalSessionsToSupabase }) => {
-        syncLocalSessionsToSupabase().catch(() => {});
-      });
+    // Recover unsynced local sessions to Supabase and confirm authenticated email on mount
+    if (typeof window !== "undefined") {
+      import("@/lib/storage/sync-service").then(
+        ({ syncLocalSessionsToSupabase, getAuthenticatedUser }) => {
+          getAuthenticatedUser()
+            .then((u) => {
+              if (u?.email) setUserEmail(u.email);
+            })
+            .catch(() => {});
+          if (navigator.onLine) {
+            syncLocalSessionsToSupabase().catch(() => {});
+          }
+        }
+      );
     }
 
     // Load unmastered weak words (top 5) for personalized generation
@@ -555,19 +579,44 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
 
       {/* Step 1: Sentence / Passage Card */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">
               1
             </span>
             {practiceMode === "passage" ? "長文スピーチ原稿・フレーズ音声" : "フレーズ確認・フレーズ音声"}
           </div>
-          {retryCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
-              <RotateCcw className="w-3 h-3" />
-              復習中 ({retryCount}回目)
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleToggleChunkSlash}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+                  adminChunkSlash
+                    ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/40 shadow-xs"
+                    : "bg-muted/60 text-muted-foreground border-border hover:text-foreground"
+                }`}
+                title="管理者専用テスト機能：意味の塊（チャンク）の切れ目に青色スラッシュを表示"
+              >
+                <span>🧪 テスト: チャンクスラッシュ</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold leading-none ${
+                    adminChunkSlash
+                      ? "bg-blue-600 text-white"
+                      : "bg-muted-foreground/20 text-muted-foreground"
+                  }`}
+                >
+                  {adminChunkSlash ? "ON" : "OFF"}
+                </span>
+              </button>
+            )}
+            {retryCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
+                <RotateCcw className="w-3 h-3" />
+                復習中 ({retryCount}回目)
+              </span>
+            )}
+          </div>
         </div>
 
         {!sentence ? (
@@ -690,6 +739,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               sentence={sentence}
               isLoading={isLoadingSentence}
               onRefresh={() => fetchNewSentence()}
+              showChunkSlash={isAdmin && adminChunkSlash}
             />
           </div>
         )}

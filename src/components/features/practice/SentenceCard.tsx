@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Play, Pause, RotateCcw, Sparkles } from "lucide-react";
 import { SentenceResponse } from "@/types";
+import { getChunkSlashIndices } from "@/lib/diff/chunk-splitter";
 
 interface SentenceCardProps {
   sentence: SentenceResponse | null;
   isLoading: boolean;
   onRefresh: () => void;
+  showChunkSlash?: boolean;
 }
 
 interface ParsedWord {
@@ -56,7 +58,12 @@ function findBestEnglishVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVo
   return enVoices[0] || null;
 }
 
-export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardProps) {
+export function SentenceCard({
+  sentence,
+  isLoading,
+  onRefresh,
+  showChunkSlash = false,
+}: SentenceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [showJapanese, setShowJapanese] = useState(true);
@@ -159,6 +166,12 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
       };
     });
   }, [sentence?.english]);
+
+  // Compute chunk break indices without modifying words or layout
+  const chunkSlashIndices = useMemo(() => {
+    if (!showChunkSlash || parsedWords.length === 0) return new Set<number>();
+    return getChunkSlashIndices(parsedWords.map((w) => w.text));
+  }, [showChunkSlash, parsedWords]);
 
   const startAnimationLoop = useCallback(() => {
     stopAnimationLoop();
@@ -505,17 +518,26 @@ export function SentenceCard({ sentence, isLoading, onRefresh }: SentenceCardPro
           <p className="text-xl sm:text-3xl font-semibold leading-relaxed tracking-normal text-foreground flex flex-wrap gap-y-2 items-baseline relative z-10">
             {parsedWords.map((w, idx) => {
               const isCurrent = isPlaying && activeWordIndex === idx;
+              const hasSlash = showChunkSlash && chunkSlashIndices.has(idx);
               return (
                 <span
                   key={w.id}
                   ref={(el) => {
                     wordRefs.current[idx] = el;
                   }}
-                  className={`inline-block px-1 py-0.5 rounded-lg mr-1.5 select-none transition-colors duration-150 ${
+                  className={`relative inline-block px-1 py-0.5 rounded-lg mr-1.5 select-none transition-colors duration-150 ${
                     isCurrent ? "text-white" : "text-foreground"
                   }`}
                 >
                   {w.text}
+                  {hasSlash && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none select-none absolute -right-[7px] top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-normal text-[0.78em] leading-none opacity-85"
+                    >
+                      /
+                    </span>
+                  )}
                 </span>
               );
             })}
