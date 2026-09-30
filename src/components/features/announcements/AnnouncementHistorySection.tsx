@@ -14,6 +14,7 @@ import {
   getReadAnnouncementIds,
   getLaterAnnouncementIds,
   hasUnreadLaterAnnouncements,
+  markAsRead,
 } from "@/lib/storage/announcement-store";
 
 export function AnnouncementHistorySection() {
@@ -36,41 +37,46 @@ export function AnnouncementHistorySection() {
   }, []);
 
   const handleOpenDetail = (ann: Announcement) => {
+    markAsRead(ann.id);
     setSelectedAnn(ann);
   };
 
   return (
     <>
       {/* Settings Card */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-card border border-border shadow-xs space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+      <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <div className="relative shrink-0 mt-0.5 sm:mt-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 <Megaphone className="w-5 h-5" />
               </div>
               {hasRedDot && (
                 <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-card animate-pulse" />
               )}
             </div>
-            <div>
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                お知らせ・キャンペーン履歴
+            <div className="min-w-0 space-y-0.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h3 className="text-sm sm:text-base font-bold text-foreground">
+                  お知らせ・キャンペーン履歴
+                </h3>
                 {hasRedDot && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
-                    あとで読む項目あり
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 whitespace-nowrap shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    未読あり
                   </span>
                 )}
-              </h3>
-              <p className="text-xs text-muted-foreground">
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 過去のキャンペーンやお知らせの内容をいつでも読み返せます。
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => setIsOpenModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-xs font-bold text-foreground transition shrink-0"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 sm:py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-xs font-bold text-foreground transition shrink-0 whitespace-nowrap min-h-[38px]"
           >
             <span>履歴を見る ({allAnnouncements.length})</span>
             <ChevronRight className="w-4 h-4" />
@@ -115,9 +121,9 @@ export function AnnouncementHistorySection() {
                     }`}
                   >
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0 ${
                             ann.category === "campaign"
                               ? "bg-amber-500/15 text-amber-600 border border-amber-500/30"
                               : "bg-blue-500/15 text-blue-600 border border-blue-500/30"
@@ -125,18 +131,18 @@ export function AnnouncementHistorySection() {
                         >
                           {ann.tagText}
                         </span>
-                        <span className="text-[11px] text-muted-foreground font-mono">
+                        <span className="text-[11px] text-muted-foreground font-mono whitespace-nowrap shrink-0">
                           {ann.publishedAt}
                         </span>
                         {isLater && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse whitespace-nowrap shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                            あとで読む
+                            未読
                           </span>
                         )}
                         {isRead && (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground font-medium whitespace-nowrap shrink-0">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                             既読
                           </span>
                         )}
