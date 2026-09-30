@@ -25,6 +25,11 @@ function getSupabaseAdmin() {
   });
 }
 
+export interface DailyUsageItem {
+  date: string;
+  count: number;
+}
+
 export interface CustomerSummary {
   id: string;
   email: string;
@@ -42,6 +47,7 @@ export interface CustomerSummary {
   projected_monthly_cost: number;
   breakeven_daily_limit: number;
   cost_risk_status: "safe" | "warning" | "danger" | "free";
+  daily_history: DailyUsageItem[];
 }
 
 export interface AdminCustomerResponse {
@@ -177,6 +183,7 @@ export async function GET(req: NextRequest) {
       lastPracticedAt: string | null;
       todayCount: number;
       dateSet: Set<string>;
+      dailyMap: Map<string, number>;
     }
 
     const sessionStatsMap = new Map<string, UserSessionStats>();
@@ -189,6 +196,7 @@ export async function GET(req: NextRequest) {
         lastPracticedAt: null,
         todayCount: 0,
         dateSet: new Set<string>(),
+        dailyMap: new Map<string, number>(),
       };
       current.count += 1;
       if (!current.lastPracticedAt || new Date(s.created_at) > new Date(current.lastPracticedAt)) {
@@ -196,6 +204,7 @@ export async function GET(req: NextRequest) {
       }
       const sessionJSTDate = getJSTDateString(s.created_at);
       current.dateSet.add(sessionJSTDate);
+      current.dailyMap.set(sessionJSTDate, (current.dailyMap.get(sessionJSTDate) || 0) + 1);
       if (sessionJSTDate === todayJST) {
         current.todayCount += 1;
       }
@@ -276,6 +285,10 @@ export async function GET(req: NextRequest) {
         s?.dateSet.size ?? 0
       );
 
+      const dailyHistory: DailyUsageItem[] = Array.from(s?.dailyMap.entries() || [])
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
       userMap.set(p.id, {
         id: p.id,
         email: p.email || "(メールアドレス未設定)",
@@ -286,6 +299,7 @@ export async function GET(req: NextRequest) {
         pro_trials_used: t?.pro_trials_used ?? 0,
         practice_count: s?.count ?? 0,
         last_practiced_at: s?.lastPracticedAt ?? null,
+        daily_history: dailyHistory,
         ...metrics,
       });
     });
@@ -309,6 +323,10 @@ export async function GET(req: NextRequest) {
           s?.dateSet.size ?? 0
         );
 
+        const dailyHistory: DailyUsageItem[] = Array.from(s?.dailyMap.entries() || [])
+          .map(([date, count]) => ({ date, count }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+
         userMap.set(u.id, {
           id: u.id,
           email,
@@ -319,6 +337,7 @@ export async function GET(req: NextRequest) {
           pro_trials_used: t?.pro_trials_used ?? 0,
           practice_count: s?.count ?? 0,
           last_practiced_at: s?.lastPracticedAt ?? null,
+          daily_history: dailyHistory,
           ...metrics,
         });
       }

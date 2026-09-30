@@ -25,8 +25,9 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
-import { AdminCustomerResponse } from "@/app/api/admin/customers/route";
+import { AdminCustomerResponse, CustomerSummary } from "@/app/api/admin/customers/route";
 import { IPComplianceSection } from "@/components/features/settings/IPComplianceSection";
+import { CustomerUsageModal } from "@/components/features/admin/CustomerUsageModal";
 
 type AdminTab = "customers" | "compliance";
 type PlanFilter = "all" | "free" | "base" | "pro";
@@ -55,6 +56,7 @@ export default function AdminCustomersPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [mobileViewMode, setMobileViewMode] = useState<"card" | "table">("card");
+  const [selectedCustomerForGraph, setSelectedCustomerForGraph] = useState<CustomerSummary | null>(null);
 
   // Monitor scroll for top-return button
   useEffect(() => {
@@ -848,25 +850,44 @@ export default function AdminCustomersPage() {
 
                       {/* 2x2 Stats Grid */}
                       <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-muted/40 text-xs">
-                        <div>
-                          <span className="text-[10px] text-muted-foreground block">本日 / 1日平均利用</span>
-                          <span className="font-bold text-foreground">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCustomerForGraph(customer)}
+                          className="text-left p-1.5 rounded-lg bg-background/50 hover:bg-background border border-border/40 hover:border-blue-500/40 transition group cursor-pointer"
+                          title="クリックして日別利用推移（折れ線グラフ）を表示"
+                        >
+                          <span className="text-[10px] text-muted-foreground flex items-center justify-between">
+                            本日 / 1日平均利用
+                            <TrendingUp className="w-3 h-3 text-blue-600 dark:text-blue-400 opacity-60 group-hover:opacity-100 transition" />
+                          </span>
+                          <span className="font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition block mt-0.5">
                             {customer.today_practice_count}回 / {customer.daily_average_practice}回
                           </span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-muted-foreground block">累計練習 / チケット</span>
-                          <span className="font-bold text-foreground">
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCustomerForGraph(customer)}
+                          className="text-left p-1.5 rounded-lg bg-background/50 hover:bg-background border border-border/40 hover:border-blue-500/40 transition group cursor-pointer"
+                          title="クリックして日別利用推移（折れ線グラフ）を表示"
+                        >
+                          <span className="text-[10px] text-muted-foreground flex items-center justify-between">
+                            累計練習 / チケット
+                            <TrendingUp className="w-3 h-3 text-blue-600 dark:text-blue-400 opacity-60 group-hover:opacity-100 transition" />
+                          </span>
+                          <span className="font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition block mt-0.5">
                             {customer.practice_count}回 ({customer.tickets_used}枚)
                           </span>
-                        </div>
-                        <div>
+                        </button>
+
+                        <div className="p-1.5">
                           <span className="text-[10px] text-muted-foreground block">月間想定原価</span>
                           <span className="font-bold text-foreground font-mono">
                             約¥{customer.projected_monthly_cost.toLocaleString()}
                           </span>
                         </div>
-                        <div>
+
+                        <div className="p-1.5">
                           <span className="text-[10px] text-muted-foreground block">採算リスク</span>
                           <div>
                             {customer.cost_risk_status === "danger" ? (
@@ -896,13 +917,24 @@ export default function AdminCustomersPage() {
                         <span>
                           最新練習: {customer.last_practiced_at ? formatDate(customer.last_practiced_at) : "未練習"}
                         </span>
-                        <a
-                          href={`mailto:${customer.email}?subject=【ShadowLogサポート】`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition"
-                        >
-                          <Mail className="w-3.5 h-3.5" />
-                          連絡する
-                        </a>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCustomerForGraph(customer)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 transition cursor-pointer"
+                            title="日別利用推移（折れ線グラフ）を表示"
+                          >
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            <span>利用推移</span>
+                          </button>
+                          <a
+                            href={`mailto:${customer.email}?subject=【ShadowLogサポート】`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            連絡
+                          </a>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1024,7 +1056,12 @@ export default function AdminCustomersPage() {
 
                           {/* Usage Counts: Today & Daily Average */}
                           <td className="py-3.5 px-4">
-                            <div className="flex flex-col text-xs space-y-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCustomerForGraph(customer)}
+                              className="flex flex-col text-xs space-y-0.5 p-1.5 -m-1.5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 border border-transparent transition text-left group cursor-pointer w-full"
+                              title="クリックして日別利用回数の推移（折れ線グラフ）を表示"
+                            >
                               <div className="flex items-center gap-1.5">
                                 <span className="text-muted-foreground">本日:</span>
                                 <span
@@ -1036,14 +1073,18 @@ export default function AdminCustomersPage() {
                                 >
                                   {customer.today_practice_count} 回
                                 </span>
+                                <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 dark:text-blue-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                                  <TrendingUp className="w-3 h-3" />
+                                  グラフ
+                                </span>
                               </div>
                               <div className="text-[11px] text-muted-foreground">
-                                1日平均: <strong className="text-foreground">{customer.daily_average_practice}</strong> 回/日
+                                1日平均: <strong className="text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{customer.daily_average_practice}</strong> 回/日
                                 <span className="text-[10px] text-muted-foreground/70 ml-1">
                                   ({customer.active_days}日稼働)
                                 </span>
                               </div>
-                            </div>
+                            </button>
                           </td>
 
                           {/* Breakeven Limit & Risk Diagnosis */}
@@ -1088,10 +1129,18 @@ export default function AdminCustomersPage() {
 
                           {/* Cumulative Practice & Tickets */}
                           <td className="py-3.5 px-4">
-                            <div className="flex flex-col text-xs">
-                              <span className="font-semibold text-foreground">
-                                累計 {customer.practice_count} 回
-                              </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCustomerForGraph(customer)}
+                              className="flex flex-col text-xs p-1.5 -m-1.5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 border border-transparent transition text-left group cursor-pointer w-full"
+                              title="クリックして日別利用回数の推移（折れ線グラフ）を表示"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                  累計 {customer.practice_count} 回
+                                </span>
+                                <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 opacity-60 group-hover:opacity-100 transition" />
+                              </div>
                               <span className="text-[11px] text-muted-foreground mt-0.5">
                                 {customer.tickets_used} 枚消化
                                 {customer.pro_trials_used > 0 && (
@@ -1100,7 +1149,7 @@ export default function AdminCustomersPage() {
                                   </span>
                                 )}
                               </span>
-                            </div>
+                            </button>
                           </td>
 
                           {/* Last Practiced / Registration */}
@@ -1121,14 +1170,25 @@ export default function AdminCustomersPage() {
 
                           {/* Actions */}
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                            <a
-                              href={`mailto:${customer.email}?subject=【ShadowLogサポート】`}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition"
-                              title="メールを送信"
-                            >
-                              <Mail className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">連絡</span>
-                            </a>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCustomerForGraph(customer)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20 transition cursor-pointer"
+                                title="日別利用推移（折れ線グラフ）を表示"
+                              >
+                                <TrendingUp className="w-3.5 h-3.5" />
+                                <span>グラフ</span>
+                              </button>
+                              <a
+                                href={`mailto:${customer.email}?subject=【ShadowLogサポート】`}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition"
+                                title="メールを送信"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">連絡</span>
+                              </a>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -1158,6 +1218,13 @@ export default function AdminCustomersPage() {
           <span className="hidden sm:inline">トップへ</span>
         </button>
       )}
+
+      {/* Customer Daily Usage Line Chart Modal */}
+      <CustomerUsageModal
+        isOpen={selectedCustomerForGraph !== null}
+        onClose={() => setSelectedCustomerForGraph(null)}
+        customer={selectedCustomerForGraph}
+      />
     </div>
   );
 }

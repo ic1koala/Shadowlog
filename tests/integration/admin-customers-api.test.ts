@@ -151,6 +151,9 @@ describe("GET /api/admin/customers Integration Tests", () => {
     expect(user1.projected_monthly_cost).toBe(10); // Math.round(30 * 0.322) = 10
     expect(user1.breakeven_daily_limit).toBe(0);
     expect(user1.cost_risk_status).toBe("free");
+    expect(Array.isArray(user1.daily_history)).toBe(true);
+    expect(user1.daily_history.length).toBe(1);
+    expect(user1.daily_history[0].count).toBe(1);
 
     expect(json).toHaveProperty("kpi");
     expect(json.kpi.totalCustomers).toBe(2);
