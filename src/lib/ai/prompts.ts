@@ -59,11 +59,122 @@ const INDUSTRY_SITUATIONS: Record<Industry, string[]> = {
   ],
 };
 
+export interface SeasonalTrendContext {
+  season: "spring" | "summer" | "autumn" | "winter";
+  quarter: "Q1" | "Q2" | "Q3" | "Q4";
+  seasonLabel: string;
+  seasonalTheme: string;
+  trendingTopic: string;
+}
+
+const SEASONAL_THEMES: Record<"spring" | "summer" | "autumn" | "winter", string[]> = {
+  spring: [
+    "New fiscal year kickoff, team onboarding, and annual strategic roadmap alignment",
+    "Spring product launches, initial quarterly milestones, and partner expos",
+    "Budget allocation rollout and departmental goal setting",
+    "Fresh organizational beginnings and cross-functional team formation",
+  ],
+  summer: [
+    "Mid-year performance reviews, milestone tracking, and H1 retro evaluations",
+    "Summer customer engagement campaigns, product promotions, and user growth",
+    "Cross-regional coordination during vacation seasons and work-life balance",
+    "H2 strategic adjustments and agile resource rebalancing",
+  ],
+  autumn: [
+    "Q3 closing and Q4 revenue sprint to meet annual enterprise targets",
+    "Annual budget formulation and next-year strategic business planning",
+    "Major autumn tech conventions, developer summits, and flagship product keynotes",
+    "Year-end commercial preparations, holiday sales pipelines, and strategic alliances",
+  ],
+  winter: [
+    "Year-end retrospectives, celebrating team milestones, and closing enterprise deals",
+    "Holiday season operations, high-traffic system reliability, and customer care",
+    "Annual financial audits, fiscal reporting, and executive reviews",
+    "New Year vision setting, executive kickoffs, and Q1 pipeline setup",
+  ],
+};
+
+const INDUSTRY_TRENDS: Record<Industry, string[]> = {
+  tech: [
+    "Agentic AI workflows, LLM orchestration, and autonomous system design",
+    "FinOps practices for cloud infrastructure and compute cost efficiency",
+    "Zero-trust cybersecurity, identity verification, and supply chain security",
+    "Edge computing, WebAssembly modules, and low-latency microservices",
+    "Modern developer experience (DevEx) and automated observability pipelines",
+  ],
+  business: [
+    "Cross-functional agility and hybrid workplace leadership dynamics",
+    "Data-driven pricing models and hedging against economic fluctuations",
+    "Customer retention optimization, LTV expansion, and recurring revenue health",
+    "ESG transparency reporting and corporate governance standards",
+    "Strategic alliances, enterprise procurement, and vendor consolidation",
+  ],
+  marketing: [
+    "AI-assisted hyper-personalized customer journeys and content delivery",
+    "First-party data strategies in privacy-first advertising ecosystems",
+    "Short-form video storytelling and creator-brand co-marketing ROI",
+    "Omnichannel conversion funnel optimization and retention triggers",
+    "Community-led growth initiatives and high-engagement referral programs",
+  ],
+  daily: [
+    "Work-life harmony, digital wellness, and flexible daily routines",
+    "Smart home automation, wearable health tech, and lifestyle optimization",
+    "Exploring artisanal cafes, seasonal cuisines, and local sustainable dining",
+    "Weekend outdoor adventures, eco-friendly travel, and cultural exploration",
+    "Lifelong learning routines, podcast discussions, and book clubs",
+  ],
+};
+
+/**
+ * Returns seasonal business cycle information and contemporary industry trends
+ * based on the provided date (defaults to current date).
+ */
+export function getSeasonalTrendContext(
+  industry: Industry,
+  date: Date = new Date()
+): SeasonalTrendContext {
+  const normInd = normalizeIndustry(industry);
+  const month = date.getMonth(); // 0 = Jan, 11 = Dec
+
+  let season: "spring" | "summer" | "autumn" | "winter";
+  let seasonLabel: string;
+  if (month >= 2 && month <= 4) {
+    season = "spring";
+    seasonLabel = "Spring (春)";
+  } else if (month >= 5 && month <= 7) {
+    season = "summer";
+    seasonLabel = "Summer (夏)";
+  } else if (month >= 8 && month <= 10) {
+    season = "autumn";
+    seasonLabel = "Autumn (秋)";
+  } else {
+    season = "winter";
+    seasonLabel = "Winter (冬)";
+  }
+
+  const quarter = `Q${Math.floor(month / 3) + 1}` as "Q1" | "Q2" | "Q3" | "Q4";
+
+  const seasonalList = SEASONAL_THEMES[season];
+  const seasonalTheme = seasonalList[Math.floor(Math.random() * seasonalList.length)]!;
+
+  const trendList = INDUSTRY_TRENDS[normInd] || INDUSTRY_TRENDS.tech;
+  const trendingTopic = trendList[Math.floor(Math.random() * trendList.length)]!;
+
+  return {
+    season,
+    quarter,
+    seasonLabel,
+    seasonalTheme,
+    trendingTopic,
+  };
+}
+
 export function getSentenceGenerationPrompt(
   industry: Industry,
   level: DifficultyLevel,
   topic?: string,
-  weakWords?: string[]
+  weakWords?: string[],
+  referenceDate?: Date
 ): PromptTemplate {
   const levelGuidelines: Record<DifficultyLevel, string> = {
     beginner:
@@ -78,6 +189,7 @@ export function getSentenceGenerationPrompt(
   const situations = INDUSTRY_SITUATIONS[normInd] || INDUSTRY_SITUATIONS.tech;
   const randomSituation = situations[Math.floor(Math.random() * situations.length)];
   const randomSeed = Math.random().toString(36).substring(2, 8);
+  const seasonal = getSeasonalTrendContext(normInd, referenceDate);
 
   const hasWeakWords = weakWords && weakWords.length > 0;
   const weakWordList = hasWeakWords ? weakWords.slice(0, 3).join(", ") : null;
@@ -85,7 +197,10 @@ export function getSentenceGenerationPrompt(
   const systemPrompt = `You are an expert English language coach specializing in shadowing practice.
 Your task is to generate ONE fresh, authentic, contextually rich English sentence along with its natural Japanese translation.
 IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets (e.g., TOEIC, TOEFL), or copyrighted materials. All generated content must be 100% original and dynamically created.
-NEVER generate generic, repetitive, or cliché template sentences.${hasWeakWords ? `
+NEVER generate generic, repetitive, or cliché template sentences.
+
+Season & Trend Awareness:
+Subtly weave in realistic seasonal timing cues (such as current quarter or annual business cycle themes) and contemporary industry trends (such as modern tech tools, agile business, or digital workflows). The sentence must feel fresh, timely, and relevant to modern professionals, rather than generic textbook English.${hasWeakWords ? `
 \nPersonalization: The learner struggles with these words: [${weakWordList}]. Naturally incorporate 1 to 2 of these words into the sentence without forcing them awkwardly.` : ""}
 
 Strict Output Format:
@@ -99,11 +214,14 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
   const userPrompt = `Generate a unique shadowing practice sentence with the following specifications:
 - Industry/Domain: ${normInd}
 - Context/Situation: ${topic ? topic : randomSituation}
+- Seasonal Timing & Cycle: ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
+- Modern Trend Angle: ${seasonal.trendingTopic}
 - Difficulty Level: ${level} (${levelGuidelines[level]})
 - Variation Seed: ${randomSeed}${hasWeakWords ? `\n- Weak Words to reinforce: ${weakWordList}` : ""}
 
 Requirements:
 - Make the vocabulary, syntax, and sentence structure novel and distinct from typical textbook examples.
+- Naturally harmonize the context with current seasonal business cycles and modern trends where appropriate.
 - Ensure natural conversational or business cadence and rhythm suitable for oral shadowing practice.`;
 
   return { systemPrompt, userPrompt };
@@ -115,17 +233,22 @@ Requirements:
 export function getPassageGenerationPrompt(
   industry: Industry,
   level: DifficultyLevel,
-  topic?: string
+  topic?: string,
+  referenceDate?: Date
 ): PromptTemplate {
   const normInd = normalizeIndustry(industry);
   const situations = INDUSTRY_SITUATIONS[normInd] || INDUSTRY_SITUATIONS.tech;
   const randomSituation = situations[Math.floor(Math.random() * situations.length)];
   const randomSeed = Math.random().toString(36).substring(2, 8);
+  const seasonal = getSeasonalTrendContext(normInd, referenceDate);
 
   const systemPrompt = `You are an elite executive speechwriter and English speaking coach.
 Your task is to generate ONE coherent, inspiring, and natural presentation/speech passage (paragraph of 3 to 5 sentences, 60 to 90 words total) along with its natural Japanese translation.
 IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets, or copyrighted materials. All generated content must be 100% original.
 Avoid formulaic openings like "Good morning everyone". Dive right into substantive, engaging speech content.
+
+Season & Trend Awareness:
+Reflect the immediate reality of modern business, subtly incorporating current seasonal momentum (such as current quarter goals, annual planning, or seasonal milestones) and contemporary industry developments so the speech sounds immediate, timely, and inspiring.
 
 Strict Output Format:
 Return ONLY a valid JSON object with the following schema:
@@ -138,12 +261,15 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
   const userPrompt = `Generate an engaging business presentation or conference speech passage with the following specifications:
 - Industry/Domain: ${normInd}
 - Scenario/Topic: ${topic ? topic : randomSituation}
+- Seasonal Timing & Cycle: ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
+- Modern Trend Angle: ${seasonal.trendingTopic}
 - Difficulty Level: ${level}
 - Target Word Count: 60 to 90 words (3 to 5 clear, rhythmic sentences)
 - Variation Seed: ${randomSeed}
 
 Style Guidelines:
 - Write in the style of an authentic keynote speech, engineering town hall, or executive briefing.
+- Naturally incorporate modern trend nuances and seasonal momentum into the rhetorical flow.
 - Use natural transitional signposts and engaging rhetoric.
 - Ensure rhythmic pauses and clear chunking for continuous shadowing.`;
 

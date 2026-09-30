@@ -65,3 +65,58 @@ describe("Passage Prompts & Fallbacks", () => {
     expect(prompt.userPrompt).toContain("流暢なスピーチペース");
   });
 });
+
+describe("Seasonal & Trend Awareness Prompt Injection", () => {
+  it("determines correct seasons and quarters based on date", async () => {
+    const { getSeasonalTrendContext } = await import("@/lib/ai/prompts");
+    
+    // Spring (e.g. April)
+    const spring = getSeasonalTrendContext("tech", new Date("2026-04-15T00:00:00Z"));
+    expect(spring.season).toBe("spring");
+    expect(spring.quarter).toBe("Q2");
+    expect(spring.seasonLabel).toContain("Spring");
+
+    // Summer (e.g. July)
+    const summer = getSeasonalTrendContext("business", new Date("2026-07-20T00:00:00Z"));
+    expect(summer.season).toBe("summer");
+    expect(summer.quarter).toBe("Q3");
+    expect(summer.seasonLabel).toContain("Summer");
+
+    // Autumn (e.g. October)
+    const autumn = getSeasonalTrendContext("marketing", new Date("2026-10-10T00:00:00Z"));
+    expect(autumn.season).toBe("autumn");
+    expect(autumn.quarter).toBe("Q4");
+    expect(autumn.seasonLabel).toContain("Autumn");
+
+    // Winter (e.g. January)
+    const winter = getSeasonalTrendContext("daily", new Date("2026-01-15T00:00:00Z"));
+    expect(winter.season).toBe("winter");
+    expect(winter.quarter).toBe("Q1");
+    expect(winter.seasonLabel).toContain("Winter");
+  });
+
+  it("injects seasonal timing and modern trend angles into sentence generation prompts", async () => {
+    const { getSentenceGenerationPrompt } = await import("@/lib/ai/prompts");
+    const autumnDate = new Date("2026-10-01T00:00:00Z");
+    const prompt = getSentenceGenerationPrompt("tech", "intermediate", undefined, undefined, autumnDate);
+
+    expect(prompt.systemPrompt).toContain("Season & Trend Awareness");
+    expect(prompt.userPrompt).toContain("Seasonal Timing & Cycle");
+    expect(prompt.userPrompt).toContain("Autumn (秋)");
+    expect(prompt.userPrompt).toContain("Q4");
+    expect(prompt.userPrompt).toContain("Modern Trend Angle");
+  });
+
+  it("injects seasonal timing and modern trend angles into passage generation prompts", async () => {
+    const { getPassageGenerationPrompt } = await import("@/lib/ai/prompts");
+    const springDate = new Date("2026-03-20T00:00:00Z");
+    const prompt = getPassageGenerationPrompt("business", "advanced", undefined, springDate);
+
+    expect(prompt.systemPrompt).toContain("Season & Trend Awareness");
+    expect(prompt.userPrompt).toContain("Seasonal Timing & Cycle");
+    expect(prompt.userPrompt).toContain("Spring (春)");
+    expect(prompt.userPrompt).toContain("Q1");
+    expect(prompt.userPrompt).toContain("Modern Trend Angle");
+  });
+});
+
