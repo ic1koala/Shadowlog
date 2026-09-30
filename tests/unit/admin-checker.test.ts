@@ -16,6 +16,8 @@ describe("Admin Access Checker", () => {
     expect(isAdminEmail("shadowlog.app@gmail.com")).toBe(true);
     expect(isAdminEmail("SHADOWLOG.APP@GMAIL.COM")).toBe(true);
     expect(isAdminEmail("  shadowlog.app@gmail.com  ")).toBe(true);
+    expect(isAdminEmail("jabonbolivar@gmail.com")).toBe(true);
+    expect(isAdminEmail("koala.hs@gmail.com")).toBe(true);
   });
 
   it("rejects non-admin emails", () => {

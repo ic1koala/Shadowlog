@@ -17,8 +17,15 @@ export function getVipTesterEmails(): string[] {
     .filter(Boolean);
 
   // Default fallback VIP emails
-  if (!baseList.includes("shadowlog.app@gmail.com")) {
-    baseList.push("shadowlog.app@gmail.com");
+  const defaultVips = [
+    "shadowlog.app@gmail.com",
+    "jabonbolivar@gmail.com",
+    "koala.hs@gmail.com",
+  ];
+  for (const v of defaultVips) {
+    if (!baseList.includes(v)) {
+      baseList.push(v);
+    }
   }
 
   return baseList;
