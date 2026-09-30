@@ -5,13 +5,6 @@
 
 export const DEFAULT_ADMIN_EMAIL = "shadowlog.app@gmail.com";
 
-// Base administrator whitelist
-export const DEFAULT_ADMIN_EMAILS = [
-  "shadowlog.app@gmail.com",
-  "jabonbolivar@gmail.com",
-  "koala.hs@gmail.com",
-];
-
 export function getAdminEmails(): string[] {
   const envAdmin =
     process.env.ADMIN_EMAIL ||
@@ -24,7 +17,7 @@ export function getAdminEmails(): string[] {
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 
-  const baseList = DEFAULT_ADMIN_EMAILS.map((e) => e.toLowerCase());
+  const baseList = [DEFAULT_ADMIN_EMAIL.toLowerCase()];
 
   for (const email of customList) {
     if (!baseList.includes(email)) {
