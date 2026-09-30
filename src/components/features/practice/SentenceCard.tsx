@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Play, Pause, RotateCcw, Sparkles } from "lucide-react";
 import { SentenceResponse } from "@/types";
 import { getChunkSlashIndices } from "@/lib/diff/chunk-splitter";
+import { calculatePlaybackWpmMap, PlaybackSpeed } from "@/lib/diff/wpm-calculator";
 
 interface SentenceCardProps {
   sentence: SentenceResponse | null;
@@ -67,9 +68,10 @@ export function SentenceCard({
   isRecording = false,
 }: SentenceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+  const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1.0);
   const [showJapanese, setShowJapanese] = useState(true);
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [, setVoicesLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
@@ -202,6 +204,12 @@ export function SentenceCard({
     return getChunkSlashIndices(parsedWords.map((w) => w.text));
   }, [showChunkSlash, parsedWords]);
 
+  // Dynamic WPM map (0.6x, 1.0x, 1.2x) calculated from real audio duration & word count
+  const speedWpmMap = useMemo(() => {
+    const count = parsedWords.length || sentence?.wordCount || 0;
+    return calculatePlaybackWpmMap(count, audioDuration);
+  }, [parsedWords.length, sentence?.wordCount, audioDuration]);
+
   const startAnimationLoop = useCallback(() => {
     stopAnimationLoop();
 
@@ -259,7 +267,7 @@ export function SentenceCard({
     };
   }, []);
 
-  // Reset playback and highlight state when sentence changes
+  // Reset playback, highlight state, and audio element when sentence changes
   useEffect(() => {
     setIsPlaying(false);
     setActiveWordIndex(null);
@@ -268,6 +276,8 @@ export function SentenceCard({
     wordRefs.current = [];
     clearPendingPlay();
     stopAnimationLoop();
+    setAudioDuration(null);
+
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
@@ -276,6 +286,32 @@ export function SentenceCard({
       audioRef.current.removeAttribute("src");
       audioRef.current = null;
     }
+
+    // Pre-load audio metadata if base64 is available to measure real duration and calculate dynamic WPM
+    if (sentence?.audioBase64) {
+      const audio = new Audio(`data:audio/mp3;base64,${sentence.audioBase64}`);
+      audioRef.current = audio;
+
+      const handleLoadedMetadata = () => {
+        if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+          setAudioDuration(audio.duration);
+        }
+      };
+
+      if (audio.readyState >= 1 && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+        setAudioDuration(audio.duration);
+      } else {
+        audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+      }
+
+      audio.onended = () => {
+        setIsPlaying(false);
+        setActiveWordIndex(null);
+        clearPendingPlay();
+        stopAnimationLoop();
+      };
+    }
+
     return () => {
       clearPendingPlay();
       stopAnimationLoop();
@@ -288,7 +324,7 @@ export function SentenceCard({
         audioRef.current = null;
       }
     };
-  }, [sentence?.id, clearPendingPlay, stopAnimationLoop]);
+  }, [sentence?.id, sentence?.audioBase64, clearPendingPlay, stopAnimationLoop]);
 
   // Synchronize smooth sliding pill position with activeWordIndex
   useEffect(() => {
@@ -405,6 +441,10 @@ export function SentenceCard({
         };
       }
 
+      if (audioRef.current.duration && isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
+        setAudioDuration(audioRef.current.duration);
+      }
+
       audioRef.current.playbackRate = playbackSpeed;
 
       if (isPlaying) {
@@ -462,7 +502,7 @@ export function SentenceCard({
     stopAnimationLoop,
   ]);
 
-  const changeSpeed = (speed: number) => {
+  const changeSpeed = (speed: PlaybackSpeed) => {
     setPlaybackSpeed(speed);
     if (audioRef.current) {
       audioRef.current.playbackRate = speed;
@@ -582,47 +622,63 @@ export function SentenceCard({
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-2 border-t border-border">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
           <button
+            type="button"
             onClick={togglePlayAudio}
             disabled={isRecording}
-            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0 ${
               isPlaying
                 ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-600/30"
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
             title={isRecording ? "録音中はお手本音声の混入を防ぐため再生できません" : undefined}
           >
-            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            {isPlaying ? "一時停止" : "フレーズ音声を聴く"}
+            {isPlaying ? <Pause className="w-4 h-4 shrink-0" /> : <Play className="w-4 h-4 shrink-0" />}
+            <span>{isPlaying ? "一時停止" : "フレーズ音声を聴く"}</span>
           </button>
 
-          {/* Speed Selector with circular active indicator */}
-          <div className="flex items-center bg-muted/70 p-1 rounded-full text-xs font-medium gap-1 shadow-inner">
-            {[0.6, 1.0, 1.2].map((spd) => {
+          {/* Speed Selector with dynamic WPM capsule indicators */}
+          <div className="flex items-center bg-muted/70 p-1 rounded-xl gap-1 shadow-inner shrink-0">
+            {([0.6, 1.0, 1.2] as const).map((spd) => {
               const isSelected = playbackSpeed === spd;
+              const wpmVal = speedWpmMap[spd];
               return (
                 <button
                   key={spd}
+                  type="button"
                   onClick={() => changeSpeed(spd)}
-                  className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 text-xs font-semibold ${
+                  className={`w-[48px] sm:w-[52px] h-[38px] sm:h-[40px] rounded-lg flex flex-col items-center justify-center transition-all duration-200 select-none ${
                     isSelected
-                      ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-500/30 scale-105"
+                      ? "bg-blue-600 text-white shadow-xs font-bold ring-1 ring-blue-500/30 scale-102"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
-                  title={`再生速度 ${spd === 1.0 ? "1x" : `${spd}x`}`}
-                  aria-label={`再生速度 ${spd === 1.0 ? "1x" : `${spd}x`}`}
+                  title={`再生速度 ${spd === 1.0 ? "1.0x" : `${spd}x`} (実効話速: 約${wpmVal} WPM)`}
+                  aria-label={`再生速度 ${spd === 1.0 ? "1.0x" : `${spd}x`} (約${wpmVal} WPM)`}
                 >
-                  {spd === 1.0 ? "1x" : `${spd}x`}
+                  <span className="text-xs font-bold leading-tight">
+                    {spd === 1.0 ? "1.0x" : `${spd}x`}
+                  </span>
+                  <span
+                    className={`text-[10px] leading-tight font-medium ${
+                      isSelected ? "text-blue-100" : "text-muted-foreground"
+                    }`}
+                  >
+                    ~{wpmVal}
+                  </span>
                 </button>
               );
             })}
+            <span className="text-[9px] font-bold text-muted-foreground/70 px-1 select-none hidden xs:inline uppercase tracking-tight">
+              WPM
+            </span>
           </div>
         </div>
 
         <button
+          type="button"
           onClick={() => setShowJapanese((prev) => !prev)}
-          className="text-xs text-muted-foreground hover:text-foreground transition underline underline-offset-4 py-1 min-h-[36px]"
+          className="text-xs text-muted-foreground hover:text-foreground transition underline underline-offset-4 py-1 min-h-[36px] self-end sm:self-auto"
         >
           {showJapanese ? "日本語訳を隠す" : "日本語訳を表示"}
         </button>
