@@ -28,7 +28,7 @@ export function WpmTrendCard({ sessions }: WpmTrendCardProps) {
   // SVG折れ線グラフの座標計算
   const chartPoints = useMemo(() => {
     const list = stats.dailyTrend;
-    if (list.length === 0) return { pathD: "", areaD: "", points: [] };
+    if (list.length === 0) return { pathD: "", areaD: "", points: [], target120Y: 30.5 };
 
     // 最大WPMを決定（最低でも160を基準スケールにする）
     const maxVal = Math.max(160, ...list.map((d) => d.wpm));
@@ -38,6 +38,9 @@ export function WpmTrendCard({ sessions }: WpmTrendCardProps) {
     const paddingY = 16;
     const chartW = width - paddingX * 2;
     const chartH = height - paddingY * 2;
+
+    // Mathematically exact Y position for 120 WPM reference line
+    const target120Y = Math.round((paddingY + chartH - (120 / maxVal) * chartH) * 10) / 10;
 
     const points = list.map((item, idx) => {
       const x = paddingX + (idx / (list.length - 1)) * chartW;
@@ -49,7 +52,7 @@ export function WpmTrendCard({ sessions }: WpmTrendCardProps) {
     // 0の日は除外して線をつなぐか、全体をプロット
     const activePoints = points.filter((p) => p.wpm > 0);
     if (activePoints.length === 0) {
-      return { pathD: "", areaD: "", points };
+      return { pathD: "", areaD: "", points, target120Y };
     }
 
     const pathD = activePoints.reduce((acc, p, i) => {
@@ -60,7 +63,7 @@ export function WpmTrendCard({ sessions }: WpmTrendCardProps) {
     const lastActive = activePoints[activePoints.length - 1];
     const areaD = `${pathD} L ${lastActive.x} ${height - paddingY} L ${firstActive.x} ${height - paddingY} Z`;
 
-    return { pathD, areaD, points };
+    return { pathD, areaD, points, target120Y };
   }, [stats.dailyTrend]);
 
   return (
@@ -180,9 +183,9 @@ export function WpmTrendCard({ sessions }: WpmTrendCardProps) {
             {/* Target 120 WPM Guide Line */}
             <line
               x1="20"
-              y1="40"
+              y1={chartPoints.target120Y}
               x2="300"
-              y2="40"
+              y2={chartPoints.target120Y}
               stroke="currentColor"
               strokeDasharray="3 3"
               className="text-border/80"
@@ -190,7 +193,7 @@ export function WpmTrendCard({ sessions }: WpmTrendCardProps) {
             />
             <text
               x="22"
-              y="37"
+              y={chartPoints.target120Y - 4}
               className="text-[8px] fill-muted-foreground/60 select-none"
             >
               標準 120 WPM
