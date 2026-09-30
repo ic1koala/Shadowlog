@@ -17,6 +17,8 @@ interface AudioRecorderProps {
   onAudioReady: (blob: Blob, durationSeconds: number) => void;
   isTranscribing: boolean;
   disabled?: boolean;
+  hasEvaluated?: boolean;
+  onRetry?: () => void;
   onRecordingStateChange?: (isRecording: boolean, hasBlob: boolean) => void;
   onRegisterControls?: (controls: { start: () => void; stop: () => void; reset: () => void }) => void;
 }
@@ -24,6 +26,8 @@ interface AudioRecorderProps {
 export function AudioRecorder({
   onAudioReady,
   isTranscribing,
+  hasEvaluated = false,
+  onRetry,
   onRecordingStateChange,
   onRegisterControls,
 }: AudioRecorderProps) {
@@ -45,6 +49,7 @@ export function AudioRecorder({
   } = useAudioRecorder();
 
   const [isPlayingRecorded, setIsPlayingRecorded] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
   const lastDurationRef = useRef<number>(0);
 
@@ -54,6 +59,13 @@ export function AudioRecorder({
       lastDurationRef.current = recordingTime;
     }
   }, [recordingTime]);
+
+  // Reset submitted state when audioBlob is cleared
+  useEffect(() => {
+    if (!audioBlob) {
+      setHasSubmitted(false);
+    }
+  }, [audioBlob]);
 
   useEffect(() => {
     setIsPlayingRecorded(false);
@@ -96,8 +108,16 @@ export function AudioRecorder({
 
   const handleTranscribeClick = () => {
     if (audioBlob) {
+      setHasSubmitted(true);
       onAudioReady(audioBlob, lastDurationRef.current || 1);
     }
+  };
+
+  const handleRetryClick = () => {
+    setHasSubmitted(false);
+    resetRecording();
+    onRecordingStateChange?.(false, false);
+    onRetry?.();
   };
 
   const formatTimer = (seconds: number) => {
@@ -105,6 +125,8 @@ export function AudioRecorder({
     const secs = seconds % 60;
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
+
+  const isEvaluatedOrSubmitted = hasEvaluated || hasSubmitted || isTranscribing;
 
   return (
     <div className="w-full bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5 sm:space-y-6">
@@ -222,18 +244,28 @@ export function AudioRecorder({
         {/* After recording: submit / preview / redo */}
         {!isRecording && audioBlob && (
           <div className="w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
-            {/* Primary action — submit for analysis */}
+            {/* Primary action — submit for analysis (turns gray once evaluated/submitted) */}
             <button
               onClick={handleTranscribeClick}
-              disabled={isTranscribing}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 disabled:opacity-50 transition shadow-sm text-base sm:text-sm min-h-[48px] order-first"
+              disabled={isEvaluatedOrSubmitted}
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-2.5 rounded-xl transition shadow-sm text-base sm:text-sm min-h-[48px] order-first ${
+                isEvaluatedOrSubmitted
+                  ? "bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-80"
+                  : "bg-primary text-primary-foreground font-semibold hover:bg-primary/90 active:scale-95 cursor-pointer"
+              }`}
             >
               <Send className="w-4 h-4" />
-              {isTranscribing ? "解析中..." : "判定する"}
+              <span>
+                {isTranscribing
+                  ? "解析中..."
+                  : hasEvaluated || hasSubmitted
+                  ? "判定完了"
+                  : "判定する"}
+              </span>
             </button>
 
             {/* Secondary actions row */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-1">
               <button
                 onClick={togglePlayRecorded}
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 bg-secondary text-secondary-foreground font-medium rounded-xl hover:bg-secondary/80 transition text-sm min-h-[48px]"
@@ -243,15 +275,16 @@ export function AudioRecorder({
               </button>
 
               <button
-                onClick={() => {
-                  resetRecording();
-                  onRecordingStateChange?.(false, false);
-                }}
+                onClick={handleRetryClick}
                 disabled={isTranscribing}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 border border-border text-muted-foreground hover:text-foreground font-medium rounded-xl hover:bg-muted transition text-sm min-h-[48px]"
+                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl transition text-sm min-h-[48px] cursor-pointer ${
+                  isEvaluatedOrSubmitted
+                    ? "bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold shadow-md shadow-blue-500/20"
+                    : "border border-border text-muted-foreground hover:text-foreground font-medium hover:bg-muted"
+                }`}
               >
                 <RotateCcw className="w-4 h-4" />
-                <span className="sm:inline">録り直す</span>
+                <span className="sm:inline">取り直す</span>
               </button>
             </div>
           </div>

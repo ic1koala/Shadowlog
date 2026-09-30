@@ -64,7 +64,7 @@ export function SentenceCard({
   sentence,
   isLoading,
   onRefresh,
-  showChunkSlash = false,
+  showChunkSlash = true,
   isRecording = false,
 }: SentenceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -594,7 +594,9 @@ export function SentenceCard({
                   ref={(el) => {
                     wordRefs.current[idx] = el;
                   }}
-                  className={`relative inline-block px-1 py-0.5 rounded-lg mr-1.5 select-none transition-colors duration-150 ${
+                  className={`relative inline-block px-1 py-0.5 rounded-lg select-none transition-colors duration-150 ${
+                    hasSlash ? "mr-2.5 sm:mr-3" : "mr-1.5"
+                  } ${
                     isCurrent ? "text-white" : "text-foreground"
                   }`}
                 >
@@ -602,7 +604,7 @@ export function SentenceCard({
                   {hasSlash && (
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none select-none absolute -right-[7px] top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-normal text-[0.78em] leading-none opacity-85"
+                      className="pointer-events-none select-none absolute -right-[8px] sm:-right-[9px] top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 font-extrabold text-[0.95em] leading-none opacity-95 drop-shadow-2xs"
                     >
                       /
                     </span>
