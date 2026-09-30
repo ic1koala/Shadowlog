@@ -257,6 +257,10 @@ export function useAudioRecorder() {
   }, []);
 
   const startRecording = useCallback(async () => {
+    // Immediately stop any playing model audio before opening the microphone
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("shadowlog:stop-model-audio"));
+    }
     cleanupAudio();
     setState((prev) => ({
       ...prev,

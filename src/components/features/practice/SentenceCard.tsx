@@ -10,6 +10,7 @@ interface SentenceCardProps {
   isLoading: boolean;
   onRefresh: () => void;
   showChunkSlash?: boolean;
+  isRecording?: boolean;
 }
 
 interface ParsedWord {
@@ -63,6 +64,7 @@ export function SentenceCard({
   isLoading,
   onRefresh,
   showChunkSlash = false,
+  isRecording = false,
 }: SentenceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
@@ -129,6 +131,33 @@ export function SentenceCard({
       playDelayTimerRef.current = null;
     }
   }, []);
+
+  const stopModelAudio = useCallback(() => {
+    clearPendingPlay();
+    stopAnimationLoop();
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlaying(false);
+    setActiveWordIndex(null);
+  }, [clearPendingPlay, stopAnimationLoop]);
+
+  // Immediately stop model audio when microphone recording starts (prevents speaker bleed into mic)
+  useEffect(() => {
+    if (isRecording) {
+      stopModelAudio();
+    }
+  }, [isRecording, stopModelAudio]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleForceStop = () => stopModelAudio();
+    window.addEventListener("shadowlog:stop-model-audio", handleForceStop);
+    return () => window.removeEventListener("shadowlog:stop-model-audio", handleForceStop);
+  }, [stopModelAudio]);
 
   // Parse English sentence into words with weighted timing distribution for natural speech pacing
   const parsedWords = useMemo<ParsedWord[]>(() => {
@@ -556,11 +585,13 @@ export function SentenceCard({
         <div className="flex items-center gap-3">
           <button
             onClick={togglePlayAudio}
-            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition min-h-[44px] ${
+            disabled={isRecording}
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed ${
               isPlaying
                 ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-600/30"
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
+            title={isRecording ? "録音中はお手本音声の混入を防ぐため再生できません" : undefined}
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             {isPlaying ? "一時停止" : "フレーズ音声を聴く"}

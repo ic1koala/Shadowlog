@@ -834,6 +834,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               isLoading={isLoadingSentence}
               onRefresh={() => fetchNewSentence()}
               showChunkSlash={isAdmin && adminChunkSlash}
+              isRecording={floatIsRecording}
             />
           </div>
         )}
@@ -846,7 +847,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
             <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">
               2
             </span>
-            {practiceMode === "passage" ? "長文通しシャドーイング録音" : "シャドーイング録音"}
+            {practiceMode === "passage" ? "聴き終わったら長文通し録音" : "聴き終わったら録音して発話"}
           </div>
 
           {/* Active Retry Coach Tip */}

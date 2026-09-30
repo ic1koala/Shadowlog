@@ -207,11 +207,16 @@ export function AudioRecorder({
 
       {/* Controls Container — start/stop are in the floating bar */}
       <div className="flex flex-col items-center gap-3 sm:gap-4 py-2">
-        {/* Idle placeholder — guides user to the floating button */}
+        {/* Idle placeholder — guides user to listen first, then start recording via floating button */}
         {!isRecording && !audioBlob && (
-          <p className="text-sm text-muted-foreground text-center">
-            画面下部のボタンでシャドーイングを開始してください
-          </p>
+          <div className="text-center space-y-1">
+            <p className="text-xs sm:text-sm font-medium text-foreground">
+              ① まず上の「フレーズ音声を聴く」でお手本のリズムを確認
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              ② 聴き終わったら、画面下部のボタンで録音して発話してください
+            </p>
+          </div>
         )}
 
         {/* After recording: submit / preview / redo */}
@@ -254,7 +259,7 @@ export function AudioRecorder({
       </div>
 
       <p className="text-[11px] sm:text-xs text-center text-muted-foreground">
-        フレーズ音声に合わせて、または聴き終わった直後に声に出して発話してください。
+        ※お手本音声がマイクに入るのを防ぐため、録音を開始するとフレーズ音声は自動で停止します。
       </p>
     </div>
   );
