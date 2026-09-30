@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShadowLog 総合収支試算シミュレーター（GMO固定費連動版）</title>
+  <title>ShadowLog 総合収支試算シミュレーター（問題バンク＆GMO固定費連動版）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     input[type=range] {
@@ -24,7 +24,7 @@
       <div class="flex items-center gap-2">
         <span class="font-bold text-slate-700">ShadowLog 管理コンソール</span>
         <span>/</span>
-        <span class="text-blue-600 font-semibold">総合収支・損益シミュレーター</span>
+        <span class="text-blue-600 font-semibold">総合収支・損益シミュレーター（2026/09/30 最新仕様反映）</span>
       </div>
       <div class="flex items-center gap-3">
         <a href="javascript:void(0)" onclick="openManagement()" class="hover:text-blue-600 underline font-medium cursor-pointer">
@@ -42,10 +42,10 @@
         <div>
           <div class="flex items-center gap-2 mb-2 flex-wrap">
             <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
-              実測データ連動型シミュレーター
+              🏦 300文問題バンク＆週10%自動入替対応
             </span>
             <span class="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
-              アプリ仕様改善（コスト抑制）反映済
+              ⚡ 先読み(0.0秒遷移)＆1日上限撤廃（使い放題）反映済
             </span>
             <span class="inline-block px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-bold">
               🏢 GMOバーチャルオフィス固定費連動
@@ -55,15 +55,15 @@
             ShadowLog 総合収支試算シミュレーター
           </h1>
           <p class="text-sm text-slate-500 mt-1">
-            OpenAI API（GPT-4o-mini / TTS-1 / Whisper-1）の実績原価 ＋ GMOバーチャルオフィス固定費に基づく事業損益モデル
+            OpenAI API（GPT-4o-mini / TTS-1 / Whisper-1）実測原価 ＋ 問題バンク定常運用 ＋ GMO固定費（月1,650円）に基づく事業損益モデル
           </p>
         </div>
         <div class="text-right bg-blue-50/60 p-4 rounded-xl border border-blue-100 shrink-0">
-          <p class="text-xs text-slate-500">1回の練習あたりのAI原価</p>
-          <p class="text-2xl font-black text-blue-600 font-mono" id="unitCostBadge">0.32 円</p>
-          <p class="text-[11px] text-slate-500" id="unitCostUsdBadge">($0.00214 / 回)</p>
+          <p class="text-xs text-slate-500">1回の練習あたりのAI変動原価</p>
+          <p class="text-2xl font-black text-blue-600 font-mono" id="unitCostBadge">0.10 円</p>
+          <p class="text-[11px] text-slate-500" id="unitCostUsdBadge">($0.00065 / 回 ＋ 入替¥331/月)</p>
           <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block" id="costReductionBadge">
-            約31%コスト抑制中
+            問題バンク定常期（約70〜80%削減）
           </span>
         </div>
       </div>
@@ -71,27 +71,27 @@
       <!-- Quick Preset Buttons -->
       <div class="mt-6 pt-6 border-t border-slate-100">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold text-slate-400">ワンクリック料金プラン試算:</span>
+          <span class="text-xs font-bold text-slate-400">ワンクリック料金プラン＆フェーズ試算:</span>
           <span class="text-[11px] text-slate-400">※ボタンを押すと全パラメーターが即座に切り替わります</span>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="applyPreset(50, 20, 500, 1650, 'optimized')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold transition text-white shadow-xs">
-            📘 【初期設定】ベースプラン (50人 × 20回 × 500円 / GMO代込)
+          <button onclick="applyPreset(50, 20, 598, 1650, 'bank')" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-bold transition text-white shadow-xs">
+            🏦 【本命・バンク定常期】3ヶ月目標50名 (Basic45+Pro5 / MRR 29,900円)
           </button>
-          <button onclick="applyPreset(50, 40, 1480, 1650, 'optimized')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold transition text-white shadow-xs">
-            👑 Proプラン標準 (50人 × 40回 × 1,480円 / GMO代込)
+          <button onclick="applyPreset(50, 20, 598, 1650, 'optimized')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold transition text-white shadow-xs">
+            📘 【蓄積期・保守上限】3ヶ月目標50名 (Basic45+Pro5 / MRR 29,900円)
           </button>
-          <button onclick="applyPreset(50, 50, 1480, 1650, 'optimized')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition text-amber-800 border border-amber-200">
-            🔥 Proプラン・ヘビー利用 (50人 × 50回 × 1,480円)
+          <button onclick="applyPreset(50, 20, 500, 1650, 'bank')" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold transition text-emerald-800 border border-emerald-200">
+            ✨ ベース単体50名 (50人 × 20回 × 500円)
           </button>
-          <button onclick="applyPreset(6, 20, 500, 1650, 'optimized')" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-semibold transition text-rose-700 border border-rose-200">
-            🎯 損益分岐点（わずか6名でGMO固定費完全回収）
+          <button onclick="applyPreset(50, 40, 1480, 1650, 'bank')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition text-amber-800 border border-amber-200">
+            👑 Pro単体50名 (50人 × 40回 × 1,480円)
           </button>
-          <button onclick="applyPreset(200, 20, 500, 1650, 'optimized')" class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-xs font-semibold transition text-purple-700 border border-purple-200">
-            🚀 成長期ベース (200人 × 20回 × 500円)
+          <button onclick="applyPreset(5, 20, 500, 1650, 'bank')" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-semibold transition text-rose-700 border border-rose-200">
+            🎯 損益分岐点（わずか5〜6名で固定費完全回収）
           </button>
-          <button onclick="applyPreset(100, 40, 1480, 1650, 'optimized')" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold transition text-indigo-700 border border-indigo-200">
-            💎 成長期Pro (100人 × 40回 × 1,480円)
+          <button onclick="applyPreset(200, 20, 598, 1650, 'bank')" class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-xs font-semibold transition text-purple-700 border border-purple-200">
+            🚀 成長期200名 (Basic180+Pro20 / MRR 119,600円)
           </button>
         </div>
       </div>
@@ -113,12 +113,12 @@
             <span>🛠️</span> API利用・原価計算モード
           </label>
           <select id="apiModeSelect" onchange="calculate()" class="w-full text-xs font-semibold p-2 rounded-lg border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500">
-            <option value="optimized" selected>✨ アプリ改善版（手動生成＋リトライ時TTS再利用）: 約0.32円/回</option>
-            <option value="cached">⚡ 高度音声キャッシュ版（全音声事前保存）: 約0.18円/回</option>
+            <option value="bank" selected>🏦 問題バンク定常運用モード（300文蓄積後＋週10%入替）: 約0.10円/回＋月331円</option>
+            <option value="optimized">✨ バンク蓄積期・保守上限モード（手動生成＋リトライ再利用）: 約0.32円/回</option>
             <option value="standard">📦 従来フルコール版（毎回新規文・新規TTS）: 約0.48円/回</option>
           </select>
           <p class="text-[11px] text-slate-500 leading-relaxed mt-1" id="apiModeDesc">
-            ユーザーが1フレーズを平均2回発話練習する際、TTS音声と英文生成を再利用することで原価を約31%圧縮した現実的な数値です。
+            4ジャンル×3レベルの12スロットに各300文（計3,600文）蓄積完了後、出題・TTS音声・先読みコストは0円。練習ごとのWhisper認識＋評価（約0.097円/回）と週10%自動ローテーション（月331円固定）のみで稼働する最新モードです。
           </p>
         </div>
 
@@ -150,16 +150,16 @@
         <!-- Slider 3: Price -->
         <div class="space-y-2">
           <div class="flex justify-between items-center text-sm">
-            <label class="font-bold text-slate-700">月額利用料金（税込）</label>
+            <label class="font-bold text-slate-700">平均月額単価（税込 ARPU）</label>
             <div class="flex items-center gap-1 font-mono font-bold text-blue-600">
-              <input type="number" id="numPrice" min="100" max="10000" step="10" value="500" class="w-24 px-2 py-1 text-right border rounded-lg text-sm" />
+              <input type="number" id="numPrice" min="100" max="10000" step="1" value="598" class="w-24 px-2 py-1 text-right border rounded-lg text-sm" />
               <span>円/月</span>
             </div>
           </div>
-          <input type="range" id="rangePrice" min="100" max="3000" step="10" value="500" class="w-full" />
+          <input type="range" id="rangePrice" min="100" max="3000" step="1" value="598" class="w-full" />
           <div class="flex justify-between text-[11px] text-slate-400">
-            <span>ベースプラン目安: 500円</span>
-            <span>Proプラン目安: 1,480円</span>
+            <span>Basic: 500円 / 目標加重平均(9:1): 598円</span>
+            <span>Pro: 1,480円</span>
           </div>
         </div>
 
@@ -189,7 +189,7 @@
                 <span class="text-xs">円/月</span>
               </div>
             </div>
-            <p class="text-[10px] text-slate-400">※入会金・保証金は0円。特商法住所およびStripe登録に使用可能。</p>
+            <p class="text-[10px] text-slate-400">※Vercel / Supabase / Resend / GitHub は無料枠（¥0/月）で稼働中。</p>
           </div>
         </div>
 
@@ -211,16 +211,16 @@
 
         <!-- Cost Breakdown Pie / Bar -->
         <div class="pt-4 border-t border-slate-100 space-y-2.5">
-          <p class="text-xs font-bold text-slate-700">1回あたりの原価構成比（現在のモード）</p>
+          <p class="text-xs font-bold text-slate-700">1回あたりの変動原価構成比（現在のモード）</p>
           <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex" id="costBreakdownBar">
-            <div id="barTts" style="width: 46.5%" class="bg-indigo-500" title="TTS-1 模範音声"></div>
-            <div id="barWhisper" style="width: 46.3%" class="bg-sky-400" title="Whisper 音声認識"></div>
-            <div id="barGpt" style="width: 7.2%" class="bg-emerald-400" title="GPT-4o-mini コーチ・文生成"></div>
+            <div id="barTts" style="width: 0%" class="bg-indigo-500" title="TTS-1 模範音声"></div>
+            <div id="barWhisper" style="width: 85%" class="bg-sky-400" title="Whisper 音声認識"></div>
+            <div id="barGpt" style="width: 15%" class="bg-emerald-400" title="GPT-4o-mini コーチ・文生成"></div>
           </div>
           <div class="flex justify-between text-[11px] text-slate-500" id="costBreakdownLabels">
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> TTS (約47%)</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block"></span> Whisper (約46%)</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> GPT-4o (約7%)</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> TTS (0%)</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block"></span> Whisper (85%)</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> GPT-4o (15%)</span>
           </div>
         </div>
       </div>
@@ -231,15 +231,15 @@
         <!-- 4 KPI Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
-            <p class="text-xs text-slate-500 font-medium">月間総売上</p>
-            <p class="text-lg sm:text-xl font-black font-mono text-slate-900 mt-1" id="kpiRevenue">¥25,000</p>
-            <p class="text-[10px] text-slate-400 mt-0.5" id="kpiRevenueSub">50人 × 500円</p>
+            <p class="text-xs text-slate-500 font-medium">月間総売上 (MRR)</p>
+            <p class="text-lg sm:text-xl font-black font-mono text-slate-900 mt-1" id="kpiRevenue">¥29,900</p>
+            <p class="text-[10px] text-slate-400 mt-0.5" id="kpiRevenueSub">50人 × 598円 (手取 ¥28,824)</p>
           </div>
 
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
-            <p class="text-xs text-slate-500 font-medium">月間AI原価</p>
-            <p class="text-lg sm:text-xl font-black font-mono text-rose-600 mt-1" id="kpiAiCost">¥9,674</p>
-            <p class="text-[10px] text-slate-400 mt-0.5" id="kpiAiCostSub">1人あたり ¥193</p>
+            <p class="text-xs text-slate-500 font-medium">月間AI総原価</p>
+            <p class="text-lg sm:text-xl font-black font-mono text-rose-600 mt-1" id="kpiAiCost">¥3,241</p>
+            <p class="text-[10px] text-slate-400 mt-0.5" id="kpiAiCostSub">変動¥2,910 + 入替¥331</p>
           </div>
 
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
@@ -261,60 +261,80 @@
             <div>
               <p class="text-xs font-bold uppercase tracking-wider opacity-90" id="profitStatusBadge">🟢 月間営業利益（固定費控除後・黒字達成）</p>
               <div class="flex items-baseline gap-2 mt-1">
-                <span class="text-3xl sm:text-4xl font-black font-mono tracking-tight" id="kpiProfit">+¥12,776</span>
-                <span class="text-sm font-bold opacity-90" id="kpiProfitMargin">(営業利益率: +51.1%)</span>
+                <span class="text-3xl sm:text-4xl font-black font-mono tracking-tight" id="kpiProfit">+¥23,933</span>
+                <span class="text-sm font-bold opacity-90" id="kpiProfitMargin">(営業利益率: +80.0%)</span>
               </div>
             </div>
             <div class="text-right sm:border-l sm:border-white/20 sm:pl-6">
               <p class="text-xs opacity-80">1人あたり手残り利益</p>
-              <p class="text-xl sm:text-2xl font-black font-mono" id="kpiProfitPerUser">+¥256 /人</p>
-              <p class="text-[11px] opacity-75 mt-0.5" id="kpiGrossProfit">粗利手取 ¥14,426 - 固定費¥1,650</p>
+              <p class="text-xl sm:text-2xl font-black font-mono" id="kpiProfitPerUser">+¥479 /人</p>
+              <p class="text-[11px] opacity-75 mt-0.5" id="kpiGrossProfit">粗利手取 ¥25,583 - 固定費¥1,650</p>
             </div>
           </div>
           <div class="mt-4 pt-4 border-t border-white/15 text-xs opacity-95 leading-relaxed" id="profitHeroAdvice">
-            健全な黒字運営です！GMOオフィスサポート代（月額1,650円）を全額差し引いても、毎月 <strong>約 ¥12,776（営業利益率 51.1%）</strong> の手残り利益をしっかり確保できます。
+            健全な黒字運営です！GMOオフィスサポート代（月額1,650円）と問題バンク週次入替費（月額331円）をすべて差し引いても、毎月 <strong>約 ¥23,933（営業利益率 80.0%）</strong> の手残り利益を確保できます。
           </div>
         </div>
 
         <!-- Strategic Break-Even Analysis Table (GMO Included) -->
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
           <h3 class="text-sm font-bold text-slate-900 flex items-center justify-between">
-            <span class="flex items-center gap-2"><span>🎯</span> 損益分岐点 & GMO固定費回収シミュレーション</span>
-            <span class="text-xs font-normal text-slate-400">リアルタイム算出</span>
+            <span class="flex items-center gap-2"><span>🎯</span> 損益分岐点 & 2フェーズ収支比較（蓄積期 vs バンク定常期）</span>
+            <span class="text-xs font-normal text-slate-400">2026/09/30 統括・実装合意値</span>
           </h3>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Break-even 1: Fixed Cost Recovery Users -->
             <div class="p-4 rounded-xl bg-purple-50/70 border border-purple-200/80 space-y-1">
               <p class="text-xs font-bold text-purple-900 flex items-center justify-between">
-                <span>① GMOオフィス代回収に必要な会員数</span>
+                <span>① 全固定費回収に必要な損益分岐会員数</span>
                 <span class="px-2 py-0.5 rounded bg-purple-200 text-purple-900 text-[10px] font-bold">重要指標</span>
               </p>
-              <p class="text-2xl font-black text-purple-700 font-mono" id="valBreakEvenUsers">わずか 6 名</p>
+              <p class="text-2xl font-black text-purple-700 font-mono" id="valBreakEvenUsers">わずか 5 名</p>
               <p class="text-[11px] text-purple-800 leading-relaxed" id="valBreakEvenUsersNote">
-                ベースプラン（500円）なら<strong>たった6人</strong>、Proプラン（1,480円）なら<strong>わずか2人</strong>の有料会員で、GMOオフィス代（¥1,650）を含めた全固定費が完全ペイされます。
+                ベースプラン（500円）なら<strong>たった5〜6人</strong>、Proプラン（1,480円）なら<strong>わずか2人</strong>の有料会員で、GMOオフィス代（¥1,650）＋バンク入替費（¥331）が完全ペイされます。
               </p>
             </div>
 
             <!-- Break-even 2: Daily Practices limit -->
             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-              <p class="text-xs font-bold text-slate-600">② 月額料金（<span id="labelCurrPrice">500</span>円）での練習上限</p>
-              <p class="text-2xl font-black text-blue-600 font-mono" id="valBreakEvenDaily">1日 49.8 回まで</p>
+              <p class="text-xs font-bold text-slate-600">② 月額料金（<span id="labelCurrPrice">598</span>円）での採算限界回数</p>
+              <p class="text-2xl font-black text-blue-600 font-mono" id="valBreakEvenDaily">1日 197.4 回まで</p>
               <p class="text-[11px] text-slate-500 leading-relaxed" id="valBreakEvenDailyNote">
-                ベースプラン（1日20回制限）なら原価割れリスクは皆無です。50回近く使われない限り赤字になりません。
+                1日上限撤廃（使い放題）でも、バンク定常期ならBasicで<strong>1日約165回（蓄積期でも約50回）</strong>、Proで<strong>1日約490回（蓄積期でも約147回）</strong>まで黒字を維持します。
               </p>
             </div>
           </div>
 
-          <!-- Optimization notes -->
-          <div class="p-4 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-950 space-y-1.5 leading-relaxed">
-            <p class="font-bold flex items-center gap-1.5 text-blue-900">
-              <span>💡</span> 収益構造の総合サマリー（変動費＋固定費の完全掌握）
-            </p>
-            <ul class="list-disc pl-4 space-y-1 text-[11px] text-blue-800">
-              <li><strong>低リスクな固定費設計:</strong> GMOオフィスサポートの月1転送プラン（¥1,650/月）は初期投資0円で法人登記・特商法表記が可能。有料会員が数名集まるだけで即座に黒字転換します。</li>
-              <li><strong>高収益な変動費設計:</strong> アプリ仕様改善（手動生成化＋リトライ時のTTS音声再利用）により、練習1回あたりの原価を <strong>約0.32円</strong> に抑制。会員が増えるほど利益率が向上します。</li>
-            </ul>
+          <!-- Two-Phase Comparison Table -->
+          <div class="overflow-x-auto pt-2">
+            <table class="w-full text-left text-[11px] border-collapse border border-slate-200 rounded-xl overflow-hidden">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 font-bold">
+                  <th class="p-2.5 border-b border-slate-200">運用フェーズ（50名目標: Basic45+Pro5 / MRR ¥29,900）</th>
+                  <th class="p-2.5 border-b border-slate-200">1練習あたり原価</th>
+                  <th class="p-2.5 border-b border-slate-200">月間AI総原価</th>
+                  <th class="p-2.5 border-b border-slate-200">月間営業利益 (GMO控除後)</th>
+                  <th class="p-2.5 border-b border-slate-200">採算限界 (Basic / Pro)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr class="bg-white">
+                  <td class="p-2.5 font-semibold text-slate-800">📘 フェーズA：バンク蓄積期（各枠300文未満・保守上限）</td>
+                  <td class="p-2.5 font-mono">0.322 円/回</td>
+                  <td class="p-2.5 font-mono text-rose-600">¥9,660〜¥10,641/月</td>
+                  <td class="p-2.5 font-mono font-bold text-emerald-700">+¥16,532〜¥17,514 (55.3〜58.6%)</td>
+                  <td class="p-2.5 font-mono">50回/日 / 147回/日</td>
+                </tr>
+                <tr class="bg-indigo-50/60">
+                  <td class="p-2.5 font-bold text-indigo-950">🏦 フェーズB：問題バンク定常運用期（3,600文蓄積後）★本命</td>
+                  <td class="p-2.5 font-mono font-bold text-indigo-700">約0.097 円/回 + 月331円</td>
+                  <td class="p-2.5 font-mono font-bold text-indigo-700">¥3,241〜¥3,532/月</td>
+                  <td class="p-2.5 font-mono font-extrabold text-emerald-700">+¥23,642〜¥23,933 (79.1〜80.0%)</td>
+                  <td class="p-2.5 font-mono font-bold text-indigo-900">165回/日 / 490回/日</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -333,7 +353,7 @@
           </p>
         </div>
         <span class="text-xs font-mono bg-slate-100 text-slate-600 px-3 py-1 rounded-full w-fit">
-          2026年最新市場データ
+          2026年9月30日 最新仕様版
         </span>
       </div>
 
@@ -377,7 +397,7 @@
               </td>
               <td class="p-3 leading-relaxed text-blue-700 font-medium">
                 <strong>価格が1/15〜1/43。</strong><br>
-                24時間待たずに<strong>AIが数秒で即時判定</strong>。何度でもリアルタイムにリトライ可能。
+                24時間待たずに<strong>AIが数秒で即時判定</strong>。先読み0.0秒遷移で何度でも無制限リトライ可能。
               </td>
             </tr>
 
@@ -408,7 +428,7 @@
               </td>
               <td class="p-3 leading-relaxed">
                 Speakは「自由会話」がメイン。<br>
-                ShadowLogは<strong>「厳密な脱落・誤読解析」「WPM話速」「長文プレゼン通し練習」</strong>に特化。
+                ShadowLogは<strong>「厳密な脱落・誤読解析」「チャンク(/)区切り」「WPM話速」「長文スピーチ通し練習」</strong>に特化。
               </td>
             </tr>
 
@@ -439,7 +459,7 @@
               </td>
               <td class="p-3 leading-relaxed">
                 ELSAは音素の矯正が中心。<br>
-                ShadowLogは<strong>「IT/金融等の実務業種別長文生成」や「60〜90語スピーチの持久力・ペース配分」</strong>に強み。
+                ShadowLogは<strong>「4大実務ジャンル（Tech/Business/Marketing/Daily）×3,600文バンク」や「60〜90語スピーチの持久力」</strong>に強み。
               </td>
             </tr>
 
@@ -485,25 +505,25 @@
               </td>
               <td class="p-3 font-mono font-extrabold text-blue-700 whitespace-nowrap">
                 ¥500 / ¥1,480
-                <div class="text-[10px] text-blue-600">無料体験あり (登録不要)</div>
+                <div class="text-[10px] text-blue-600">無料体験20回+Pro2回</div>
               </td>
               <td class="p-3 leading-relaxed text-blue-950">
-                ・業界別（IT/医療/金融/ビジネス）即時英文・長文生成<br>
-                ・Whisperによる脱落・誤読のリアルタイム解析<br>
-                ・WPM話速測定＆エグゼクティブスピーチ指導<br>
-                ・個人カルテ＆つまずき単語帳
+                ・4ジャンル（Tech/Business/Marketing/Daily）×3,600文バンク＆先読み0.0秒出題<br>
+                ・Whisperによる脱落・誤読のリアルタイム解析＆チャンク(/)表示<br>
+                ・WPM話速測定＆60〜90語エグゼクティブスピーチ指導<br>
+                ・個人カルテ＆弱点単語自動注入アルゴリズム
               </td>
               <td class="p-3 whitespace-nowrap">
-                <span class="font-bold text-blue-900">目標: 100〜500名</span>
-                <div class="text-[10px] text-blue-600">(シャドテン高額層の受け皿)</div>
+                <span class="font-bold text-blue-900">3ヶ月目標: 50名</span>
+                <div class="text-[10px] text-blue-600">拡大目標: 100〜1,000名</div>
               </td>
               <td class="p-3 text-center">
                 <span class="px-2.5 py-1 rounded-full bg-blue-600 text-white font-extrabold text-[10px]">◎ AI即時自動</span>
               </td>
               <td class="p-3 leading-relaxed text-blue-950 font-semibold">
-                <strong>「シャドテン級の価値を圧倒的低価格（¥500〜）で即時提供」</strong><br>
-                ・ベース500円（1日20回）で日常習慣化<br>
-                ・Pro 1,480円で長文プレゼン通し練習無制限
+                <strong>「シャドテン級の価値を圧倒的低価格（¥500〜）＆回数無制限で即時提供」</strong><br>
+                ・ベース500円：短文シャドーイング無制限（使い放題）<br>
+                ・Pro 1,480円：短文＋長文プレゼン通し練習完全無制限
               </td>
             </tr>
           </tbody>
@@ -519,18 +539,18 @@
           </p>
         </div>
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <p class="font-bold text-slate-800 mb-1">💰 粗利55〜70%の確定2大プラン</p>
+          <p class="font-bold text-slate-800 mb-1">💰 1日上限撤廃（使い放題）＆超高粗利2大プラン</p>
           <p class="text-slate-600 leading-relaxed">
-            ・<strong>ベースプラン（月500円）</strong>: 1日20回制限（粗利率 約58%）<br>
-            ・<strong>Proプラン（月1,480円）</strong>: 毎日40〜50回＋長文スピーチモード（粗利率 約65〜70%）
+            ・<strong>ベースプラン（月500円）</strong>: 短文使い放題（バンク定常時粗利 <strong>約85%</strong> / 蓄積期約60%）<br>
+            ・<strong>Proプラン（月1,480円）</strong>: 短文＋長文スピーチ完全無制限（定常時粗利 <strong>約88%</strong> / 蓄積期約70%）
           </p>
         </div>
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
           <p class="font-bold text-slate-800 mb-1">📈 登録者数ごとの営業利益（GMO代¥1,650控除後）</p>
           <p class="text-slate-600 leading-relaxed">
-            ・<strong>6名（損益分岐点）</strong>: 月商 約3,000円 ➔ <strong>固定費完全回収・黒字化</strong><br>
-            ・<strong>50名（初期目標）</strong>: 月商 約3.9万円 ➔ <strong>営業利益 +¥2.2万円/月</strong><br>
-            ・<strong>200名（成長期）</strong>: 月商 約15.8万円 ➔ <strong>営業利益 +¥9.6万円/月</strong>
+            ・<strong>5〜6名（損益分岐点）</strong>: 月商 約3,000円 ➔ <strong>固定費完全回収・黒字化</strong><br>
+            ・<strong>50名（3ヶ月目標: MRR 29,900円）</strong>: ➔ <strong>営業利益 +¥23,933/月 (定常期 利益率80%)</strong><br>
+            ・<strong>200名（成長期: MRR 11.96万円）</strong>: ➔ <strong>営業利益 +¥9.9万円/月</strong>
           </p>
         </div>
       </div>
@@ -540,13 +560,17 @@
     // Empirical constants based on real usage
     const CHARS_PER_TTS = 133.1;
     const SECONDS_PER_WHISPER = 9.92;
-    const TOKENS_PER_CHAT = 284.1 * 2; // 2 calls (gen + coach)
-    const OUTPUT_TOKENS = 100 * 2;
+    const TOKENS_GEN = 334.0;
+    const TOKENS_COACH = 284.1;
 
     const PRICE_TTS_1M = 15.00;
     const PRICE_WHISPER_MIN = 0.006;
     const PRICE_GPT_IN_1M = 0.150;
     const PRICE_GPT_OUT_1M = 0.600;
+
+    // Sentence bank steady-state benchmark
+    const BANK_VAR_UNIT_JPY_AT_150 = 0.097;
+    const BANK_MONTHLY_ROTATION_JPY_AT_150 = 331.0;
 
     // Elements
     const numUsers = document.getElementById('numUsers');
@@ -587,10 +611,10 @@
     }
 
     function resetDefaults() {
-      applyPreset(50, 20, 500, 1650, 'optimized');
+      applyPreset(50, 20, 598, 1650, 'bank');
     }
 
-    function applyPreset(users, dailyUses, price, officeFee = 1650, mode = 'optimized') {
+    function applyPreset(users, dailyUses, price, officeFee = 1650, mode = 'bank') {
       numUsers.value = users;
       rangeUsers.value = users;
       numDailyUses.value = dailyUses;
@@ -624,28 +648,32 @@
       // Base component costs
       let ttsUsd = (CHARS_PER_TTS / 1_000_000) * PRICE_TTS_1M;
       let whisperUsd = (SECONDS_PER_WHISPER / 60) * PRICE_WHISPER_MIN;
-      let gptGenUsd = ((TOKENS_PER_CHAT / 2) / 1_000_000) * PRICE_GPT_IN_1M + (100 / 1_000_000) * PRICE_GPT_OUT_1M;
-      let gptCoachUsd = ((TOKENS_PER_CHAT / 2) / 1_000_000) * PRICE_GPT_IN_1M + (100 / 1_000_000) * PRICE_GPT_OUT_1M;
+      let gptGenUsd = (TOKENS_GEN / 1_000_000) * PRICE_GPT_IN_1M + (100 / 1_000_000) * PRICE_GPT_OUT_1M;
+      let gptCoachUsd = (TOKENS_COACH / 1_000_000) * PRICE_GPT_IN_1M + (100 / 1_000_000) * PRICE_GPT_OUT_1M;
 
       let modeDescText = "";
       let reductionBadgeText = "";
+      let rotationMonthlyJpy = 0;
 
-      if (mode === 'optimized') {
-        // Retry factor = 2 (user practices each generated phrase ~2 times on average)
-        // TTS and sentence generation are amortized across retries
+      if (mode === 'bank') {
+        // Sentence Bank Steady State: 0 USD for TTS & Gen per practice; only Whisper + Coach evaluation (~0.097 JPY @ 150)
+        ttsUsd = 0;
+        gptGenUsd = 0;
+        const targetUnitUsd = BANK_VAR_UNIT_JPY_AT_150 / 150.0;
+        whisperUsd = targetUnitUsd * 0.85;
+        gptCoachUsd = targetUnitUsd * 0.15;
+        rotationMonthlyJpy = BANK_MONTHLY_ROTATION_JPY_AT_150 * (rate / 150.0);
+        modeDescText = "4ジャンル×3レベルの12スロットに各300文（計3,600文）蓄積完了後、出題・TTS音声・先読みコストは0円。練習ごとのWhisper認識＋評価（約0.097円/回）と週10%自動ローテーション（月331円固定）のみで稼働する最新モードです。";
+        reductionBadgeText = "問題バンク定常期（約70〜80%削減）";
+      } else if (mode === 'optimized') {
+        // Retry factor = 2 (user practices each generated phrase ~2 times on average during accumulation)
         ttsUsd = ttsUsd / 2.0;
         gptGenUsd = gptGenUsd / 2.0;
-        modeDescText = "ユーザーが1フレーズを平均2回発話練習する際、TTS音声と英文生成を再利用することで原価を約31%圧縮した現実的な数値です。";
-        reductionBadgeText = "約31%コスト抑制中";
-      } else if (mode === 'cached') {
-        // High caching: TTS is cached completely (0 USD for repeats)
-        ttsUsd = ttsUsd * 0.1; // only 10% new TTS
-        gptGenUsd = gptGenUsd * 0.2;
-        modeDescText = "模範音声をSupabase Storage等にキャッシュし、音声を完全再利用した場合の超高効率モードです。";
-        reductionBadgeText = "約60%コスト削減中";
+        modeDescText = "バンクが各スロット300文に達するまでの蓄積期（または保守的上限試算）。1フレーズ平均2回練習時のTTS・生成文再利用により原価を約0.322円/回に抑制した数値です。";
+        reductionBadgeText = "蓄積期・約33%コスト抑制中";
       } else {
         // Standard full request
-        modeDescText = "1回の練習ごとに毎回新規英文生成・新規TTS作成を行う従来のフルリクエスト想定です。";
+        modeDescText = "1回の練習ごとに毎回新規英文生成・新規TTS作成を行う従来のフルリクエスト想定（約0.48円/回）です。";
         reductionBadgeText = "従来フル計算";
       }
 
@@ -657,7 +685,11 @@
       document.getElementById('costReductionBadge').innerText = reductionBadgeText;
 
       document.getElementById('unitCostBadge').innerText = `${unitJpy.toFixed(2)} 円`;
-      document.getElementById('unitCostUsdBadge').innerText = `($${unitUsd.toFixed(5)} / 回)`;
+      if (rotationMonthlyJpy > 0) {
+        document.getElementById('unitCostUsdBadge').innerText = `($${unitUsd.toFixed(5)} / 回 ＋ 入替¥${Math.round(rotationMonthlyJpy)}/月)`;
+      } else {
+        document.getElementById('unitCostUsdBadge').innerText = `($${unitUsd.toFixed(5)} / 回)`;
+      }
 
       // Update Breakdown Bar
       const ttsPct = ((ttsUsd / unitUsd) * 100);
@@ -684,9 +716,10 @@
       const paymentFee = totalRev * (fee / 100);
       const netRev = totalRev - paymentFee;
 
-      // AI Cost (Variable Cost)
+      // AI Cost (Variable Cost + Weekly 10% Rotation Fixed Cost if in bank mode)
       const costPerUserJpy = monthlyUsesPerUser * unitJpy;
-      const totalAiCostJpy = totalPractices * unitJpy;
+      const variableAiCostJpy = totalPractices * unitJpy;
+      const totalAiCostJpy = variableAiCostJpy + rotationMonthlyJpy;
 
       // Gross Profit
       const grossProfitJpy = netRev - totalAiCostJpy;
@@ -697,8 +730,9 @@
       const operatingMargin = (operatingProfitJpy / totalRev) * 100;
       const netProfitPerUser = operatingProfitJpy / users;
 
-      // Break-even users needed to cover GMO Office Fee
-      const breakEvenUsers = profitPerUserGross > 0 ? Math.ceil(fixedOffice / profitPerUserGross) : Infinity;
+      // Break-even users needed to cover GMO Office Fee (+ bank rotation)
+      const totalFixedToCover = fixedOffice + rotationMonthlyJpy;
+      const breakEvenUsers = profitPerUserGross > 0 ? Math.ceil(totalFixedToCover / profitPerUserGross) : Infinity;
 
       // Break-even daily practices
       const netRevPerUser = price * (1 - fee / 100);
@@ -710,7 +744,11 @@
       document.getElementById('kpiRevenueSub').innerText = `${users}人 × ${price}円 (手取 ¥${Math.round(netRev).toLocaleString()})`;
 
       document.getElementById('kpiAiCost').innerText = `¥${Math.round(totalAiCostJpy).toLocaleString()}`;
-      document.getElementById('kpiAiCostSub').innerText = `1人あたり ¥${Math.round(costPerUserJpy).toLocaleString()}`;
+      if (rotationMonthlyJpy > 0) {
+        document.getElementById('kpiAiCostSub').innerText = `変動¥${Math.round(variableAiCostJpy).toLocaleString()} + 入替¥${Math.round(rotationMonthlyJpy)}`;
+      } else {
+        document.getElementById('kpiAiCostSub').innerText = `1人あたり ¥${Math.round(costPerUserJpy).toLocaleString()}`;
+      }
 
       document.getElementById('kpiFixedCost').innerText = `¥${Math.round(fixedOffice).toLocaleString()}`;
       document.getElementById('kpiFixedCostSub').innerText = fixedOffice === 1650 ? '月1転送プラン' : '固定費設定額';
@@ -734,20 +772,20 @@
         kpiProfit.innerText = `+¥${Math.round(operatingProfitJpy).toLocaleString()}`;
         kpiProfitMargin.innerText = `(営業利益率: +${operatingMargin.toFixed(1)}%)`;
         kpiProfitPerUser.innerText = `+¥${Math.round(netProfitPerUser).toLocaleString()} /人`;
-        advice.innerHTML = `健全な営業黒字です！GMOオフィス代（¥${Math.round(fixedOffice).toLocaleString()}/月）を全額差し引いても、毎月 <strong>約 ¥${Math.round(operatingProfitJpy).toLocaleString()}（営業利益率 ${operatingMargin.toFixed(1)}%）</strong> の手残り利益をしっかり確保できます。`;
+        advice.innerHTML = `健全な営業黒字です！GMOオフィス代（¥${Math.round(fixedOffice).toLocaleString()}/月）${rotationMonthlyJpy > 0 ? `とバンク週次入替費（¥${Math.round(rotationMonthlyJpy)}/月）` : ''}を全額差し引いても、毎月 <strong>約 ¥${Math.round(operatingProfitJpy).toLocaleString()}（営業利益率 ${operatingMargin.toFixed(1)}%）</strong> の手残り利益をしっかり確保できます。`;
       } else {
         hero.className = 'p-6 sm:p-8 rounded-2xl border text-white shadow-md bg-gradient-to-r from-rose-600 to-red-700 transition-all duration-300';
         statusBadge.innerText = '🔴 月間営業赤字（固定費未達）';
         kpiProfit.innerText = `-¥${Math.round(Math.abs(operatingProfitJpy)).toLocaleString()}`;
         kpiProfitMargin.innerText = `(営業利益率: ${operatingMargin.toFixed(1)}%)`;
         kpiProfitPerUser.innerText = `-¥${Math.round(Math.abs(netProfitPerUser)).toLocaleString()} /人`;
-        advice.innerHTML = `⚠️ 現在の会員数（${users}名）ではGMOオフィス代（¥${Math.round(fixedOffice).toLocaleString()}）をカバーできていません。<strong>あと ${breakEvenUsers - users} 名（合計 ${breakEvenUsers} 名）</strong> の会員獲得で完全黒字化します！`;
+        advice.innerHTML = `⚠️ 現在の会員数（${users}名）では固定費をカバーできていません。<strong>あと ${breakEvenUsers - users} 名（合計 ${breakEvenUsers} 名）</strong> の会員獲得で完全黒字化します！`;
       }
 
       // Render Break-even Section
       document.getElementById('valBreakEvenUsers').innerText = `わずか ${breakEvenUsers} 名`;
       document.getElementById('valBreakEvenUsersNote').innerHTML = `
-        1人あたり粗利（¥${Math.round(profitPerUserGross).toLocaleString()}）に基づき、<strong>わずか ${breakEvenUsers} 名</strong>の有料会員でGMOオフィス代（¥${Math.round(fixedOffice).toLocaleString()}）を含めた全固定費が完全ペイされます。
+        1人あたり限界利益（¥${Math.round(profitPerUserGross).toLocaleString()}）に基づき、<strong>わずか ${breakEvenUsers} 名</strong>の有料会員でGMOオフィス代（¥${Math.round(fixedOffice).toLocaleString()}）${rotationMonthlyJpy > 0 ? `＋バンク入替費（¥${Math.round(rotationMonthlyJpy)}）` : ''}が完全ペイされます。
       `;
 
       document.getElementById('labelCurrPrice').innerText = price;

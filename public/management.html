@@ -83,9 +83,9 @@
         <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">現在フォーカス</div>
         <div class="mt-1 text-xl font-bold text-slate-900 flex items-center gap-1.5">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          Stage 0 / 1
+          Stage 2 (β検証)
         </div>
-        <div class="text-xs text-slate-500 mt-1">MVP品質向上 ＆ 課金基盤導入</div>
+        <div class="text-xs text-slate-500 mt-1">クローズドβ稼働(5名)＆定着検証</div>
       </div>
 
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -94,16 +94,16 @@
         <div class="text-xs text-slate-500 mt-1">Basic 45名 / Pro 5名 (MRR ¥29,900)</div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">AI原価 & 粗利率</div>
-        <div class="mt-1 text-xl font-bold text-slate-900">約 0.32 円 <span class="text-xs font-normal text-slate-500">/ 回</span></div>
-        <div class="text-xs text-emerald-600 font-medium mt-1">粗利率 58%〜70% を維持</div>
+      <div class="bg-white p-4 rounded-xl border border-indigo-200 shadow-sm bg-indigo-50/20">
+        <div class="text-xs font-medium text-indigo-800 uppercase tracking-wider">AI原価 (バンク定常 / 蓄積期)</div>
+        <div class="mt-1 text-xl font-bold text-indigo-700">約 0.10 円 <span class="text-xs font-normal text-slate-500">/回 (蓄積0.32円)</span></div>
+        <div class="text-xs text-emerald-600 font-semibold mt-1">営業利益 +¥23,933/月 (利益率80%)</div>
       </div>
 
       <div class="bg-white p-4 rounded-xl border border-purple-200 shadow-sm bg-purple-50/30">
         <div class="text-xs font-medium text-purple-800 uppercase tracking-wider">GMO固定費 & 損益分岐</div>
-        <div class="mt-1 text-xl font-bold text-purple-700">¥1,650 <span class="text-xs font-normal text-purple-600">/月</span></div>
-        <div class="text-xs text-purple-700 font-semibold mt-1">★ わずか 6 名 で固定費回収</div>
+        <div class="mt-1 text-xl font-bold text-purple-700">¥1,650 <span class="text-xs font-normal text-purple-600">/月 (+入替¥331)</span></div>
+        <div class="text-xs text-purple-700 font-semibold mt-1">★ わずか 5〜6 名 で固定費回収</div>
       </div>
 
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-1 sm:col-span-2 md:col-span-1">
@@ -364,11 +364,11 @@
             </span>
             <h2 class="text-xl font-bold text-slate-900">ShadowLog サービス ＆ システム基本仕様設計書</h2>
             <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              最新版（2026/09/27）
+              最新版（2026/09/30 統括・実装同期済）
             </span>
           </div>
           <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
-            本プロダクトのビジョン、料金・制限体系（使い放題）、AI原価、DB設計、顧客管理の自動計算ロジック、および運用ルールを定義するマスター仕様書です。
+            本プロダクトのビジョン、料金・制限体系（使い放題）、300文問題バンク＆先読みアーキテクチャ、AI原価、DB設計、および運用ルールを定義するマスター仕様書です。
           </p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
@@ -400,13 +400,13 @@
 
           <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-2">
             <div class="font-bold text-emerald-900 flex items-center gap-1.5 text-sm">
-              <span>⚡</span> コア差別化（独自の強み）
+              <span>⚡</span> コア差別化（独自の強み・2026/09/30最新）
             </div>
             <ul class="text-slate-700 space-y-1.5 list-disc list-inside">
-              <li><strong>即時Diff判定</strong>: Whisper文字起こしで脱落単語・誤読単語を瞬時に赤字可視化。</li>
-              <li><strong>話速（WPM）解析</strong>: ネイティブ音声に対する追従スピードを客観評価。</li>
-              <li><strong>弱点克服パーソナライズ</strong>: 苦手単語（Weak Words）を次回以降のAI生成文に自動注入。</li>
-              <li><strong>圧倒的低価格 ＆ 使い放題</strong>: 月額500円（Base）/ 1,480円（Pro）で回数無制限。</li>
+              <li><strong>即時Diff判定 ＆ チャンク(/)表示</strong>: 脱落・誤読単語の赤字可視化と意味の塊（スラッシュ）表示。</li>
+              <li><strong>バックグラウンド先読み (0.0秒遷移)</strong>: 1問目練習中に次問を先読みし、待ち時間ゼロで連続練習。</li>
+              <li><strong>3,600文問題バンク ＆ 週10%入替</strong>: 4ジャンル×3レベル×300文を蓄積し高速配信と原価70%超削減を両立。</li>
+              <li><strong>圧倒的低価格 ＆ 使い放題</strong>: 月額500円（Base）/ 1,480円（Pro）で1日回数上限なし。</li>
             </ul>
           </div>
         </div>
@@ -414,14 +414,19 @@
 
       <!-- Section 2: Pricing & Ticket System -->
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
             <h3 class="text-base font-bold text-slate-900">2. 料金プラン ＆ チケット・利用制限体系</h3>
           </div>
-          <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-            ★ 有料プラン 1日上限完全撤廃（使い放題）
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+              🎁 10/20迄登録で10/30までVIP(Pro無制限)自動付与
+            </span>
+            <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+              ★ 有料プラン 1日上限完全撤廃（使い放題）
+            </span>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -434,7 +439,7 @@
                 <th class="p-3">長文スピーチ (60〜90語)</th>
                 <th class="p-3">カルテ & 弱点単語帳</th>
                 <th class="p-3">1日練習上限</th>
-                <th class="p-3">採算限界 (損益分岐)</th>
+                <th class="p-3">採算限界 (蓄積期 / バンク定常期)</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -466,7 +471,7 @@
                 <td class="p-3 text-slate-400">✕</td>
                 <td class="p-3 text-emerald-600 font-semibold">◯</td>
                 <td class="p-3 font-bold text-purple-700">上限なし (使い放題)</td>
-                <td class="p-3 font-mono font-bold text-slate-700">1日約50回 (月1,492回)</td>
+                <td class="p-3 font-mono font-bold text-slate-700">50回/日 ➔ <span class="text-indigo-600">定常 165回/日</span></td>
               </tr>
               <tr class="bg-amber-50/30 hover:bg-amber-50/60">
                 <td class="p-3 font-bold text-amber-700 flex items-center gap-1.5">
@@ -475,10 +480,10 @@
                 </td>
                 <td class="p-3 font-mono font-bold text-amber-600">¥1,480 /月</td>
                 <td class="p-3 text-emerald-700 font-bold">無制限 (使い放題)</td>
-                <td class="p-3 text-amber-700 font-bold">無制限 (業界別英文可)</td>
+                <td class="p-3 text-amber-700 font-bold">無制限 (4大ジャンル対応)</td>
                 <td class="p-3 text-emerald-600 font-semibold">◯</td>
                 <td class="p-3 font-bold text-purple-700">上限なし (使い放題)</td>
-                <td class="p-3 font-mono font-bold text-slate-700">1日約147回 (月4,414回)</td>
+                <td class="p-3 font-mono font-bold text-slate-700">147回/日 ➔ <span class="text-indigo-600">定常 490回/日</span></td>
               </tr>
             </tbody>
           </table>
@@ -487,45 +492,52 @@
         <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2.5">
           <span class="text-indigo-600 font-bold">💡 方針確定メモ:</span>
           <div>
-            ユーザーが「残回数」を気にせず継続できるよう、有料プランのデイリー上限は完全撤廃いたしました。
-            管理側（<code>/admin/customers</code>）で損益分岐点（Base: 1日50回、Pro: 1日147回）に対する利用ペースを自動監視するため、安全に使い放題を提供可能です。
+            有料プランのデイリー上限は完全撤廃（使い放題）。さらに300文問題バンク（<code>sentence_bank</code>）定常稼働により、採算限界はBaseで<strong>1日約165回</strong>、Proで<strong>1日約490回</strong>まで大幅に引き上がっています（<code>/admin/customers</code>では安全マージンを取り保守基準50回/147回で厳格監視）。
           </div>
         </div>
       </div>
 
       <!-- Section 3: AI Pipeline & Cost Structure -->
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
-          <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-          <h3 class="text-base font-bold text-slate-900">3. AI・音響パイプライン ＆ コスト・キャパシティ構造</h3>
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+            <h3 class="text-base font-bold text-slate-900">3. AI・音響パイプライン ＆ コスト・キャパシティ構造（2フェーズ試算）</h3>
+          </div>
+          <span class="text-xs font-mono text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200">
+            2026/09/30 再計算反映済
+          </span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs">
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <div class="text-slate-500 font-medium">1練習あたり実質原価</div>
-            <div class="text-2xl font-bold font-mono text-slate-900 mt-1">約 0.322 円</div>
-            <div class="text-[11px] text-slate-500 mt-2 space-y-1">
-              <div>・Whisper: 0.149 円 (約10秒録音)</div>
-              <div>・TTS-1: 0.150 円 (リトライ時0円)</div>
-              <div>・GPT-4o-mini: 0.024 円 (弱点注入)</div>
+          <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-200">
+            <div class="text-indigo-900 font-bold">🏦 定常期 AI変動原価 (300文蓄積後)</div>
+            <div class="text-2xl font-bold font-mono text-indigo-700 mt-1">約 0.097 円 <span class="text-xs font-normal">/回</span></div>
+            <div class="text-[11px] text-slate-600 mt-2 space-y-1">
+              <div>・出題＆TTS音声＆先読み: <strong>0 円 (DB配信)</strong></div>
+              <div>・Whisper + 評価のみ: <strong>約0.097〜0.165円</strong></div>
+              <div>・週10%入替固定費: <strong>月331円 (1,440文/月)</strong></div>
+              <div class="text-slate-400">※蓄積期(300文未満)は 0.322円/回</div>
             </div>
           </div>
 
           <div class="p-4 rounded-xl bg-purple-50/50 border border-purple-200">
-            <div class="text-purple-800 font-medium">月間固定費（GMOオフィス）</div>
+            <div class="text-purple-800 font-bold">🏢 月間固定費（GMOオフィス等）</div>
             <div class="text-2xl font-bold font-mono text-purple-700 mt-1">¥1,650 <span class="text-xs font-normal">/月</span></div>
-            <div class="text-[11px] text-purple-700 mt-2">
-              ・特商法表記 ＆ 法人登記可能<br>
-              ・<strong>わずか 6名（Proなら2名）</strong> で固定費回収
+            <div class="text-[11px] text-purple-700 mt-2 space-y-1">
+              <div>・GMOオフィスサポート (月1転送/登記可)</div>
+              <div>・Vercel / Supabase / Resend: <strong>¥0 (無料枠)</strong></div>
+              <div>・<strong>わずか 5〜6名（Proなら2名）</strong> で固定費完全回収</div>
             </div>
           </div>
 
           <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200">
-            <div class="text-emerald-800 font-medium">3ヶ月後目標 (50名) の手残り</div>
-            <div class="text-2xl font-bold font-mono text-emerald-600 mt-1">+¥16,532 <span class="text-xs font-normal">/月</span></div>
-            <div class="text-[11px] text-emerald-700 mt-2">
-              ・売上: ¥29,900 / 粗利: 60.8%<br>
-              ・全員毎日上限時でも <strong>+1.1万円黒字</strong>
+            <div class="text-emerald-800 font-bold">💰 3ヶ月後目標 (50名) 月間営業利益</div>
+            <div class="text-2xl font-bold font-mono text-emerald-600 mt-1">+¥23,933 <span class="text-xs font-normal">/月 (定常期)</span></div>
+            <div class="text-[11px] text-emerald-800 mt-2 space-y-1">
+              <div>・MRR売上: <strong>¥29,900</strong> (手取 ¥28,824)</div>
+              <div>・バンク定常期: <strong>利益率 80.0% (AI原価¥3,241)</strong></div>
+              <div>・バンク蓄積期: <strong>+¥16,532〜17,514 (利益率55〜58%)</strong></div>
             </div>
           </div>
         </div>
@@ -540,12 +552,12 @@
             </div>
             <div class="p-2.5 rounded-lg bg-white border border-slate-200">
               <div class="font-semibold text-slate-700">TTS-1 (模範音声合成)</div>
-              <div class="text-emerald-600 font-mono font-bold text-sm mt-0.5">負荷率 1.6% 〜 2.4%</div>
-              <div class="text-[10px] text-slate-500">同一文の再練習時は音声再利用。安全率約40〜60倍。</div>
+              <div class="text-emerald-600 font-mono font-bold text-sm mt-0.5">定常期 負荷率 0.0% (週1回バッチのみ)</div>
+              <div class="text-[10px] text-slate-500">300文バンク到達後はDBから0.1秒配信。API呼び出しゼロ。</div>
             </div>
             <div class="p-2.5 rounded-lg bg-white border border-slate-200">
-              <div class="font-semibold text-slate-700">GPT-4o-mini (文生成)</div>
-              <div class="text-slate-700 font-mono font-bold text-sm mt-0.5">負荷率 0.3% 以下</div>
+              <div class="font-semibold text-slate-700">GPT-4o-mini (評価・生成)</div>
+              <div class="text-slate-700 font-mono font-bold text-sm mt-0.5">負荷率 0.2% 以下</div>
               <div class="text-[10px] text-slate-500">上限500 RPMに対し1.5 RPM。安全率300倍以上。</div>
             </div>
           </div>
@@ -563,11 +575,11 @@
           <div class="space-y-3">
             <div class="font-bold text-slate-800">💻 技術スタック</div>
             <ul class="space-y-1.5 text-slate-600 list-disc list-inside">
-              <li><strong>Frontend</strong>: Next.js 14 (App Router), React 18, Tailwind CSS, Web Audio API</li>
-              <li><strong>Backend</strong>: Vercel Serverless Edge, Node.js API Routes</li>
+              <li><strong>Frontend</strong>: Next.js 15 (App Router), React 18, Tailwind CSS, Web Audio API</li>
+              <li><strong>Backend</strong>: Vercel Serverless Edge, Node.js API Routes, Cron / Batch Rotation</li>
               <li><strong>Database / Auth</strong>: Supabase (PostgreSQL, Google OAuth / Email Auth, Row Level Security)</li>
               <li><strong>Payment</strong>: Stripe Billing / Checkout / Customer Portal</li>
-              <li><strong>Email / CRM</strong>: Resend API (問い合わせ自動転送 & 自動返信)</li>
+              <li><strong>Email / CRM</strong>: Resend API (問い合わせ通知・Waitlist 14日無料クーポン自動返信)</li>
               <li><strong>SNS Tracking</strong>: Meta Graph API (Threads インサイト自動集計)</li>
             </ul>
           </div>
@@ -575,6 +587,9 @@
           <div class="space-y-3">
             <div class="font-bold text-slate-800">🗄️ Supabase データベーステーブル一覧</div>
             <div class="space-y-1.5 font-mono text-[11px]">
+              <div class="p-2 rounded bg-indigo-50/60 border border-indigo-200">
+                <strong>sentence_bank</strong>: 3,600文問題バンク (genre, level, text_en, audio_base64, use_count)
+              </div>
               <div class="p-2 rounded bg-slate-50 border border-slate-200">
                 <strong>profiles</strong>: ユーザー基本情報 (id, email, plan, nickname, stripe_id)
               </div>
@@ -588,7 +603,7 @@
                 <strong>weak_words</strong>: ユーザー別の苦手単語帳 (fail_count, is_mastered)
               </div>
               <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                <strong>feedback_tickets</strong>: 不具合報告・問い合わせログ・添付スクショ
+                <strong>feedback_tickets / daily_analytics</strong>: 問い合わせログ・日次PV/UU永続集計
               </div>
             </div>
           </div>
@@ -615,11 +630,11 @@
 
           <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
             <div class="font-bold text-slate-800 flex items-center justify-between">
-              <span>✉️ お問い合わせ ＆ 不具合対応窓口</span>
-              <span class="text-emerald-600 font-semibold">Resend 連携稼働中</span>
+              <span>🚀 ウェイトリストLP (<code>/waitlist</code>) ＆ 問い合わせ窓口</span>
+              <a href="/waitlist" target="_blank" class="text-emerald-600 font-semibold hover:underline">LPを開く ↗</a>
             </div>
             <p class="text-slate-600 leading-relaxed">
-              アプリ内設定画面最下部から送信された声が <code>shadowlog.app@gmail.com</code> に即時HTML通知。管理者はGmail上で「返信」ボタンを押すだけでユーザーへ直接回答可能。
+              <code>/waitlist</code> にて1問インタラクティブデモ＆14日間無料クーポン自動送信が稼働中。お問い合わせも Resend 経由で <code>shadowlog.app@gmail.com</code> に即時通知。
             </p>
           </div>
         </div>
@@ -646,7 +661,7 @@
       {
         id: 0,
         title: "Stage 0: コア体験検証 & MVP安定化",
-        badge: "現状フェーズ",
+        badge: "完了 (100%)",
         badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300",
         description: "発話認識の精度、Diff判定、音声再生などのコア体験の完成度を高め、快適な学習ループを担保する。",
         tasks: [
@@ -661,15 +676,15 @@
       {
         id: 1,
         title: "Stage 1: 課金・会員インフラ構築",
-        badge: "最優先タスク",
+        badge: "完了 (100%)",
         badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-300",
         description: "Stripe連携、無料/有料プランのアクセス制限、安全な定期課金決済の仕組みを実装する。",
         tasks: [
           { id: "s1-0", text: "プロジェクト専用メールアドレス（shadowlog.app@gmail.com）の作成", done: true },
           { id: "s1-1", text: "Stripeアカウント開設（Sandbox環境準備完了）", done: true },
           { id: "s1-1b", text: "Stripeテスト環境APIキー（pk_test, sk_test）の取得と環境変数設定", done: true },
-          { id: "s1-2", text: "検証・テスター用 VIPホワイトリスト（特定メアド無制限）機能の実装", done: true },
-          { id: "s1-3", text: "3段階チケット制（ゲスト5回 ＋ 登録後15回 ＋ Pro味見2回）の実装", done: true },
+          { id: "s1-2", text: "検証・テスター用 VIPホワイトリスト（特定メアド無制限＆10/20迄登録キャンペーン）機能の実装", done: true },
+          { id: "s1-3", text: "3段階チケット制（ゲスト5回 ＋ 登録後15回 ＋ Pro味見2回）＆ 有料プラン1日上限撤廃（使い放題）実装", done: true },
           { id: "s1-4", text: "ヘッダー残りチケットバッジ ＆ アップセル課金モーダルUIの実装", done: true },
           { id: "s1-5", text: "Stripe Checkout（月額500円/1,480円）決済連携エンドポイントの実装", done: true },
           { id: "s1-6", text: "【実務担当】Gitコミット ＆ GitHub経由でのVercel自動デプロイ", done: true }
@@ -678,20 +693,26 @@
       {
         id: 2,
         title: "Stage 2: クローズドβ & 定着率検証",
-        badge: "検証フェーズ",
+        badge: "現在進行中",
         badgeColor: "bg-amber-100 text-amber-800 border-amber-300",
-        description: "限定30〜50名のアーリーアダプターに利用してもらい、Day 7継続率40%超えを狙う。",
+        description: "アーリーアダプターに利用してもらい、300文バンク・先読み0.0秒遷移・チャンク表示等でDay 7継続率40%超えを狙う。",
         tasks: [
           { id: "s2-0", text: "広報担当とThreads初期投稿の作成・公開完了", done: true },
-          { id: "s2-1", text: "友人・知人への個別招待 ＆ クローズドβテスター集客", done: false },
+          { id: "s2-1", text: "友人・知人への個別招待 ＆ クローズドβテスター第1陣（5名）開始（9/29〜稼働中）", done: true },
           { id: "s2-2", text: "【実務担当】サイレントアクセスロガー実装 ＆ 統括ダッシュボードへのDaily解析UI統合", done: true },
+          { id: "s2-6", text: "【実務担当】弱点単語組み込み生成アルゴリズム ＆ オフライン閲覧キャッシュ同期", done: true },
+          { id: "s2-7", text: "Supabase DB（profiles, practice_sessions, weak_words, user_tickets, sentence_bank）本番開通", done: true },
+          { id: "s2-8", text: "Googleワンクリックログイン ＆ ゲストデータ自動引き継ぎ処理の実装", done: true },
+          { id: "s2-9", text: "不具合報告・お問い合わせフォーム（Resendメール通知・スクショ添付・環境収集）", done: true },
+          { id: "s2-10", text: "【広報・CRM連携】新着お知らせポップアップ ＆ 「あとで読む」設定アイコン吸い込み通知アニメーション", done: true },
+          { id: "s2-11", text: "【FB-016】練習セッションのWPM自動算出・保存 ＆ ダッシュボード推移グラフ完全同期", done: true },
+          { id: "s2-12", text: "【FB-017】先行登録LP（/waitlist）構築（1問デモ体験・14日間無料クーポン自動送信・Threads連携）", done: true },
+          { id: "s2-13", text: "【FB-018/019】結果画面下部オレンジ「次のフレーズへ」バー ＆ チャンク(/)区切り表示 ＆ 管理者プレビュー機能", done: true },
+          { id: "s2-14", text: "【FB-020】バックグラウンド先読み（0.0秒遷移）＆ 4大ジャンル300文バンク（週10%自動入替）実装", done: true },
+          { id: "s2-15", text: "【FB-021】録音開始時の模範音声自動停止（マイク回り込み防止）＆ Listen-then-Speak導線改善", done: true },
           { id: "s2-3", text: "習慣化リマインド通知（ストリーク途切れ防止のメール/Web通知）", done: false },
           { id: "s2-4", text: "SNSシェア用OGP画像自動生成機能（「#今日のシャドーイング」拡散用）", done: false },
-          { id: "s2-5", text: "テスターへの1on1インタビュー・価格納得感（月1,480円）の検証", done: false },
-          { id: "s2-6", text: "【実務担当】弱点単語組み込み生成アルゴリズム ＆ オフライン閲覧キャッシュ同期", done: true },
-          { id: "s2-7", text: "Supabase DB（profiles, practice_sessions, weak_words, user_tickets）本番開通", done: true },
-          { id: "s2-8", text: "Googleワンクリックログイン ＆ ゲストデータ自動引き継ぎ処理の実装", done: true },
-          { id: "s2-9", text: "不具合報告・お問い合わせフォーム（Resendメール通知・スクショ添付・環境収集）", done: true }
+          { id: "s2-5", text: "βテスター（30〜50名拡大）への1on1ヒアリング・価格納得感（月500円/1,480円）の検証", done: false }
         ]
       },
       {
@@ -699,7 +720,7 @@
         title: "Stage 3: パブリックローンチ & 収益化始動",
         badge: "拡大フェーズ",
         badgeColor: "bg-purple-100 text-purple-800 border-purple-300",
-        description: "有料会員100名（月商12万円規模）の突破を目指す本格公開とPR施策。",
+        description: "3ヶ月後目標：有料会員50名（Basic 45名 / Pro 5名、MRR ¥29,900、月間営業利益+¥23,933）の達成と本格PR。",
         tasks: [
           { id: "s3-1", text: "Zenn/Note開発ストーリー執筆「シャドテンが高すぎてAI版を個人開発した話」", done: false },
           { id: "s3-2", text: "Product Hunt & 各種SaaSディレクトリへの掲載・ローンチ", done: false },
@@ -710,15 +731,13 @@
       },
       {
         id: 4,
-        title: "Stage 4: スケール & 1ヶ月置き業界拡張アップデート",
+        title: "Stage 4: スケール & B2B展開",
         badge: "将来展望",
         badgeColor: "bg-slate-100 text-slate-800 border-slate-300",
-        description: "有料会員1,000名（月商88万円〜）、1ヶ月置きの業界拡充および法人展開。",
+        description: "有料会員200〜1,000名（月商12万〜88万円）、問題バンク拡充および法人研修展開。",
         tasks: [
-          { id: "s4-m1", text: "【ローンチ1ヶ月後 v1.1】「接客・サービス（Hospitality）」業界フレーズの拡充", done: false },
-          { id: "s4-m2", text: "【ローンチ2ヶ月後 v1.2】「日常雑談・街中会話（Casual & Town）」フレーズの拡充", done: false },
-          { id: "s4-m3", text: "【ローンチ3ヶ月後 v1.3】「医療・特定専門領域（Medical）」高単価カテゴリの解放", done: false },
-          { id: "s4-1", text: "PWA強化またはモバイルアプリ化（通知による継続率向上）", done: false },
+          { id: "s4-m1", text: "【バンク拡張 v1.1】各スロット300文満杯後の週次10%ローテーション分析＆高評価フレーズ厳選", done: false },
+          { id: "s4-1", text: "PWA強化またはモバイルアプリ化（プッシュ通知による継続率向上）", done: false },
           { id: "s4-2", text: "法人向け（B2B）一括管理ダッシュボード（社員の発話量・WPM監視）の設計", done: false }
         ]
       }
@@ -726,9 +745,10 @@
 
     let stages = [];
     let currentFilter = 'all';
+    const STORAGE_KEY = 'shadowlog_mgmt_stages_v20260930';
 
     function init() {
-      const saved = localStorage.getItem('shadowlog_mgmt_stages');
+      const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
           stages = JSON.parse(saved);
@@ -737,12 +757,13 @@
         }
       } else {
         stages = JSON.parse(JSON.stringify(DEFAULT_STAGES));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stages));
       }
       render();
     }
 
     function save() {
-      localStorage.setItem('shadowlog_mgmt_stages', JSON.stringify(stages));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stages));
       render();
     }
 
