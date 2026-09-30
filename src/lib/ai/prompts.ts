@@ -1,4 +1,4 @@
-import { DifficultyLevel, Industry, DiffResult, CoachFeedback, WPMInfo } from "@/types";
+import { DifficultyLevel, Industry, DiffResult, CoachFeedback, WPMInfo, normalizeIndustry } from "@/types";
 
 export interface PromptTemplate {
   systemPrompt: string;
@@ -29,8 +29,6 @@ const INDUSTRY_SITUATIONS: Record<Industry, string[]> = {
     "Managing customer escalation and turning churn risk into loyalty",
     "Onboarding remote distributed team members across time zones",
     "Post-merger organizational change management and culture integration",
-  ],
-  finance: [
     "Analyzing quarterly EBITDA margins and cash burn projections",
     "Portfolio rebalancing in response to central bank interest rate hikes",
     "M&A due diligence, valuation multiples, and synergy estimates",
@@ -39,15 +37,6 @@ const INDUSTRY_SITUATIONS: Record<Industry, string[]> = {
     "Assessing credit risk ratings for corporate debt issuance",
     "ESG investment criteria and sustainable fund performance disclosure",
     "Capital allocation strategy between dividends and R&D reinvestment",
-  ],
-  medical: [
-    "Discussing Phase III clinical trial efficacy and adverse event rates",
-    "Interpreting diagnostic imaging results and biomarker assays",
-    "Explaining treatment options and potential side effects with compassion",
-    "Implementing electronic health record (EHR) interoperability protocols",
-    "Hospital infection control standards and antimicrobial stewardship",
-    "Telemedicine triage workflows and remote patient monitoring devices",
-    "Ethical considerations in genetic screening and personalized medicine",
   ],
   marketing: [
     "Optimizing customer acquisition cost (CAC) and lifetime value (LTV)",
@@ -85,7 +74,8 @@ export function getSentenceGenerationPrompt(
       "Target length: 20 to 30 words. Use complex sentence structures (relative clauses, conditionals, participial constructions), sophisticated industry vocabulary, and natural rhythm suitable for professional presentations or executive meetings. Suitable for C1 CEFR level.",
   };
 
-  const situations = INDUSTRY_SITUATIONS[industry] || INDUSTRY_SITUATIONS.tech;
+  const normInd = normalizeIndustry(industry);
+  const situations = INDUSTRY_SITUATIONS[normInd] || INDUSTRY_SITUATIONS.tech;
   const randomSituation = situations[Math.floor(Math.random() * situations.length)];
   const randomSeed = Math.random().toString(36).substring(2, 8);
 
@@ -107,7 +97,7 @@ Return ONLY a valid JSON object with the following schema:
 Do NOT include markdown fences, extra commentary, or additional fields.`;
 
   const userPrompt = `Generate a unique shadowing practice sentence with the following specifications:
-- Industry/Domain: ${industry}
+- Industry/Domain: ${normInd}
 - Context/Situation: ${topic ? topic : randomSituation}
 - Difficulty Level: ${level} (${levelGuidelines[level]})
 - Variation Seed: ${randomSeed}${hasWeakWords ? `\n- Weak Words to reinforce: ${weakWordList}` : ""}
@@ -127,7 +117,8 @@ export function getPassageGenerationPrompt(
   level: DifficultyLevel,
   topic?: string
 ): PromptTemplate {
-  const situations = INDUSTRY_SITUATIONS[industry] || INDUSTRY_SITUATIONS.tech;
+  const normInd = normalizeIndustry(industry);
+  const situations = INDUSTRY_SITUATIONS[normInd] || INDUSTRY_SITUATIONS.tech;
   const randomSituation = situations[Math.floor(Math.random() * situations.length)];
   const randomSeed = Math.random().toString(36).substring(2, 8);
 
@@ -145,7 +136,7 @@ Return ONLY a valid JSON object with the following schema:
 Do NOT include markdown fences, extra commentary, or additional fields.`;
 
   const userPrompt = `Generate an engaging business presentation or conference speech passage with the following specifications:
-- Industry/Domain: ${industry}
+- Industry/Domain: ${normInd}
 - Scenario/Topic: ${topic ? topic : randomSituation}
 - Difficulty Level: ${level}
 - Target Word Count: 60 to 90 words (3 to 5 clear, rhythmic sentences)
@@ -249,6 +240,7 @@ export function getPassageCoachReviewPrompt(
  */
 export function getFallbackPassage(industry: Industry, level?: DifficultyLevel): { english: string; japanese: string } {
   void level;
+  const normInd = normalizeIndustry(industry);
   const passages: Record<Industry, { english: string; japanese: string }> = {
     tech: {
       english:
@@ -261,18 +253,6 @@ export function getFallbackPassage(industry: Industry, level?: DifficultyLevel):
         "Thank you all for joining this quarterly strategic review. Over the past three months, our cross-functional teams have demonstrated exceptional collaboration, resulting in a fifteen percent increase in client retention. Furthermore, our expansion into emerging markets has created significant competitive advantages. As we move into the next quarter, maintaining financial discipline and customer trust remains our highest priority.",
       japanese:
         "四半期戦略レビューにご参加いただきありがとうございます。この3ヶ月間、部門横断チームが素晴らしい連携を見せ、顧客維持率は15%向上しました。さらに、新興市場への進出は大きな競争優位性を生み出しています。来四半期に向けて、財務規律と顧客の信頼維持を最優先課題として取り組んでまいります。",
-    },
-    medical: {
-      english:
-        "Welcome to today's clinical briefing. Our research team has completed the second phase of trials for our targeted therapy protocol. Preliminary findings indicate a substantial improvement in patient outcomes with minimal side effects. Moving forward, we will collaborate closely with regulatory authorities to accelerate the approval process and ensure the highest safety standards.",
-      japanese:
-        "本日の臨床ブリーフィングへようこそ。当研究チームは標的治療プロトコルの第2相試験を完了しました。予備的結果では、副作用を最小限に抑えつつ患者の治療成績が大幅に改善したことが示されています。今後は規制当局と緊密に連携し、最高水準の安全性を確保しながら承認手続きを進めてまいります。",
-    },
-    finance: {
-      english:
-        "Welcome to our annual investor presentation. Despite macroeconomic volatility, our diversified investment portfolio delivered resilient risk-adjusted returns this fiscal year. In addition, our automated risk mitigation framework successfully shielded our assets from market downturns. Moving forward, we remain committed to delivering sustainable value to all our stakeholders.",
-      japanese:
-        "年次投資家向けプレゼンテーションへようこそ。マクロ経済の変動にもかかわらず、分散投資ポートフォリオは強靭なリスク調整後リターンを達成しました。さらに、自動化されたリスク管理フレームワークが市場の下落から資産を保護しました。今後もすべてのステークホルダーへ持続的な価値を提供してまいります。",
     },
     marketing: {
       english:
@@ -288,7 +268,7 @@ export function getFallbackPassage(industry: Industry, level?: DifficultyLevel):
     },
   };
 
-  return passages[industry] || passages.tech;
+  return passages[normInd] || passages.tech;
 }
 
 /**

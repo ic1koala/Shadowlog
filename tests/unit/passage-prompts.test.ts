@@ -4,18 +4,25 @@ import {
   getPassageCoachReviewPrompt,
   getFallbackPassage,
 } from "@/lib/ai/prompts";
-import { DiffResult } from "@/types";
+import { DiffResult, Industry, normalizeIndustry } from "@/types";
 
 describe("Passage Prompts & Fallbacks", () => {
   it("generates passage creation prompt with word range instructions", () => {
-    const prompt = getPassageGenerationPrompt("finance", "advanced");
+    const prompt = getPassageGenerationPrompt("business", "advanced");
     expect(prompt.systemPrompt).toContain("60 to 90 words");
-    expect(prompt.userPrompt).toContain("finance");
+    expect(prompt.userPrompt).toContain("business");
     expect(prompt.userPrompt).toContain("advanced");
   });
 
+  it("normalizes legacy finance and medical industries to business and daily", () => {
+    expect(normalizeIndustry("finance")).toBe("business");
+    expect(normalizeIndustry("medical")).toBe("daily");
+    const legacyPrompt = getPassageGenerationPrompt("finance" as Industry, "advanced");
+    expect(legacyPrompt.userPrompt).toContain("business");
+  });
+
   it("provides fallback passage for every supported industry", () => {
-    const industries = ["tech", "business", "finance", "medical", "marketing", "daily"] as const;
+    const industries = ["tech", "business", "marketing", "daily"] as const;
     for (const ind of industries) {
       const fallback = getFallbackPassage(ind, "intermediate");
       expect(fallback.english.length).toBeGreaterThan(50);

@@ -40,6 +40,7 @@ flowchart LR
 | FB-017 | 2026/09/29 | オーナー・テスター | マーケティング・事前登録 | ウェイティングリストLP（/waitlist）作成。14日間無料クーポン、動くUIデモ、Resendサンクスメール自動送信 | 最高 | 完了 | WAITLIST_LP_SPEC.md 策定、/waitlist LP・/api/waitlist・Resendメール・管理画面連携を実装 (99 passed) |
 | FB-018 | 2026/09/29 | βテスター（5名） | UI/UX改善 | 「次のフレーズへ」の視認性向上（オレンジ色変更）＆画面下部へのフローティング配置 | 高 | 完了 | 練習結果表示時に浮遊型バー（Floating Next Phrase Bar）を新設、オレンジ色適用・スコア表示付き (9adbb5a) |
 | FB-019 | 2026/09/30 | オーナー・テスター | 開発基盤・学習UX | 管理者専用のテストボタンモード新設 ＆ 第1弾「文字レイアウトを変えないチャンク青スラッシュ（/）」実装 | 高 | 完了 | ADMIN_PREVIEW_AND_CHUNK_SLASH_SPEC.md 策定、chunk-splitter・admin-preview-store・SentenceCardゼロシフト描画を実装 (112 passed) |
+| FB-020 | 2026/09/30 | βテスター・オーナー | 速度改善・コスト・ジャンル再編 | 例文生成の5秒待ち解消（裏での次問先読み＋問題バンク300文蓄積＋週10%使用回数順入れ替え）＆4ジャンル集約（Finance統合・Medical削除） | 最高 | 完了 | SENTENCE_BANK_AND_PREFETCH_SPEC.md 策定、sentence_bank・rotate API・0.0秒先読み・4ジャンル化を実装 (118 passed) |
 
 
 

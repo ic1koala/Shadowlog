@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DifficultyLevel, Industry, SentenceResponse, PracticeMode } from "@/types";
+import {
+  DifficultyLevel,
+  Industry,
+  SentenceResponse,
+  PracticeMode,
+  normalizeIndustry,
+} from "@/types";
 import { getOpenAIClient, FALLBACK_SENTENCES } from "@/lib/ai/openai";
 import {
   getSentenceGenerationPrompt,
@@ -7,21 +13,25 @@ import {
   getFallbackPassage,
 } from "@/lib/ai/prompts";
 import { countWords } from "@/lib/diff/diff-calculator";
-
-const VALID_INDUSTRIES: Industry[] = [
-  "tech",
-  "business",
-  "finance",
-  "medical",
-  "marketing",
-  "daily",
-];
+import {
+  isSlotFull,
+  pickFromSentenceBank,
+  saveToSentenceBank,
+} from "@/lib/ai/sentence-bank";
 
 const VALID_LEVELS: DifficultyLevel[] = ["beginner", "intermediate", "advanced"];
 
 export async function POST(req: NextRequest) {
   try {
-    let body: { industry?: string; level?: string; topic?: string; mode?: string; weakWords?: string[] } = {};
+    let body: {
+      industry?: string;
+      level?: string;
+      topic?: string;
+      mode?: string;
+      weakWords?: string[];
+      excludeIds?: string[];
+      preferBank?: boolean;
+    } = {};
     try {
       body = await req.json();
     } catch {
@@ -31,9 +41,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const industry: Industry = VALID_INDUSTRIES.includes(body.industry as Industry)
-      ? (body.industry as Industry)
-      : "tech";
+    const industry: Industry = normalizeIndustry(body.industry);
 
     const level: DifficultyLevel = VALID_LEVELS.includes(body.level as DifficultyLevel)
       ? (body.level as DifficultyLevel)
@@ -44,8 +52,27 @@ export async function POST(req: NextRequest) {
     const weakWords: string[] = Array.isArray(body.weakWords)
       ? body.weakWords.filter((w): w is string => typeof w === "string").slice(0, 5)
       : [];
+    const excludeIds: string[] = Array.isArray(body.excludeIds)
+      ? body.excludeIds.filter((id): id is string => typeof id === "string")
+      : [];
+    const preferBank = Boolean(body.preferBank);
 
-    // Check if OpenAI API key is configured
+    // 1. If the sentence bank slot has reached 300 (or preferBank is requested), serve from the bank
+    const slotFull = await isSlotFull(industry, level, mode);
+    if (slotFull || preferBank) {
+      const banked = await pickFromSentenceBank({
+        industry,
+        level,
+        mode,
+        excludeIds,
+        weakWords,
+      });
+      if (banked) {
+        return NextResponse.json(banked, { status: 200 });
+      }
+    }
+
+    // 2. Otherwise generate a new sentence via OpenAI and store it in the sentence bank
     try {
       const openai = getOpenAIClient();
       const { systemPrompt, userPrompt } =
@@ -53,7 +80,7 @@ export async function POST(req: NextRequest) {
           ? getPassageGenerationPrompt(industry, level, topic)
           : getSentenceGenerationPrompt(industry, level, topic, weakWords);
 
-      // 1. Generate sentence text with GPT-4o-mini
+      // Generate sentence text with GPT-4o-mini
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -77,7 +104,7 @@ export async function POST(req: NextRequest) {
         throw new Error("OpenAI returned an empty English sentence");
       }
 
-      // 2. Generate model audio using TTS-1
+      // Generate model audio using TTS-1
       let audioBase64: string | undefined;
       try {
         const mp3 = await openai.audio.speech.create({
@@ -103,9 +130,27 @@ export async function POST(req: NextRequest) {
         mode,
       };
 
+      // Save newly generated sentence to the bank (up to 300 per slot)
+      const savedRecord = await saveToSentenceBank(responsePayload);
+      if (savedRecord) {
+        responsePayload.id = savedRecord.id;
+      }
+
       return NextResponse.json(responsePayload, { status: 200 });
     } catch (openaiErr) {
-      console.warn("OpenAI API call failed, falling back to mock sentence:", openaiErr);
+      console.warn("OpenAI API call failed, checking sentence bank or fallback:", openaiErr);
+
+      // Try sentence bank before static fallback
+      const banked = await pickFromSentenceBank({
+        industry,
+        level,
+        mode,
+        excludeIds,
+        weakWords,
+      });
+      if (banked) {
+        return NextResponse.json(banked, { status: 200 });
+      }
 
       // Graceful fallback for offline / development / missing key
       let fallbackText = "";

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { DifficultyLevel, Industry } from "@/types";
+import { DifficultyLevel, Industry, normalizeIndustry } from "@/types";
 import { AssessmentResult } from "@/lib/assessment/assessment-engine";
 import {
   Settings,
@@ -151,9 +151,9 @@ export default function SettingsPage() {
   useEffect(() => {
     // 1. Load preferences
     try {
-      const savedIndustry = localStorage.getItem("shadowlog_industry") as Industry;
+      const savedIndustry = localStorage.getItem("shadowlog_industry");
       const savedLevel = localStorage.getItem("shadowlog_level") as DifficultyLevel;
-      if (savedIndustry) setIndustry(savedIndustry);
+      if (savedIndustry) setIndustry(normalizeIndustry(savedIndustry));
       if (savedLevel) setLevel(savedLevel);
 
       const savedResult = localStorage.getItem("shadowlog_assessment_result");
@@ -300,12 +300,10 @@ export default function SettingsPage() {
   };
 
   const industries: Array<{ key: Industry; label: string; desc: string }> = [
-    { key: "tech", label: "Tech / IT", desc: "クラウド、AI、アジャイル開発、API、障害対応など" },
-    { key: "business", label: "Business", desc: "経営戦略、商談、プロジェクトマネジメント、会議など" },
-    { key: "finance", label: "Finance", desc: "四半期決算、投資、リスク管理、市場動向など" },
-    { key: "medical", label: "Medical", desc: "臨床研究、医療技術、ヘルスケア、患者対応など" },
-    { key: "marketing", label: "Marketing", desc: "ブランド戦略、デジタル広告、顧客維持、分析など" },
-    { key: "daily", label: "Daily / General", desc: "日常会話、旅行、食事、カジュアルな交流など" },
+    { key: "tech", label: "Tech (IT・開発)", desc: "クラウド、AI、アジャイル開発、API、障害対応など" },
+    { key: "business", label: "Business (ビジネス・財務)", desc: "経営戦略、商談、四半期決算、投資、リスク管理など" },
+    { key: "marketing", label: "Marketing (マーケ・企画)", desc: "ブランド戦略、デジタル広告、顧客維持、分析など" },
+    { key: "daily", label: "Daily (日常・街中会話)", desc: "日常会話、旅行、食事、カジュアルな交流など" },
   ];
 
   const levels: Array<{ key: DifficultyLevel; label: string; words: string; desc: string }> = [

@@ -14,6 +14,7 @@ import {
   PracticeMode,
   WPMInfo,
   UserPlanType,
+  normalizeIndustry,
 } from "@/types";
 import {
   recordPracticeSession,
@@ -85,6 +86,16 @@ export default function PracticePage() {
   const recorderSectionRef = useRef<HTMLDivElement | null>(null);
   const activeRequestIdRef = useRef<number>(0);
 
+  // Background prefetch state for 0.0s transition to next phrase
+  const prefetchedSentenceRef = useRef<{
+    sentence: SentenceResponse;
+    industry: Industry;
+    level: DifficultyLevel;
+    mode: PracticeMode;
+  } | null>(null);
+  const seenSentenceIdsRef = useRef<Set<string>>(new Set());
+  const prefetchRequestIdRef = useRef<number>(0);
+
   // Sync current user plan and tickets from storage
   useEffect(() => {
     const s = getTicketStatus();
@@ -137,13 +148,68 @@ export default function PracticePage() {
     }
   }, []);
 
+  // Silently prefetches the next question in the background while the user is practicing
+  const prefetchNextSentence = useCallback(
+    async (
+      targetIndustry: Industry,
+      targetLevel: DifficultyLevel,
+      targetMode: PracticeMode,
+      currentId?: string
+    ) => {
+      if (currentId) {
+        seenSentenceIdsRef.current.add(currentId);
+      }
+
+      const existing = prefetchedSentenceRef.current;
+      if (
+        existing &&
+        existing.industry === targetIndustry &&
+        existing.level === targetLevel &&
+        existing.mode === targetMode &&
+        existing.sentence.id !== currentId
+      ) {
+        return;
+      }
+
+      const pId = ++prefetchRequestIdRef.current;
+      try {
+        const res = await fetch("/api/generate-sentence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            industry: targetIndustry,
+            level: targetLevel,
+            mode: targetMode,
+            weakWords: targetMode === "sentence" ? activeWeakWords : [],
+            excludeIds: Array.from(seenSentenceIdsRef.current),
+          }),
+        });
+
+        if (!res.ok || pId !== prefetchRequestIdRef.current) return;
+        const data: SentenceResponse = await res.json();
+        if (pId === prefetchRequestIdRef.current && data?.english) {
+          seenSentenceIdsRef.current.add(data.id);
+          prefetchedSentenceRef.current = {
+            sentence: data,
+            industry: targetIndustry,
+            level: targetLevel,
+            mode: targetMode,
+          };
+        }
+      } catch {
+        // Silent background failure: fetchNewSentence will gracefully fetch on demand
+      }
+    },
+    [activeWeakWords]
+  );
+
   const fetchNewSentence = useCallback(
     async (
       overrideIndustry?: Industry,
       overrideLevel?: DifficultyLevel,
       overrideMode?: PracticeMode
     ) => {
-      const targetIndustry = overrideIndustry || industry;
+      const targetIndustry = normalizeIndustry(overrideIndustry || industry);
       const targetLevel = overrideLevel || level;
       const targetMode = overrideMode || practiceMode;
 
@@ -161,7 +227,6 @@ export default function PracticePage() {
       }
 
       const requestId = ++activeRequestIdRef.current;
-      setIsLoadingSentence(true);
       // Fully reset audio recorder and floating button state
       recorderControlsRef.current?.reset?.();
       setFloatHasBlob(false);
@@ -175,6 +240,29 @@ export default function PracticePage() {
       setIsSaved(false);
       setErrorMessage(null);
 
+      // 0.0s instant swap if background-prefetched sentence is ready for the same conditions
+      const prefetched = prefetchedSentenceRef.current;
+      if (
+        prefetched &&
+        prefetched.industry === targetIndustry &&
+        prefetched.level === targetLevel &&
+        prefetched.mode === targetMode
+      ) {
+        prefetchedSentenceRef.current = null;
+        seenSentenceIdsRef.current.add(prefetched.sentence.id);
+        setSentence(prefetched.sentence);
+        setIsLoadingSentence(false);
+        void prefetchNextSentence(
+          targetIndustry,
+          targetLevel,
+          targetMode,
+          prefetched.sentence.id
+        );
+        return;
+      }
+
+      setIsLoadingSentence(true);
+
       try {
         const res = await fetch("/api/generate-sentence", {
           method: "POST",
@@ -184,6 +272,7 @@ export default function PracticePage() {
             level: targetLevel,
             mode: targetMode,
             weakWords: targetMode === "sentence" ? activeWeakWords : [],
+            excludeIds: Array.from(seenSentenceIdsRef.current),
           }),
         });
 
@@ -196,7 +285,10 @@ export default function PracticePage() {
 
         const data: SentenceResponse = await res.json();
         if (requestId === activeRequestIdRef.current) {
+          seenSentenceIdsRef.current.add(data.id);
           setSentence(data);
+          // Immediately prefetch the next phrase in the background
+          void prefetchNextSentence(targetIndustry, targetLevel, targetMode, data.id);
         }
       } catch (err: unknown) {
         if (requestId === activeRequestIdRef.current) {
@@ -209,16 +301,14 @@ export default function PracticePage() {
         }
       }
     },
-    [industry, level, practiceMode, activeWeakWords]
+    [industry, level, practiceMode, activeWeakWords, prefetchNextSentence]
   );
 
 const INDUSTRY_OPTIONS: Array<{ key: Industry; label: string }> = [
-  { key: "tech", label: "Tech / IT" },
-  { key: "business", label: "Business (ビジネス全般)" },
-  { key: "finance", label: "Finance (金融・財務)" },
-  { key: "medical", label: "Medical (医療・バイオ)" },
-  { key: "marketing", label: "Marketing (マーケティング)" },
-  { key: "daily", label: "Daily (日常・一般)" },
+  { key: "tech", label: "Tech (IT・開発)" },
+  { key: "business", label: "Business (ビジネス・財務)" },
+  { key: "marketing", label: "Marketing (マーケ・企画)" },
+  { key: "daily", label: "Daily (日常・街中会話)" },
 ];
 
 const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
@@ -244,6 +334,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       }
     }
 
+    prefetchedSentenceRef.current = null;
     setPracticeMode(targetMode);
     if (sentence) {
       fetchNewSentence(undefined, undefined, targetMode);
@@ -251,13 +342,16 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
   };
 
   const handleIndustryChange = (newInd: Industry) => {
-    setIndustry(newInd);
+    const norm = normalizeIndustry(newInd);
+    prefetchedSentenceRef.current = null;
+    setIndustry(norm);
     try {
-      localStorage.setItem("shadowlog_industry", newInd);
+      localStorage.setItem("shadowlog_industry", norm);
     } catch {}
   };
 
   const handleLevelChange = (newLvl: DifficultyLevel) => {
+    prefetchedSentenceRef.current = null;
     setLevel(newLvl);
     try {
       localStorage.setItem("shadowlog_level", newLvl);
@@ -271,12 +365,12 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       const urlParams = new URLSearchParams(window.location.search);
       const retryText = urlParams.get("retryText");
       const retryJa = urlParams.get("retryJa");
-      const indParam = urlParams.get("industry") as Industry;
+      const indParam = urlParams.get("industry");
       const lvlParam = urlParams.get("level") as DifficultyLevel;
       const modeParam = urlParams.get("mode") as PracticeMode;
 
       if (retryText) {
-        const ind = indParam || "tech";
+        const ind = normalizeIndustry(indParam);
         const lvl = lvlParam || "intermediate";
         const mode = modeParam === "passage" ? "passage" : "sentence";
         setIndustry(ind);
@@ -296,10 +390,10 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     }
 
     try {
-      const storedInd = localStorage.getItem("shadowlog_industry") as Industry;
+      const storedInd = localStorage.getItem("shadowlog_industry");
       const storedLvl = localStorage.getItem("shadowlog_level") as DifficultyLevel;
       if (storedInd) {
-        setIndustry(storedInd);
+        setIndustry(normalizeIndustry(storedInd));
       }
       if (storedLvl) {
         setLevel(storedLvl);

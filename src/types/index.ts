@@ -23,10 +23,28 @@ export type DifficultyLevel = "beginner" | "intermediate" | "advanced";
 export type Industry =
   | "tech"
   | "business"
-  | "finance"
-  | "medical"
   | "marketing"
   | "daily";
+
+export const VALID_INDUSTRIES: Industry[] = [
+  "tech",
+  "business",
+  "marketing",
+  "daily",
+];
+
+/**
+ * Normalizes raw or legacy industry strings ("finance", "medical") into the 4 active genres.
+ */
+export function normalizeIndustry(input?: string | null): Industry {
+  if (!input) return "tech";
+  if (input === "finance") return "business";
+  if (input === "medical") return "daily";
+  if ((VALID_INDUSTRIES as string[]).includes(input)) {
+    return input as Industry;
+  }
+  return "tech";
+}
 
 export type PracticeMode = "sentence" | "passage";
 
