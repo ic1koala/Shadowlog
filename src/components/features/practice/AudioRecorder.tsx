@@ -233,7 +233,7 @@ export function AudioRecorder({
         {!isRecording && !audioBlob && (
           <div className="text-center space-y-1">
             <p className="text-xs sm:text-sm font-medium text-foreground">
-              ① まず上の「フレーズ音声を聴く」でお手本のリズムを確認
+              ① まず上の緑色ボタン「フレーズ音声を聴く」でお手本のリズムを確認
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground">
               ② 聴き終わったら、画面下部のボタンで録音して発話してください

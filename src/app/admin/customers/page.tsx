@@ -22,6 +22,9 @@ import {
   AlertTriangle,
   ArrowUp,
   Gift,
+  ExternalLink,
+  Globe,
+  BookOpen,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
@@ -386,6 +389,29 @@ export default function AdminCustomersPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <div className="hidden xl:flex items-center gap-2">
+              <Link
+                href="/compare/shadoten"
+                target="_blank"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition"
+                title="競合比較LP（静的生成）を確認"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>シャドテン比較LP</span>
+                <ExternalLink className="w-3 h-3 opacity-60" />
+              </Link>
+              <Link
+                href="/blog"
+                target="_blank"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
+                title="公式ノウハウブログを確認"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>ノウハウブログ</span>
+                <ExternalLink className="w-3 h-3 opacity-60" />
+              </Link>
+            </div>
+
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted text-xs text-muted-foreground">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               <span>{adminEmail}</span>

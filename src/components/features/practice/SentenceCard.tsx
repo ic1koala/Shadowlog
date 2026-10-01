@@ -69,7 +69,7 @@ export function SentenceCard({
 }: SentenceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1.0);
-  const [showJapanese, setShowJapanese] = useState(true);
+  const [showJapanese, setShowJapanese] = useState(false);
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [, setVoicesLoaded] = useState(false);
@@ -274,6 +274,7 @@ export function SentenceCard({
     prevWordIndexRef.current = null;
     setPillStyle({ left: 0, top: 0, width: 0, height: 0, opacity: 0 });
     wordRefs.current = [];
+    setShowJapanese(false);
     clearPendingPlay();
     stopAnimationLoop();
     setAudioDuration(null);
@@ -567,8 +568,21 @@ export function SentenceCard({
       </div>
 
       <div className="space-y-2 sm:space-y-3">
-        {/* English sentence with smooth sliding karaoke pill */}
-        <div ref={containerRef} className="relative p-1 -m-1">
+        {/* English sentence with smooth sliding karaoke pill (tap to toggle Japanese translation) */}
+        <div
+          ref={containerRef}
+          onClick={() => setShowJapanese((prev) => !prev)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setShowJapanese((prev) => !prev);
+            }
+          }}
+          className="relative p-1 -m-1 cursor-pointer select-none rounded-xl transition-colors hover:bg-muted/30 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
+          title="タップで日本語の意味を表示/非表示"
+        >
           {/* Smooth sliding karaoke highlight pill */}
           <div
             aria-hidden="true"
@@ -615,11 +629,31 @@ export function SentenceCard({
           </p>
         </div>
 
-
-        {showJapanese && (
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed pt-0.5 sm:pt-1">
-            {sentence.japanese}
-          </p>
+        {/* Japanese translation: displayed when script is tapped, hidden by default */}
+        {showJapanese ? (
+          <div className="flex items-start justify-between gap-3 pt-0.5 sm:pt-1 animate-in fade-in duration-200">
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              {sentence.japanese}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowJapanese(false)}
+              className="text-[11px] text-muted-foreground hover:text-foreground shrink-0 px-2 py-0.5 rounded-md hover:bg-muted transition cursor-pointer"
+              title="日本語訳を隠す"
+            >
+              隠す
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowJapanese(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground pt-0.5 sm:pt-1 transition-colors group cursor-pointer"
+            title="タップで日本語訳を表示"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform" />
+            <span className="underline decoration-dotted underline-offset-4">💡 フレーズをタップで日本語訳を表示</span>
+          </button>
         )}
       </div>
 
@@ -631,12 +665,12 @@ export function SentenceCard({
             disabled={isRecording}
             className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0 ${
               isPlaying
-                ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-600/30"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                ? "bg-emerald-700 text-white shadow-md ring-2 ring-emerald-500/40"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25 active:scale-95"
             }`}
             title={isRecording ? "録音中はお手本音声の混入を防ぐため再生できません" : undefined}
           >
-            {isPlaying ? <Pause className="w-4 h-4 shrink-0" /> : <Play className="w-4 h-4 shrink-0" />}
+            {isPlaying ? <Pause className="w-4 h-4 shrink-0" /> : <Play className="w-4 h-4 shrink-0 fill-current" />}
             <span>{isPlaying ? "一時停止" : "フレーズ音声を聴く"}</span>
           </button>
 

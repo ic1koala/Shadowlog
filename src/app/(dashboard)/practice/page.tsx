@@ -21,6 +21,7 @@ import {
   setPlanType,
   getWeakWords,
 } from "@/lib/storage/user-learning-store";
+import { getUntriedStarterSentence } from "@/lib/practice/starter-sentences";
 import {
   getTicketStatus,
   consumeTicket,
@@ -336,6 +337,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     try {
       localStorage.setItem("shadowlog_industry", norm);
     } catch {}
+    void prefetchNextSentence(norm, level, practiceMode);
   };
 
   const handleLevelChange = (newLvl: DifficultyLevel) => {
@@ -344,9 +346,10 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     try {
       localStorage.setItem("shadowlog_level", newLvl);
     } catch {}
+    void prefetchNextSentence(industry, newLvl, practiceMode);
   };
 
-  // Load preferences from localStorage on mount (DO NOT auto-generate sentence to prevent token waste)
+  // Load preferences from localStorage on mount and immediately display an untried starter sentence
   useEffect(() => {
     // Check URL search params for direct review repetition
     if (typeof window !== "undefined") {
@@ -364,7 +367,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         setIndustry(ind);
         setLevel(lvl);
         setPracticeMode(mode);
-        setSentence({
+        const reviewSentence: SentenceResponse = {
           id: `review-${Date.now()}`,
           english: decodeURIComponent(retryText),
           japanese: retryJa ? decodeURIComponent(retryJa) : "",
@@ -372,26 +375,41 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           industry: ind,
           level: lvl,
           mode: mode,
-        });
+        };
+        seenSentenceIdsRef.current.add(reviewSentence.id);
+        setSentence(reviewSentence);
+        void prefetchNextSentence(ind, lvl, mode, reviewSentence.id);
         return;
       }
     }
+
+    let initialInd: Industry = "tech";
+    let initialLvl: DifficultyLevel = "intermediate";
+    const initialMode: PracticeMode = "sentence";
 
     try {
       const storedInd = localStorage.getItem("shadowlog_industry");
       const storedLvl = localStorage.getItem("shadowlog_level") as DifficultyLevel;
       if (storedInd) {
-        setIndustry(normalizeIndustry(storedInd));
+        initialInd = normalizeIndustry(storedInd);
+        setIndustry(initialInd);
       }
       if (storedLvl) {
-        setLevel(storedLvl);
+        initialLvl = storedLvl;
+        setLevel(initialLvl);
       }
     } catch {
       // localStorage may fail in restricted environments
     }
 
-    // Intentionally omitted fetchNewSentence: User clicks "この条件で生成開始"
-  }, []); // Run ONCE on mount
+    // Instantly display an untried starter sentence without AI generation waiting (0ms)
+    const starter = getUntriedStarterSentence(initialInd, initialLvl, initialMode);
+    seenSentenceIdsRef.current.add(starter.id);
+    setSentence(starter);
+
+    // Silently prefetch the next sentence in the background while the user practices the first one
+    void prefetchNextSentence(initialInd, initialLvl, initialMode, starter.id);
+  }, [prefetchNextSentence]); // Run ONCE on mount
 
   const handleAudioReady = async (audioBlob: Blob, durationSeconds: number) => {
     if (!sentence) return;

@@ -112,6 +112,12 @@ export default function DashboardLayout({
       <footer className="border-t border-border/80 py-6 text-center text-xs text-muted-foreground pb-24 sm:pb-6">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs">
+            <Link href="/compare/shadoten" className="hover:underline text-muted-foreground hover:text-foreground">シャドテン比較</Link>
+            <span>•</span>
+            <Link href="/blog" className="hover:underline text-muted-foreground hover:text-foreground font-medium text-foreground">公式ブログ</Link>
+            <span>•</span>
+            <Link href="/tokushoho" className="hover:underline text-muted-foreground hover:text-foreground">特定商取引法に基づく表記</Link>
+            <span>•</span>
             <Link href="/terms" className="hover:underline text-muted-foreground hover:text-foreground">利用規約</Link>
             <span>•</span>
             <Link href="/privacy" className="hover:underline text-muted-foreground hover:text-foreground">プライバシーポリシー</Link>

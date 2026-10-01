@@ -29,6 +29,7 @@ import {
   ArrowUp,
   Megaphone,
   MessageSquare,
+  BookOpen,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -876,7 +877,46 @@ export default function SettingsPage() {
         />
       </div>
 
-      {/* ── 10. 学習データ・記録の初期化 ── */}
+      {/* ── 10. 公式ノウハウ & サービス比較 ── */}
+      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
+          <BookOpen className="w-5 h-5 text-primary" />
+          <span>公式ブログ & ノウハウガイド</span>
+        </div>
+        <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+          WPMを高める「チャンク（意味の塊）」意識トレーニングや、他社サービスとの料金・機能比較記事を公開しています。
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <Link
+            href="/blog"
+            className="p-3.5 rounded-xl border border-border bg-muted/40 hover:bg-muted transition flex items-center justify-between group"
+          >
+            <div>
+              <span className="text-xs font-bold text-foreground group-hover:text-primary transition block">
+                公式ブログ（WPM・シャドーイング解説）
+              </span>
+              <span className="text-[10px] text-muted-foreground">記事一覧をチェック</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition" />
+          </Link>
+
+          <Link
+            href="/compare/shadoten"
+            className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition flex items-center justify-between group"
+          >
+            <div>
+              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 block">
+                シャドテン vs ShadowLog 徹底比較
+              </span>
+              <span className="text-[10px] text-muted-foreground">料金・AIリアルタイム判定の違い</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-0.5 transition" />
+          </Link>
+        </div>
+      </div>
+
+      {/* ── 11. 学習データ・記録の初期化 ── */}
       <div id="section-reset" className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
           <RotateCcw className="w-5 h-5 text-muted-foreground" />
