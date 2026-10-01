@@ -23,6 +23,17 @@ export const metadata: Metadata = {
 
 const ARTICLES = [
   {
+    slug: "why-i-built-shadowlog",
+    title: "社会人が英語を口に出す「きっかけ」を作るために。ShadowLogを開発した理由",
+    description:
+      "仕事で英語を使わない日常の中で、どうすれば毎日声を出す習慣を作れるか？開発者自身が感じた課題と、自分専用の英文で喋るShadowLogに込めた想いを語ります。",
+    date: "2026.04.01",
+    readTime: "4分",
+    category: "開発ストーリー",
+    tags: ["開発秘話", "習慣化", "社会人英語"],
+    isFeatured: true,
+  },
+  {
     slug: "wpm-guide",
     title: "【2026年最新】チャンクとは？WPM向上のための英語シャドーイング実践ガイド",
     description:

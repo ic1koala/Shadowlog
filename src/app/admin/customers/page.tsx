@@ -388,26 +388,26 @@ export default function AdminCustomersPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden xl:flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Link
                 href="/compare/shadoten"
                 target="_blank"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition"
                 title="競合比較LP（静的生成）を確認"
               >
                 <Globe className="w-3.5 h-3.5" />
-                <span>シャドテン比較LP</span>
+                <span className="hidden sm:inline">シャドテン</span>比較LP
                 <ExternalLink className="w-3 h-3 opacity-60" />
               </Link>
               <Link
                 href="/blog"
                 target="_blank"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
                 title="公式ノウハウブログを確認"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>ノウハウブログ</span>
+                <span>公式ブログ</span>
                 <ExternalLink className="w-3 h-3 opacity-60" />
               </Link>
             </div>
@@ -492,9 +492,60 @@ export default function AdminCustomersPage() {
 
         {activeTab === "customers" ? (
           <>
+            {/* PR & Marketing Public Hub Links */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-amber-500/5 to-emerald-500/10 border border-primary/20 shadow-xs space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-bold">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-xs sm:text-sm font-bold text-foreground">
+                      広報・SEOマーケティング管理 Hub
+                    </h2>
+                    <p className="text-[11px] text-muted-foreground">
+                      本番公開済みの静的SEO比較LP・公式ブログへのアクセス導線
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href="/compare/shadoten"
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>シャドテン比較LP (/compare/shadoten)</span>
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </Link>
+
+                  <Link
+                    href="/blog"
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 transition"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>公式ブログ一覧 (/blog)</span>
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </Link>
+
+                  <Link
+                    href="/blog/why-i-built-shadowlog"
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>最新記事：開発秘話</span>
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             {/* KPI Cards Section - Growth & Scale */}
-        {/* KPI Cards: プラン別登録者内訳 & スケール指標 */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+            {/* KPI Cards: プラン別登録者内訳 & スケール指標 */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           {/* Card 1: Total Users */}
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-muted-foreground mb-2">

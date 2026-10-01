@@ -71,7 +71,13 @@ export default function PracticePage() {
   // Floating recording bar state
   const [floatIsRecording, setFloatIsRecording] = useState(false);
   const [floatHasBlob, setFloatHasBlob] = useState(false);
-  const recorderControlsRef = useRef<{ start: () => void; stop: () => void; reset?: () => void } | null>(null);
+  const [recordingMode, setRecordingMode] = useState<"repeating" | "shadowing">("repeating");
+  const recorderControlsRef = useRef<{
+    start: (mode?: "repeating" | "shadowing") => void;
+    stop: () => void;
+    reset?: () => void;
+  } | null>(null);
+  const shadowingAutoStopTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const recorderSectionRef = useRef<HTMLDivElement | null>(null);
   const activeRequestIdRef = useRef<number>(0);
@@ -410,6 +416,53 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     // Silently prefetch the next sentence in the background while the user practices the first one
     void prefetchNextSentence(initialInd, initialLvl, initialMode, starter.id);
   }, [prefetchNextSentence]); // Run ONCE on mount
+
+  const handleStartRecording = useCallback(
+    (mode: "repeating" | "shadowing" = "repeating") => {
+      setRecordingMode(mode);
+      if (mode === "shadowing") {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("shadowlog:play-model-audio"));
+        }
+      }
+      recorderControlsRef.current?.start?.(mode);
+    },
+    []
+  );
+
+  const handleStopRecording = useCallback(() => {
+    if (shadowingAutoStopTimerRef.current) {
+      clearTimeout(shadowingAutoStopTimerRef.current);
+      shadowingAutoStopTimerRef.current = null;
+    }
+    recorderControlsRef.current?.stop?.();
+  }, []);
+
+  // Shadowing auto-stop listener: When model audio ends in shadowing mode, wait 1.5s then auto stop & transcribe
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleModelAudioEnded = () => {
+      if (recordingMode === "shadowing" && floatIsRecording) {
+        if (shadowingAutoStopTimerRef.current) {
+          clearTimeout(shadowingAutoStopTimerRef.current);
+        }
+        // Spec 3.3: 模範音声終了＋1.5秒で自動的に録音停止＆採点へ
+        shadowingAutoStopTimerRef.current = setTimeout(() => {
+          handleStopRecording();
+        }, 1500);
+      }
+    };
+
+    window.addEventListener("shadowlog:model-audio-ended", handleModelAudioEnded);
+    return () => {
+      window.removeEventListener("shadowlog:model-audio-ended", handleModelAudioEnded);
+      if (shadowingAutoStopTimerRef.current) {
+        clearTimeout(shadowingAutoStopTimerRef.current);
+        shadowingAutoStopTimerRef.current = null;
+      }
+    };
+  }, [recordingMode, floatIsRecording, handleStopRecording]);
 
   const handleAudioReady = async (audioBlob: Blob, durationSeconds: number) => {
     if (!sentence) return;
@@ -818,6 +871,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               onRefresh={() => fetchNewSentence()}
               showChunkSlash={true}
               isRecording={floatIsRecording}
+              recordingType={recordingMode}
             />
           </div>
         )}
@@ -849,6 +903,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
             onAudioReady={handleAudioReady}
             isTranscribing={isTranscribing}
             hasEvaluated={Boolean(diffResult)}
+            isAdmin={isAdmin}
             onRetry={handleRetry}
             onRecordingStateChange={(rec, hasBlob) => {
               setFloatIsRecording(rec);
@@ -925,44 +980,99 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       {/* ── Floating Recording Bar ── */}
       {/* Shown while sentence is active and no result yet (recording phase) */}
       {sentence && !diffResult && !floatHasBlob && (
-        <div className="fixed bottom-24 sm:bottom-10 left-1/2 -translate-x-1/2 flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
-          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full animate-in slide-in-from-bottom-5 duration-300">
-            {/* Status indicator */}
-            <div className="flex items-center gap-2">
-              {floatIsRecording ? (
-                <span className="flex items-center gap-2 text-xs font-bold text-destructive animate-pulse">
-                  <span className="w-2.5 h-2.5 rounded-full bg-destructive" />
-                  録音中...
-                </span>
-              ) : (
-                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  準備完了
+        <div className="fixed bottom-24 sm:bottom-10 left-1/2 -translate-x-1/2 flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4">
+          <div className="pointer-events-auto flex flex-col gap-2 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full animate-in slide-in-from-bottom-5 duration-300">
+            {/* Status indicator row */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {floatIsRecording ? (
+                  <span className="flex items-center gap-2 text-xs font-bold text-destructive animate-pulse">
+                    <span className="w-2.5 h-2.5 rounded-full bg-destructive" />
+                    <span>
+                      {recordingMode === "shadowing"
+                        ? "🎧 シャドーイング録音中..."
+                        : "🗣️ 録音中..."}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    準備完了
+                  </span>
+                )}
+              </div>
+
+              {isAdmin && !floatIsRecording && (
+                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                  🧪 管理者テスト: 録音方式検証中
                 </span>
               )}
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-2">
-              {!floatIsRecording ? (
+            {floatIsRecording ? (
+              <div className="flex items-center justify-between gap-3 pt-0.5">
+                <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                  {recordingMode === "shadowing"
+                    ? "※模範音声終了＋1.5秒で自動停止・採点へ進みます"
+                    : "※発話が終わったら録音を終了してください"}
+                </span>
                 <button
-                  onClick={() => recorderControlsRef.current?.start()}
-                  disabled={isLoadingSentence || isTranscribing}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-lg active:scale-95 min-h-[44px]"
-                >
-                  <Mic className="w-4 h-4" />
-                  シャドーイングを開始
-                </button>
-              ) : (
-                <button
-                  onClick={() => recorderControlsRef.current?.stop()}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 transition shadow-lg active:scale-95 min-h-[44px]"
+                  onClick={handleStopRecording}
+                  className="w-full sm:w-auto ml-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 transition shadow-lg active:scale-95 min-h-[44px] cursor-pointer"
                 >
                   <Square className="w-4 h-4 fill-current" />
                   録音を終了
                 </button>
-              )}
-            </div>
+              </div>
+            ) : isAdmin ? (
+              /* Admin 2-button split */
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleStartRecording("repeating")}
+                  disabled={isLoadingSentence || isTranscribing}
+                  className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 transition shadow-sm active:scale-95 min-h-[48px] cursor-pointer"
+                  title="お手本音声を停止し、自分のペースで発話録音します"
+                >
+                  <span className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <span>🗣️</span>
+                    <span>リピーティング録音</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal">
+                    (お手本停止・自習)
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleStartRecording("shadowing")}
+                  disabled={isLoadingSentence || isTranscribing}
+                  className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 disabled:opacity-50 transition active:scale-95 min-h-[48px] cursor-pointer ring-1 ring-blue-400/30"
+                  title="模範音声と同時に発話し、終了後1.5秒で自動採点します"
+                >
+                  <span className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <span>🎧</span>
+                    <span>シャドーイング録音</span>
+                  </span>
+                  <span className="text-[10px] text-blue-100/90 font-normal">
+                    (イヤホンを装着してください)
+                  </span>
+                </button>
+              </div>
+            ) : (
+              /* Non-Admin existing single button */
+              <div className="flex justify-end pt-0.5">
+                <button
+                  onClick={() => handleStartRecording("repeating")}
+                  disabled={isLoadingSentence || isTranscribing}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-lg active:scale-95 min-h-[44px]"
+                >
+                  <Mic className="w-4 h-4" />
+                  シャドーイングを開始
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

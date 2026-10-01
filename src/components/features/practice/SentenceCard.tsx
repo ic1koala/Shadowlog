@@ -12,6 +12,7 @@ interface SentenceCardProps {
   onRefresh: () => void;
   showChunkSlash?: boolean;
   isRecording?: boolean;
+  recordingType?: "repeating" | "shadowing";
 }
 
 interface ParsedWord {
@@ -66,6 +67,7 @@ export function SentenceCard({
   onRefresh,
   showChunkSlash = true,
   isRecording = false,
+  recordingType = "repeating",
 }: SentenceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1.0);
@@ -147,12 +149,12 @@ export function SentenceCard({
     setActiveWordIndex(null);
   }, [clearPendingPlay, stopAnimationLoop]);
 
-  // Immediately stop model audio when microphone recording starts (prevents speaker bleed into mic)
+  // Immediately stop model audio when microphone recording starts in repeating mode
   useEffect(() => {
-    if (isRecording) {
+    if (isRecording && recordingType !== "shadowing") {
       stopModelAudio();
     }
-  }, [isRecording, stopModelAudio]);
+  }, [isRecording, recordingType, stopModelAudio]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -310,6 +312,9 @@ export function SentenceCard({
         setActiveWordIndex(null);
         clearPendingPlay();
         stopAnimationLoop();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("shadowlog:model-audio-ended"));
+        }
       };
     }
 
@@ -396,6 +401,9 @@ export function SentenceCard({
         setIsPlaying(false);
         setActiveWordIndex(null);
         clearPendingPlay();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("shadowlog:model-audio-ended"));
+        }
       };
 
       utterance.onerror = (e) => {
@@ -417,7 +425,7 @@ export function SentenceCard({
     [playbackSpeed, parsedWords, clearPendingPlay]
   );
 
-  const togglePlayAudio = useCallback(() => {
+  const playModelAudio = useCallback(() => {
     if (!sentence) return;
 
     // Path A: OpenAI TTS-1 audio (base64 MP3)
@@ -431,6 +439,9 @@ export function SentenceCard({
           setActiveWordIndex(null);
           clearPendingPlay();
           stopAnimationLoop();
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("shadowlog:model-audio-ended"));
+          }
         };
 
         audio.onerror = () => {
@@ -448,53 +459,35 @@ export function SentenceCard({
 
       audioRef.current.playbackRate = playbackSpeed;
 
-      if (isPlaying) {
-        clearPendingPlay();
-        audioRef.current.pause();
-        setIsPlaying(false);
-        setActiveWordIndex(null);
-        stopAnimationLoop();
-      } else {
-        clearPendingPlay();
-        // Immediately highlight the first word to draw focus and prepare learner
-        setIsPlaying(true);
-        if (parsedWords.length > 0) {
-          setActiveWordIndex(0);
-        }
-
-        // Delay audio playback start slightly (~250ms) so user is ready and highlight firmly leads
-        playDelayTimerRef.current = setTimeout(() => {
-          if (!audioRef.current) return;
-          audioRef.current.currentTime = 0;
-          audioRef.current
-            .play()
-            .then(() => {
-              startAnimationLoop();
-            })
-            .catch(() => {
-              setIsPlaying(false);
-              setActiveWordIndex(null);
-              stopAnimationLoop();
-            });
-        }, AUDIO_PLAYBACK_DELAY_MS);
+      clearPendingPlay();
+      // Immediately highlight the first word to draw focus and prepare learner
+      setIsPlaying(true);
+      if (parsedWords.length > 0) {
+        setActiveWordIndex(0);
       }
+
+      // Delay audio playback start slightly (~250ms) so user is ready and highlight firmly leads
+      playDelayTimerRef.current = setTimeout(() => {
+        if (!audioRef.current) return;
+        audioRef.current.currentTime = 0;
+        audioRef.current
+          .play()
+          .then(() => {
+            startAnimationLoop();
+          })
+          .catch(() => {
+            setIsPlaying(false);
+            setActiveWordIndex(null);
+            stopAnimationLoop();
+          });
+      }, AUDIO_PLAYBACK_DELAY_MS);
       return;
     }
 
     // Path B: SpeechSynthesis
-    if (isPlaying) {
-      clearPendingPlay();
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-      setIsPlaying(false);
-      setActiveWordIndex(null);
-    } else {
-      speakWithSpeechSynthesis(sentence.english);
-    }
+    speakWithSpeechSynthesis(sentence.english);
   }, [
     sentence,
-    isPlaying,
     playbackSpeed,
     parsedWords,
     clearPendingPlay,
@@ -502,6 +495,24 @@ export function SentenceCard({
     startAnimationLoop,
     stopAnimationLoop,
   ]);
+
+  const togglePlayAudio = useCallback(() => {
+    if (isPlaying) {
+      stopModelAudio();
+    } else {
+      playModelAudio();
+    }
+  }, [isPlaying, stopModelAudio, playModelAudio]);
+
+  // Listen for external trigger to start model audio (e.g. shadowing recording start)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleForcePlay = () => {
+      playModelAudio();
+    };
+    window.addEventListener("shadowlog:play-model-audio", handleForcePlay);
+    return () => window.removeEventListener("shadowlog:play-model-audio", handleForcePlay);
+  }, [playModelAudio]);
 
   const changeSpeed = (speed: PlaybackSpeed) => {
     setPlaybackSpeed(speed);
@@ -662,13 +673,13 @@ export function SentenceCard({
           <button
             type="button"
             onClick={togglePlayAudio}
-            disabled={isRecording}
+            disabled={isRecording && recordingType !== "shadowing"}
             className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0 ${
               isPlaying
                 ? "bg-emerald-700 text-white shadow-md ring-2 ring-emerald-500/40"
                 : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25 active:scale-95"
             }`}
-            title={isRecording ? "録音中はお手本音声の混入を防ぐため再生できません" : undefined}
+            title={isRecording && recordingType !== "shadowing" ? "録音中はお手本音声の混入を防ぐため再生できません" : undefined}
           >
             {isPlaying ? <Pause className="w-4 h-4 shrink-0" /> : <Play className="w-4 h-4 shrink-0 fill-current" />}
             <span>{isPlaying ? "一時停止" : "フレーズ音声を聴く"}</span>

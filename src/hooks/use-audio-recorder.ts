@@ -256,9 +256,9 @@ export function useAudioRecorder() {
     animationFrameRef.current = requestAnimationFrame(updateVolumeMeter);
   }, []);
 
-  const startRecording = useCallback(async () => {
-    // Immediately stop any playing model audio before opening the microphone
-    if (typeof window !== "undefined") {
+  const startRecording = useCallback(async (mode: "repeating" | "shadowing" = "repeating") => {
+    // If repeating: stop any playing model audio before opening the microphone
+    if (mode === "repeating" && typeof window !== "undefined") {
       window.dispatchEvent(new Event("shadowlog:stop-model-audio"));
     }
     cleanupAudio();
@@ -280,11 +280,11 @@ export function useAudioRecorder() {
       }
 
       // Request microphone stream with selected device or fallback
-      // Request microphone stream with selected device (using ideal constraint to prevent OverconstrainedError on AirPods/iOS)
+      // When mode is 'shadowing', earphones are assumed so echoCancellation is set to false to prevent ducking
       let stream: MediaStream;
       const baseConstraints: MediaTrackConstraints = {
         deviceId: selectedDeviceId ? { ideal: selectedDeviceId } : undefined,
-        echoCancellation: true,
+        echoCancellation: mode === "shadowing" ? false : true,
         noiseSuppression: true,
       };
 
@@ -297,11 +297,22 @@ export function useAudioRecorder() {
         console.warn("Retrying getUserMedia with relaxed constraints for Bluetooth compatibility:", constraintErr);
         try {
           stream = await navigator.mediaDevices.getUserMedia({
-            audio: selectedDeviceId ? { deviceId: { ideal: selectedDeviceId } } : true,
+            audio: selectedDeviceId
+              ? {
+                  deviceId: { ideal: selectedDeviceId },
+                  echoCancellation: mode === "shadowing" ? false : true,
+                }
+              : {
+                  echoCancellation: mode === "shadowing" ? false : true,
+                },
           });
         } catch {
           // Final fallback: any microphone
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: mode === "shadowing" ? false : true,
+            },
+          });
         }
       }
 
