@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>モダンSaaS開発 ＆ プロジェクト推進 総合プレイブック</title>
+  <title>モダンSaaS開発 ＆ プロジェクト推進 総合プレイブック (第2版)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&family=Fira+Code:wght@400;500;600&display=swap');
@@ -19,7 +19,7 @@
     @media print {
       @page {
         size: A4;
-        margin: 16mm 16mm 18mm 16mm;
+        margin: 14mm 14mm 16mm 14mm;
       }
       body {
         -webkit-print-color-adjust: exact !important;
@@ -40,34 +40,34 @@
   <!-- Document Header -->
   <div class="border-b-2 border-indigo-600 pb-6 mb-8">
     <div class="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md tracking-wider uppercase mb-3 border border-indigo-200">
-      Architecture & PM Playbook
+      Architecture & PM Playbook — Edition 2.0
     </div>
     <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
       モダンSaaS開発 ＆ プロジェクト推進 総合プレイブック
     </h1>
     <p class="text-base text-indigo-600 font-semibold mt-1">
-      GitHub × Vercel × Supabase を用いた高速開発・アーキテクチャ・やること管理ノウハウ
+      GitHub × Vercel × Supabase を用いた高速開発・ゼロ待ち時間UX・採算管理・やること管理ノウハウ
     </p>
-    <div class="flex items-center gap-4 text-xs text-slate-500 mt-4 pt-4 border-t border-slate-100">
-      <span><strong>分類:</strong> 汎用Webサービス・SaaS開発標準ガイド</span>
+    <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-4 pt-4 border-t border-slate-100">
+      <span><strong>分類:</strong> 汎用Webサービス・生成AI SaaS開発標準ガイド</span>
       <span>|</span>
-      <span><strong>更新日:</strong> 2026年9月</span>
+      <span><strong>最終更新:</strong> 2026年10月1日（第2版）</span>
       <span>|</span>
-      <span><strong>推奨環境:</strong> Next.js / TypeScript / PostgreSQL</span>
+      <span><strong>推奨環境:</strong> Next.js 15 / TypeScript / Supabase / Stripe / Resend</span>
     </div>
   </div>
 
   <!-- Intro -->
   <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 mb-8 no-break">
     <strong>【本ドキュメントの目的】</strong><br>
-    本ドキュメントは、Next.js、GitHub、Vercel、Supabase、および外部決済・AI APIを組み合わせてWebサービス（SaaS）を迅速かつ安全に立ち上げ・スケールさせるための<strong>システム設計アーキテクチャ</strong>および<strong>プロジェクト推進（やること管理・意思決定）のノウハウ</strong>を体系化した汎用プレイブックです。特定のサービス名やドメインに依存せず、新規事業の立ち上げ時に標準テンプレートとして活用できます。
+    本ドキュメントは、Next.js、GitHub、Vercel、Supabase、および外部決済・生成AI APIを組み合わせてWebサービス（SaaS）を迅速かつ安全に立ち上げ・スケールさせるための<strong>システム設計アーキテクチャ（0.0秒先読み・コンテンツバンク・自動レスキュー同期）</strong>および<strong>プロジェクト推進（4ロール分業・勝手に直さないガバナンス・抜け漏れ防止4大プロトコル・2フェーズ原価管理）</strong>を体系化した汎用プレイブックです。特定のサービス名に依存せず、新規事業の立ち上げ時に標準テンプレートとしてそのまま活用できます。
   </div>
 
   <!-- Chapter 1 -->
   <div class="mb-10 no-break">
     <div class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
       <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-sm flex items-center justify-center">1</span>
-      <h2 class="text-xl font-bold text-slate-900">システム構造 ＆ インフラアーキテクチャ</h2>
+      <h2 class="text-xl font-bold text-slate-900">システム構造 ＆ ゼロ待ち時間アーキテクチャ</h2>
     </div>
 
     <h3 class="text-sm font-bold text-indigo-900 mb-2">1. 全体パイプライン（GitHub ➔ Vercel ➔ Supabase）</h3>
@@ -75,11 +75,11 @@
     <!-- Pipeline Diagram Box -->
     <div class="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs font-mono my-3 shadow-inner overflow-x-auto leading-relaxed">
 <pre class="whitespace-pre">
-[開発環境 / AIエージェント]
+[開発環境 / AIエージェントチーム]
         │
-        ▼ (git push)
+        ▼ (git push / Vitest・tsc自動検証)
   ┌───────────┐
-  │  GitHub   │ ➔ バージョン管理・Pull Request・CI自動テスト (Vitest / Jest)
+  │  GitHub   │ ➔ バージョン管理・Pull Request・CI自動テスト
   └─────┬─────┘
         │ (Webhook自動連携)
         ▼
@@ -87,47 +87,39 @@
   │  Vercel   │ ➔ Next.js App Router (ホスティング・CDN・Edge/Serverless Functions)
   └─────┬─────┘
         │
-        ├────────────────────────┬────────────────────────┐
-        ▼                        ▼                        ▼
- ┌──────────────┐         ┌──────────────┐         ┌──────────────┐
- │   Supabase   │         │    Stripe    │         │  外部API /   │
- │ (DB/Auth/RLS)│         │(決済・サブスク)│        │  AI基盤      │
- └──────────────┘         └──────────────┘         └──────────────┘
+        ├────────────────────────┬────────────────────────┬────────────────────────┐
+        ▼                        ▼                        ▼                        ▼
+ ┌──────────────┐         ┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+ │   Supabase   │         │    Stripe    │         │  生成AI基盤  │         │    Resend    │
+ │ (DB/Auth/RLS)│         │(決済・サブスク)│        │(LLM/STT/TTS) │         │(自動通知メール)│
+ └──────────────┘         └──────────────┘         └──────────────┘         └──────────────┘
 </pre>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 my-4 text-xs">
-      <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-        <div class="font-bold text-slate-800 mb-1">⚡ インフラ保守ゼロ</div>
-        <p class="text-slate-600">サーバーレスによりOSパッチやスケーリング監視が不要。PVがゼロの時は費用も極小。</p>
+    <h3 class="text-sm font-bold text-indigo-900 mt-5 mb-2">2. オフラインファースト ＆ 未同期データの「自動レスキュー同期」設計</h3>
+    <div class="p-3 bg-indigo-50/60 border border-indigo-100 rounded-lg text-xs space-y-2 mb-4">
+      <div class="flex items-start gap-2">
+        <span class="font-bold text-indigo-700 shrink-0">① ゲスト体験 (登録不要):</span>
+        <span class="text-slate-700">最初の数回は登録不要で即時利用可能にし、LocalStorageへ一時保存して離脱を防止。</span>
       </div>
-      <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-        <div class="font-bold text-slate-800 mb-1">🚀 デプロイの自動化</div>
-        <p class="text-slate-600">GitHubへpushするだけでVercelが自動ビルド。PRごとのプレビューURLで即時レビュー可能。</p>
-      </div>
-      <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-        <div class="font-bold text-slate-800 mb-1">🗄️ フルスタックDB</div>
-        <p class="text-slate-600">SupabaseによりPostgreSQL、認証、RLS、ファイル保管、リアルタイム連携を即座に利用。</p>
+      <div class="flex items-start gap-2">
+        <span class="font-bold text-indigo-700 shrink-0">② リアルタイム保存 ＋ 自動レスキュー同期:</span>
+        <span class="text-slate-700">アクション完了時にローカル保存と同時にSupabaseへ即時INSERT。さらに画面起動時に「ローカルにあるがクラウドに未反映のレコード（localOnly）」を自動検出し、バックグラウンドでクラウドへ救出同期する。</span>
       </div>
     </div>
 
-    <h3 class="text-sm font-bold text-indigo-900 mt-5 mb-2">2. オフラインファースト ＆ クラウド二重化設計</h3>
-    <p class="text-xs text-slate-600 leading-relaxed mb-3">
-      B2Cや習慣化SaaSでは、「ネット環境が不安定でも快適に動く」「登録前にすぐ試せる」ことがCVR（登録率）と継続率を大きく左右します。
+    <h3 class="text-sm font-bold text-indigo-900 mt-5 mb-2">3. 生成AIの「5秒待ち」を「0.0秒」にするハイブリッド先読み＆バンク設計</h3>
+    <p class="text-xs text-slate-600 leading-relaxed mb-2">
+      LLMや音声合成（TTS）はリアルタイム生成すると3〜5秒の待ち時間が発生し、API原価もかさみます。以下の2段階設計で<strong>「体感待ち時間 0.0秒」</strong>と<strong>「API変動原価 70〜80%削減」</strong>を同時達成します。
     </p>
-
-    <div class="p-3 bg-indigo-50/60 border border-indigo-100 rounded-lg text-xs space-y-2">
-      <div class="flex items-start gap-2">
-        <span class="font-bold text-indigo-700 shrink-0">① ゲスト体験:</span>
-        <span class="text-slate-700">登録不要で即時利用可能にし、LocalStorage/IndexedDBへ一時保存（超高速・離脱防止）。</span>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+      <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg">
+        <div class="font-bold text-emerald-900 mb-1">⚡ ① クライアント1件先読み (Prefetch)</div>
+        <p class="text-slate-700">1問目を操作中に裏側（非同期）で「次の1問（テキスト＋音声）」を先読みしてメモリ保持。「次へ」を押した瞬間に待ち時間 <strong>0.0秒</strong> で即時表示。</p>
       </div>
-      <div class="flex items-start gap-2">
-        <span class="font-bold text-indigo-700 shrink-0">② クラウド自動移行:</span>
-        <span class="text-slate-700">会員登録・ログインが完了した瞬間に、端末内の利用履歴をSupabaseへ一括自動アップロード。</span>
-      </div>
-      <div class="flex items-start gap-2">
-        <span class="font-bold text-indigo-700 shrink-0">③ 複数端末同期:</span>
-        <span class="text-slate-700">PCやスマホのログイン時にクラウドから最新データを自動ダウンロードし、差分をマージ。</span>
+      <div class="p-3 bg-blue-50/70 border border-blue-200 rounded-lg">
+        <div class="font-bold text-blue-900 mb-1">🏦 ② DBバンク蓄積 ＆ 週次10%入れ替え</div>
+        <p class="text-slate-700">ユーザー利用の裏で生成データをDB（各カテゴリ上限300件）に蓄積。上限到達後はDBから0.1秒・原価0円で配信し、毎週1回「使用回数上位10%」だけを季節・最新トレンド入りで入れ替え。</p>
       </div>
     </div>
   </div>
@@ -144,42 +136,34 @@
     <div class="space-y-4 text-xs">
       <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
         <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-          <span class="text-indigo-600">🔒</span> 1. Row Level Security (RLS) の徹底
+          <span class="text-indigo-600">🔒</span> 1. Row Level Security (RLS) ＆ 管理者権限の単一厳格化
         </h3>
         <p class="text-slate-600">
-          Supabaseではフロントエンドから直接DB操作が可能ですが、<strong>全テーブルでRLSを有効化</strong>しないと他人のデータが丸見えになります。
+          全テーブルでRLSを有効化し、本人のみ読み書きを許可。管理者画面（<code>/admin/*</code>）やテストモードの判定（<code>isAdminEmail</code>）は、開発用ダミーアドレスを残さず<strong>本番オーナーの単一メールアドレスのみに厳格化</strong>する。
         </p>
         <div class="bg-slate-900 text-slate-200 p-2.5 rounded font-mono text-[11px]">
-          -- 本人のみ読み書きを許可するポリシー例<br>
           ALTER TABLE public.user_data ENABLE ROW LEVEL SECURITY;<br>
           CREATE POLICY "User owns data" ON public.user_data FOR ALL USING (auth.uid() = user_id);
         </div>
-        <p class="text-[11px] text-slate-500">
-          ※ 管理者集計や定期バッチは、サーバーサイドAPIからのみ <code>SUPABASE_SERVICE_ROLE_KEY</code> を使用して実行する。
-        </p>
       </div>
 
       <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
         <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
           <span class="text-indigo-600">💳</span> 2. 決済情報の完全非保持化 (PCI-DSS準拠)
         </h3>
-        <p class="text-slate-600">
-          自社サーバーにクレジットカード番号を保持・通過させることはセキュリティ・法務上絶対に避けるべきです。
-        </p>
         <ul class="list-disc list-inside text-slate-600 space-y-1">
           <li><strong>Stripe Checkout / Customer Portal</strong> の全面採用により、カード情報はStripe内で完結。</li>
-          <li>自社DBには「Stripe顧客ID（<code>cus_xxx</code>）」のみを紐付け、カード番号は一切持たない。</li>
           <li>Webhookイベント（課金成功・解約・期限切れ）を受信してSupabaseのプランステータスを自動更新。</li>
+          <li>特定商取引法に基づく表記（<code>/tokushoho</code>）は全画面フッターで目立たせず、決済モーダル・ログイン導線に適切配置。</li>
         </ul>
       </div>
 
       <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
         <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-          <span class="text-indigo-600">⚙️</span> 3. サーバーレス環境での状態管理（インメモリ禁止）
+          <span class="text-indigo-600">⚙️</span> 3. サーバーレス環境での永続化と環境変数多段フォールバック
         </h3>
         <p class="text-slate-600">
-          VercelのServerless Functionsはアクセスごとに異なるコンテナが起動し、数分アクセスがないと破棄されます。
-          <strong>「メモリ上の変数（Mapなど）に保存したデータは再起動・デプロイで必ず消える」</strong>ため、アクセスログや状態値は必ずSupabaseやRedisなどの外部DBへ永続化する。
+          VercelのServerless Functionsは数分でコンテナが破棄されるため、アクセス解析（PV/UU）等はメモリ変数（<code>Map</code>）ではなく必ずSupabase（<code>daily_analytics</code>等）へ日次UPSERT永続化する。また、Vercel連携時の環境変数重複プレフィックスに備え、初期化コードには多段キーフォールバックを実装する。
         </p>
       </div>
     </div>
@@ -192,35 +176,53 @@
       <h2 class="text-xl font-bold text-slate-900">プロジェクト推進 ＆ 「やること管理」ノウハウ</h2>
     </div>
 
-    <h3 class="text-sm font-bold text-indigo-900 mb-2">1. 3層マネジメント分業体制</h3>
-    <div class="grid grid-cols-3 gap-2.5 my-3 text-xs">
+    <h3 class="text-sm font-bold text-indigo-900 mb-2">1. 4ロール分業体制（オーナー × 統括PM × 技術相談 × 実務実装）</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 my-3 text-xs">
       <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-center">
         <div class="font-bold text-purple-900 mb-1">① オーナー / PO</div>
         <div class="text-[11px] text-purple-700">最高意思決定<br>事業方針・最終承認</div>
       </div>
       <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-center">
         <div class="font-bold text-indigo-900 mb-1">② 統括担当 / PM</div>
-        <div class="text-[11px] text-indigo-700">要件定義・仕様書作成<br>試算・品質監査</div>
+        <div class="text-[11px] text-indigo-700">進捗/FB管理・原価試算<br>週次監査・仕様書統括</div>
+      </div>
+      <div class="p-3 bg-sky-50 border border-sky-200 rounded-lg text-center">
+        <div class="font-bold text-sky-900 mb-1">③ 技術相談・設計</div>
+        <div class="text-[11px] text-sky-700">技術壁打ち・UX検証<br>詳細実装指示書(SPEC)</div>
       </div>
       <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
-        <div class="font-bold text-emerald-900 mb-1">③ 実務担当 / エンジニア</div>
-        <div class="text-[11px] text-emerald-700">コード実装・単体テスト<br>ビルド検証・デプロイ</div>
+        <div class="font-bold text-emerald-900 mb-1">④ 実務・実装担当</div>
+        <div class="text-[11px] text-emerald-700">コード実装・Vitest検証<br>ビルド確認・デプロイ</div>
       </div>
     </div>
 
-    <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950 my-3">
-      <strong>【最重要鉄則】「勝手に直さない」意思決定プロトコル</strong><br>
-      開発中に問題や不整合を発見しても、実装者は勝手にコードを書き換えてはならない。
-      <ol class="list-decimal list-inside mt-1 space-y-0.5 text-amber-900">
-        <li><strong>検知</strong>: どこに何の懸念・問題があるかを特定。</li>
-        <li><strong>提案</strong>: 修正案・選択肢を整理して提示。</li>
-        <li><strong>判断</strong>: オーナーの確認・承認を得る。</li>
-        <li><strong>着手</strong>: 承認後に初めて実装を行い、テスト確認を経て完了報告する。</li>
-      </ol>
-      これにより、「意図と異なる改修」や「仕様の先祖返り」を完全に防止できる。
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 my-3 text-xs">
+      <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-950">
+        <strong>【鉄則1】「勝手に直さない」意思決定プロトコル</strong>
+        <ol class="list-decimal list-inside mt-1 space-y-0.5 text-amber-900">
+          <li><strong>検知</strong>: 問題や不整合箇所を特定。</li>
+          <li><strong>提案</strong>: 修正案A/Bと影響を整理して提示。</li>
+          <li><strong>判断</strong>: オーナーの承認を得る。</li>
+          <li><strong>着手</strong>: 承認後に実装・テスト・報告。</li>
+        </ol>
+      </div>
+      <div class="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-950">
+        <strong>【鉄則2】抜け漏れゼロの「4大プロトコル」</strong>
+        <ol class="list-decimal list-inside mt-1 space-y-0.5 text-indigo-900">
+          <li><strong>即時復唱</strong>: 会話の場で優先度と時期を合意。</li>
+          <li><strong>即時起票</strong>: その場で <code>FEEDBACK_LOG.md</code> へ記録。</li>
+          <li><strong>定期スキャン</strong>: 毎週月曜朝に未着手項目を点検。</li>
+          <li><strong>HTML可視化</strong>: 統括ダッシュボードへ即時同期。</li>
+        </ol>
+      </div>
     </div>
 
-    <h3 class="text-sm font-bold text-indigo-900 mt-4 mb-2">2. ドキュメント体系の標準テンプレート</h3>
+    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs mb-4">
+      <strong class="text-slate-800">🧪 本番環境を汚さない「管理者限定プレビュー（Feature Toggle）」方式:</strong><br>
+      新UIや実験的機能（例: チャンク区切り表示や新録音方式）は、まず管理者アカウント（<code>isAdminEmail</code> / 🧪テストボタンモード）限定で本番に表示してオーナーが実機検証し、完成度を確認してから全ユーザー標準ONへ昇格させる。
+    </div>
+
+    <h3 class="text-sm font-bold text-indigo-900 mt-4 mb-2">2. ドキュメント体系の標準テンプレート（5点セット）</h3>
     <table class="w-full text-left text-xs border border-slate-200 rounded-lg overflow-hidden">
       <thead class="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold">
         <tr>
@@ -238,21 +240,21 @@
         <tr>
           <td class="p-2.5 font-mono font-bold text-indigo-700">FEEDBACK_LOG.md</td>
           <td class="p-2.5 text-slate-600">顧客・テスターの声（VoC）と対応ステータス管理簿</td>
-          <td class="p-2.5 text-slate-500">FB受領ごと</td>
+          <td class="p-2.5 text-slate-500">FB受領・相談ごと</td>
         </tr>
         <tr>
           <td class="p-2.5 font-mono font-bold text-indigo-700">weeklylog.md</td>
-          <td class="p-2.5 text-slate-600">週次での決定事項・実装・直面した課題・解決策の定点記録</td>
-          <td class="p-2.5 text-slate-500">毎週月曜朝</td>
+          <td class="p-2.5 text-slate-600">週次での決定事項・実装・<strong>直面したつまづきと解決策</strong>のクロニクル記録</td>
+          <td class="p-2.5 text-slate-500">毎週月曜朝＋節目</td>
         </tr>
         <tr>
           <td class="p-2.5 font-mono font-bold text-indigo-700">SYSTEM_SPECIFICATION.md</td>
-          <td class="p-2.5 text-slate-600">サービスの基本仕様・価格・DB・API原価・ルールのマスター設計書</td>
+          <td class="p-2.5 text-slate-600">サービスの基本仕様・価格・DB・2フェーズ原価・ルールのマスター設計書</td>
           <td class="p-2.5 text-slate-500">仕様変更時（即時）</td>
         </tr>
         <tr>
           <td class="p-2.5 font-mono font-bold text-indigo-700">XXXX_SPEC.md</td>
-          <td class="p-2.5 text-slate-600">機能単位の詳細実装指示書（背景、要件、テスト方針）</td>
+          <td class="p-2.5 text-slate-600">機能単位の詳細実装指示書（背景、要件、管理者フラグ、テスト方針）</td>
           <td class="p-2.5 text-slate-500">機能着手ごと</td>
         </tr>
       </tbody>
@@ -265,37 +267,36 @@
   <div class="mb-10 no-break">
     <div class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
       <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-sm flex items-center justify-center">4</span>
-      <h2 class="text-xl font-bold text-slate-900">事業採算・コスト管理 ＆ リスク自動計算ノウハウ</h2>
+      <h2 class="text-xl font-bold text-slate-900">事業採算・2フェーズ原価管理 ＆ リスク自動計算ノウハウ</h2>
     </div>
 
     <div class="space-y-4 text-xs">
       <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-        <h3 class="font-bold text-slate-800 text-sm">1. API従量課金SaaSの原価シミュレーション</h3>
+        <h3 class="font-bold text-slate-800 text-sm">1. 2フェーズ原価管理モデル（蓄積期 ➔ バンク定常運用期）</h3>
         <p class="text-slate-600">
-          AIやSMSなどの従量課金APIを組み込む場合、概算ではなく「1リクエストあたりの実測原価」を厳密に計算します。
+          生成AIを組み込むSaaSでは、「蓄積期（Phase A）」と「バンク定常期（Phase B）」の2段階で原価と営業利益率を管理します。
         </p>
         <div class="grid grid-cols-2 gap-3 pt-1">
-          <div class="p-2.5 bg-white border border-slate-200 rounded">
-            <strong>実測ベースの単価算出:</strong><br>
-            トークン数、録音秒数、文字数を実測し、1ドル150円等の為替レートで1回あたりの原価を算出（例: 1回約0.32円）。
+          <div class="p-3 bg-white border border-slate-200 rounded-lg">
+            <strong class="text-indigo-900">📘 フェーズA：バンク蓄積期（保守上限）</strong><br>
+            各スロットが上限（300件）に達するまでの期間。都度生成＋解析で1回あたり<strong>約0.322円</strong>。50名規模での営業利益率は<strong>約55〜58%</strong>。管理画面の安全監視基準に採用。
           </div>
-          <div class="p-2.5 bg-white border border-slate-200 rounded">
-            <strong>キャッシュ再利用による圧縮:</strong><br>
-            同一入力の再試行時は生成済みオブジェクトをメモリキャッシュから再利用し、2回目以降のコストを0円にする。
+          <div class="p-3 bg-emerald-50/60 border border-emerald-200 rounded-lg">
+            <strong class="text-emerald-900">🏦 フェーズB：バンク定常期（本命）</strong><br>
+            上限到達後はDBから0円で配信し、解析のみ（<strong>約0.097円/回</strong>、原価70%超削減）＋週10%入替（<strong>月額固定約331円</strong>）。営業利益率は<strong>約79〜80%</strong>へ向上！
           </div>
         </div>
       </div>
 
       <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-        <h3 class="font-bold text-slate-800 text-sm">2. 顧客ごとの損益分岐点（採算限界）自動計算式</h3>
+        <h3 class="font-bold text-slate-800 text-sm">2. 顧客管理画面（/admin/customers）の4大モニタリング機能</h3>
         <p class="text-slate-600">
-          有料プランを「使い放題」として提供する場合、管理画面で各顧客の利用ペースと赤字化リスクを自動計算させます。
+          有料プランを「使い放題」として提供しつつ、管理画面で各顧客の利用ペース・日次推移・監査ログを一元監視します。
         </p>
-        <div class="bg-indigo-50 border border-indigo-200 p-3 rounded font-mono text-[11px] text-indigo-950 space-y-1">
-          <div>月間損益分岐回数 = (月額料金 - Stripe手数料 3.6%) ÷ 1回あたり原価</div>
-          <div>1日あたり限界回数 = 月間損益分岐回数 ÷ 30日</div>
+        <div class="bg-indigo-50 border border-indigo-200 p-2.5 rounded font-mono text-[11px] text-indigo-950">
+          月間損益分岐回数 = (月額料金 - Stripe手数料 3.6%) ÷ 1回原価 ／ 1日限界回数 = 月間損益分岐回数 ÷ 30日
         </div>
-        <div class="grid grid-cols-3 gap-2 text-center pt-2">
+        <div class="grid grid-cols-3 gap-2 text-center pt-1">
           <div class="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-800">
             <strong>🟢 安全 (Safe)</strong><br>限界の50%未満利用
           </div>
@@ -306,6 +307,10 @@
             <strong>🔴 警戒 (Danger)</strong><br>限界の80%以上利用
           </div>
         </div>
+        <ul class="list-disc list-inside text-slate-600 pt-1 space-y-0.5">
+          <li><strong>メンバー別「日次利用回数折れ線グラフ」モーダル</strong>: 利用回数ボタンから日別推移グラフ＋合計・平均・最高記録を即時表示。</li>
+          <li><strong>プラン別内訳（Pro/Basic）＆ モバイルカード表示切替 ＆ コンプライアンス監査ログタブ統合</strong>。</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -324,7 +329,7 @@
           <div>☑ Next.js + Tailwind フロントエンド構築</div>
           <div>☑ コアドメイン機能（提供価値）の動的検証</div>
           <div>☑ ゲスト体験（LocalStorage一時保存）</div>
-          <div>☑ 単体テスト環境（Vitest / Jest）</div>
+          <div>☑ 単体・統合テスト環境（Vitest / tsc）</div>
         </div>
       </div>
 
@@ -332,29 +337,29 @@
         <div class="font-bold text-slate-800">Stage 1: 課金・認証・法務</div>
         <div class="space-y-1 text-slate-600">
           <div>☑ Supabase Auth (Email / Google) 導入</div>
-          <div>☑ DBスキーマ設計 ＆ RLSポリシー適用</div>
+          <div>☑ DBスキーマ設計 ＆ RLSポリシー完全適用</div>
           <div>☑ Stripe Checkout / Webhook 決済基盤</div>
           <div>☑ 法務3画面 (/terms, /privacy, /tokushoho)</div>
         </div>
       </div>
 
       <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-        <div class="font-bold text-slate-800">Stage 2: クローズドβ ＆ 定着検証</div>
+        <div class="font-bold text-slate-800">Stage 2: クローズドβ・LP集客 ＆ 0.0秒化</div>
         <div class="space-y-1 text-slate-600">
-          <div>☑ 限定テスター30〜50名の招待</div>
-          <div>☑ 不具合報告・問い合わせ窓口設置</div>
-          <div>☑ アクセス解析基盤（Vercel Analytics等）</div>
-          <div>☑ 習慣化ループ（ストリーク・通知）</div>
+          <div>☑ 動くデモ付き先行LP (/waitlist) ＆ クーポン自動返信</div>
+          <div>☑ β期間限定VIP（無制限）自動付与キャンペーン</div>
+          <div>☑ 1問先読み (0.0秒遷移) ＆ DBバンク週次10%入替</div>
+          <div>☑ 管理者プレビューモード ＆ 問い合わせ自動通知</div>
         </div>
       </div>
 
       <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-        <div class="font-bold text-slate-800">Stage 3: ローンチ ＆ 収益化始動</div>
+        <div class="font-bold text-slate-800">Stage 3: ローンチ ＆ 収益化・自走運用</div>
         <div class="space-y-1 text-slate-600">
-          <div>☑ LP最適化 ＆ SEOメタタグ整備</div>
-          <div>☑ SNS・コミュニティでのパブリック公開</div>
-          <div>☑ 顧客管理（Admin）による採算リスク監視</div>
-          <div>☑ 週次振り返りログによる高速改善</div>
+          <div>☑ SNS（Threads等）発信 ＆ インサイト連携</div>
+          <div>☑ 顧客管理（採算リスク・日次折れ線グラフ・監査）</div>
+          <div>☑ 未同期データの自動レスキュー同期パイプライン</div>
+          <div>☑ 毎週月曜朝の定期点検（weeklylog更新＆監査）</div>
         </div>
       </div>
     </div>
@@ -362,7 +367,7 @@
 
   <!-- Footer -->
   <div class="border-t border-slate-200 pt-4 text-center text-[11px] text-slate-400 no-break">
-    Modern SaaS Development & Project Management Playbook — Created for rapid and secure SaaS development.
+    Modern SaaS Development & Project Management Playbook (Edition 2.0) — Created for rapid, zero-latency, and high-margin SaaS development.
   </div>
 
 </body>
