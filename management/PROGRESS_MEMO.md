@@ -87,6 +87,7 @@
 - [x] AI原価シミュレーター (`AI cost/`) および統括ダッシュボード (`management/checklist.html`, `public/management.html`) の最新コスト・仕様同期
 - [x] **【完了・FB-026】管理者テストモード: 「リピーティング録音」＆「シャドーイング録音（イヤホン推奨）」2ボタン分割実装 (`955a355` / 全137テスト合格 / AECバイパス ＆ 1.5秒自動停止)**
 - [x] **【完了・FB-027】リピーティング録音（青）＆シャドーイング録音（紫）の配色変更 ＆ モバイルスクロール時の固定ボトムバー・録音バー浮き上がり解消 (scroll-behavior:smooth解除、transform除去、translateZ(0) GPUピン留め、min-h-dvh、overscroll-behavior-y)**
+- [x] **【完了・FB-028】2ボタン録音の全ユーザー正式開放 ＆ 文言改訂「(イヤホンを装着し、しっかりと発声)」（`ADMIN_SHADOWING_RECORDING_SPEC.md` / 管理者制限解除・ガイダンス統一）**
 - [ ] **【着手準備】Phase 2: 弱点データ蓄積基盤（Supabase `user_weaknesses` ＆ `/api/transcribe-diff`）**
 - [ ] **【着手準備】Phase 3: リベンジ例文自動生成プロンプト注入（`/api/generate-sentence`）**
 - [ ] 【進行中】クローズドβテスター（第1陣5名 ➔ 30〜50名）の利用ログ・フィードバック定点観測

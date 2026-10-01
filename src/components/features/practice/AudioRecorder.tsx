@@ -242,25 +242,12 @@ export function AudioRecorder({
         {/* Idle placeholder — guides user to listen first, then start recording via floating button */}
         {!isRecording && !audioBlob && (
           <div className="text-center space-y-1">
-            {isAdmin ? (
-              <>
-                <p className="text-xs sm:text-sm font-medium text-foreground">
-                  ① 画面下部から「リピーティング」または「シャドーイング」を選択
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  ※シャドーイング録音はお手本音声とシンクロ再生されます（イヤホン推奨・自動採点）
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-xs sm:text-sm font-medium text-foreground">
-                  ① まず上の緑色ボタン「フレーズ音声を聴く」でお手本のリズムを確認
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  ② 聴き終わったら、画面下部のボタンで録音して発話してください
-                </p>
-              </>
-            )}
+            <p className="text-xs sm:text-sm font-medium text-foreground">
+              ① 画面下部から「リピーティング」または「シャドーイング」を選択
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              ※シャドーイング録音はお手本音声とシンクロ再生されます（イヤホン推奨・自動採点）
+            </p>
           </div>
         )}
 
@@ -315,9 +302,7 @@ export function AudioRecorder({
       </div>
 
       <p className="text-[11px] sm:text-xs text-center text-muted-foreground">
-        {isAdmin
-          ? "※リピーティング録音時は模範音声が停止します。シャドーイング録音時はイヤホン装着推奨でお手本と同時に発話し、終了後1.5秒で自動採点されます。"
-          : "※お手本音声がマイクに入るのを防ぐため、録音を開始するとフレーズ音声は自動で停止します。"}
+        ※リピーティング録音時は模範音声が停止します。シャドーイング録音時はイヤホン装着推奨でお手本と同時に発話し、終了後1.5秒で自動採点されます。
       </p>
     </div>
   );

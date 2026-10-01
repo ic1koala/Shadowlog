@@ -36,7 +36,6 @@ import {
   RotateCcw,
   Crown,
   Sparkles,
-  Mic,
   Square,
   CheckCircle2,
 } from "lucide-react";
@@ -997,12 +996,6 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                   </span>
                 )}
               </div>
-
-              {isAdmin && !floatIsRecording && (
-                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
-                  🧪 管理者テスト: 録音方式検証中
-                </span>
-              )}
             </div>
 
             {/* Controls */}
@@ -1021,8 +1014,8 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                   録音を終了
                 </button>
               </div>
-            ) : isAdmin ? (
-              /* Admin 2-button split */
+            ) : (
+              /* 2-button split (standard for all users) */
               <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-0.5">
                 <button
                   type="button"
@@ -1052,20 +1045,8 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                     <span>シャドーイング録音</span>
                   </span>
                   <span className="text-[10px] text-purple-100/90 font-normal">
-                    (イヤホンを装着してください)
+                    (イヤホンを装着し、しっかりと発声)
                   </span>
-                </button>
-              </div>
-            ) : (
-              /* Non-Admin existing single button */
-              <div className="flex justify-end pt-0.5">
-                <button
-                  onClick={() => handleStartRecording("repeating")}
-                  disabled={isLoadingSentence || isTranscribing}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-lg active:scale-95 min-h-[44px]"
-                >
-                  <Mic className="w-4 h-4" />
-                  シャドーイングを開始
                 </button>
               </div>
             )}
