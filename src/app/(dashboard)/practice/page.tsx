@@ -21,7 +21,6 @@ import {
   setPlanType,
   getWeakWords,
 } from "@/lib/storage/user-learning-store";
-import { getUntriedStarterSentence } from "@/lib/practice/starter-sentences";
 import {
   getTicketStatus,
   consumeTicket,
@@ -408,14 +407,9 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       // localStorage may fail in restricted environments
     }
 
-    // Instantly display an untried starter sentence without AI generation waiting (0ms)
-    const starter = getUntriedStarterSentence(initialInd, initialLvl, initialMode);
-    seenSentenceIdsRef.current.add(starter.id);
-    setSentence(starter);
-
-    // Silently prefetch the next sentence in the background while the user practices the first one
-    void prefetchNextSentence(initialInd, initialLvl, initialMode, starter.id);
-  }, [prefetchNextSentence]); // Run ONCE on mount
+    // Generate initial sentence with AI + OpenAI TTS-1 generated model audio
+    void fetchNewSentence(initialInd, initialLvl, initialMode);
+  }, [fetchNewSentence]); // Run ONCE on mount
 
   const handleStartRecording = useCallback(
     (mode: "repeating" | "shadowing" = "repeating") => {
@@ -749,7 +743,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           </div>
         </div>
 
-        {!sentence ? (
+        {!sentence && !isLoadingSentence ? (
           <div className="w-full bg-card rounded-2xl p-5 sm:p-7 border border-border shadow-xs space-y-5 animate-in fade-in-50">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -844,17 +838,19 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                   {LEVEL_OPTIONS.find((l) => l.key === level)?.label}
                 </span>
               </div>
-              <button
-                onClick={() => {
-                  setSentence(null);
-                  setDiffResult(null);
-                  setTranscription("");
-                  setWpmInfo(undefined);
-                }}
-                className="text-primary hover:underline font-bold text-xs"
-              >
-                条件を変更する
-              </button>
+              {sentence && (
+                <button
+                  onClick={() => {
+                    setSentence(null);
+                    setDiffResult(null);
+                    setTranscription("");
+                    setWpmInfo(undefined);
+                  }}
+                  className="text-primary hover:underline font-bold text-xs"
+                >
+                  条件を変更する
+                </button>
+              )}
             </div>
 
             {/* Personalization badge: shown when weak words are being reinforced */}

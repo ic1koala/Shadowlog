@@ -105,3 +105,25 @@ button, a, [role="button"] {
   isolation: isolate;
 }
 
+/* 3D Word Flip Card Utilities */
+.word-flip-perspective {
+  perspective: 800px;
+  -webkit-perspective: 800px;
+}
+
+.word-flip-preserve-3d {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.word-flip-backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.word-flip-rotated-180 {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+
+

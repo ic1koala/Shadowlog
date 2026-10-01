@@ -5,6 +5,11 @@ import { Play, Pause, RotateCcw, Sparkles } from "lucide-react";
 import { SentenceResponse } from "@/types";
 import { getChunkSlashIndices } from "@/lib/diff/chunk-splitter";
 import { calculatePlaybackWpmMap, PlaybackSpeed } from "@/lib/diff/wpm-calculator";
+import {
+  getWordTranslation,
+  fetchWordTranslationAsync,
+  cleanWord,
+} from "@/lib/practice/word-dictionary";
 
 interface SentenceCardProps {
   sentence: SentenceResponse | null;
@@ -71,7 +76,8 @@ export function SentenceCard({
 }: SentenceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1.0);
-  const [showJapanese, setShowJapanese] = useState(false);
+  const [flippedWordIndices, setFlippedWordIndices] = useState<Set<number>>(new Set());
+  const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, string>>({});
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [, setVoicesLoaded] = useState(false);
@@ -79,6 +85,34 @@ export function SentenceCard({
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const rafIdRef = useRef<number | null>(null);
   const playDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Toggle word flip between English and Japanese
+  const toggleWordFlip = useCallback(
+    (idx: number, rawWord: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setFlippedWordIndices((prev) => {
+        const next = new Set(prev);
+        if (next.has(idx)) {
+          next.delete(idx);
+        } else {
+          next.add(idx);
+        }
+        return next;
+      });
+
+      // Background contextual refinement for any word not covered by static dictionary
+      const cleaned = cleanWord(rawWord);
+      const currentTrans = dynamicTranslations[cleaned] || getWordTranslation(rawWord);
+      if (currentTrans.startsWith("訳: ") && sentence?.english) {
+        fetchWordTranslationAsync(rawWord, sentence.english).then((refined) => {
+          if (refined && refined !== currentTrans) {
+            setDynamicTranslations((prev) => ({ ...prev, [cleaned]: refined }));
+          }
+        });
+      }
+    },
+    [dynamicTranslations, sentence?.english]
+  );
 
   // Smooth sliding karaoke pill state & refs
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -276,7 +310,8 @@ export function SentenceCard({
     prevWordIndexRef.current = null;
     setPillStyle({ left: 0, top: 0, width: 0, height: 0, opacity: 0 });
     wordRefs.current = [];
-    setShowJapanese(false);
+    setFlippedWordIndices(new Set());
+    setDynamicTranslations({});
     clearPendingPlay();
     stopAnimationLoop();
     setAudioDuration(null);
@@ -582,17 +617,7 @@ export function SentenceCard({
         {/* English sentence with smooth sliding karaoke pill (tap to toggle Japanese translation) */}
         <div
           ref={containerRef}
-          onClick={() => setShowJapanese((prev) => !prev)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setShowJapanese((prev) => !prev);
-            }
-          }}
-          className="relative p-1 -m-1 cursor-pointer select-none rounded-xl transition-colors hover:bg-muted/30 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
-          title="タップで日本語の意味を表示/非表示"
+          className="relative p-1 -m-1 select-none rounded-xl"
         >
           {/* Smooth sliding karaoke highlight pill */}
           <div
@@ -613,19 +638,56 @@ export function SentenceCard({
             {parsedWords.map((w, idx) => {
               const isCurrent = isPlaying && activeWordIndex === idx;
               const hasSlash = showChunkSlash && chunkSlashIndices.has(idx);
+              const isFlipped = flippedWordIndices.has(idx);
+              const cleaned = cleanWord(w.text);
+              const translation = dynamicTranslations[cleaned] || getWordTranslation(w.text);
+
               return (
                 <span
                   key={w.id}
                   ref={(el) => {
                     wordRefs.current[idx] = el;
                   }}
-                  className={`relative inline-block px-1 py-0.5 rounded-lg select-none transition-colors duration-150 ${
+                  className={`relative inline-block select-none align-baseline transition-colors duration-150 ${
                     hasSlash ? "mr-2.5 sm:mr-3" : "mr-1.5"
-                  } ${
-                    isCurrent ? "text-white" : "text-foreground"
                   }`}
                 >
-                  {w.text}
+                  <button
+                    type="button"
+                    onClick={(e) => toggleWordFlip(idx, w.text, e)}
+                    className="group/word inline-grid word-flip-perspective cursor-pointer focus:outline-hidden align-baseline"
+                    title={isFlipped ? "タップで英語に戻す" : `タップで「${translation}」にフリップ`}
+                    aria-label={isFlipped ? `${w.text} (日本語: ${translation})` : w.text}
+                  >
+                    <span
+                      className={`grid grid-cols-1 grid-rows-1 items-center justify-center transition-transform duration-350 ease-out word-flip-preserve-3d ${
+                        isFlipped ? "word-flip-rotated-180" : ""
+                      }`}
+                    >
+                      {/* Front: English word */}
+                      <span
+                        className={`col-start-1 row-start-1 px-1 py-0.5 rounded-lg word-flip-backface-hidden transition-all duration-150 ${
+                          isCurrent
+                            ? "text-white font-semibold"
+                            : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-4 group-hover/word:decoration-primary"
+                        }`}
+                      >
+                        {w.text}
+                      </span>
+
+                      {/* Back: Japanese meaning */}
+                      <span
+                        className={`col-start-1 row-start-1 px-1.5 py-0.5 rounded-md text-xs sm:text-sm font-bold word-flip-backface-hidden word-flip-rotated-180 transition-all duration-150 flex items-center justify-center whitespace-nowrap ${
+                          isCurrent
+                            ? "bg-amber-400 text-amber-950 shadow-xs"
+                            : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-xs"
+                        }`}
+                      >
+                        {translation}
+                      </span>
+                    </span>
+                  </button>
+
                   {hasSlash && (
                     <span
                       aria-hidden="true"
@@ -640,31 +702,17 @@ export function SentenceCard({
           </p>
         </div>
 
-        {/* Japanese translation: displayed when script is tapped, hidden by default */}
-        {showJapanese ? (
-          <div className="flex items-start justify-between gap-3 pt-0.5 sm:pt-1 animate-in fade-in duration-200">
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+        {/* Japanese translation displayed by default */}
+        {sentence.japanese && (
+          <div className="pt-2 sm:pt-3 border-t border-border/60 space-y-1">
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-normal">
               {sentence.japanese}
             </p>
-            <button
-              type="button"
-              onClick={() => setShowJapanese(false)}
-              className="text-[11px] text-muted-foreground hover:text-foreground shrink-0 px-2 py-0.5 rounded-md hover:bg-muted transition cursor-pointer"
-              title="日本語訳を隠す"
-            >
-              隠す
-            </button>
+            <p className="text-[11px] text-muted-foreground/80 flex items-center gap-1.5 pt-0.5">
+              <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+              <span>英単語をタップすると日本語の意味にフリップします</span>
+            </p>
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowJapanese(true)}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground pt-0.5 sm:pt-1 transition-colors group cursor-pointer"
-            title="タップで日本語訳を表示"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform" />
-            <span className="underline decoration-dotted underline-offset-4">💡 フレーズをタップで日本語訳を表示</span>
-          </button>
         )}
       </div>
 
@@ -722,13 +770,17 @@ export function SentenceCard({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowJapanese((prev) => !prev)}
-          className="text-xs text-muted-foreground hover:text-foreground transition underline underline-offset-4 py-1 min-h-[36px] self-end sm:self-auto"
-        >
-          {showJapanese ? "日本語訳を隠す" : "日本語訳を表示"}
-        </button>
+        {flippedWordIndices.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setFlippedWordIndices(new Set())}
+            className="text-xs text-muted-foreground hover:text-foreground transition py-1 min-h-[36px] self-end sm:self-auto flex items-center gap-1 cursor-pointer"
+            title="すべての単語を英語表示に戻す"
+          >
+            <RotateCcw className="w-3 h-3" />
+            単語フリップを戻す ({flippedWordIndices.size})
+          </button>
+        )}
       </div>
     </div>
   );
