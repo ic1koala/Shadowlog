@@ -976,8 +976,8 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       {/* ── Floating Recording Bar ── */}
       {/* Shown while sentence is active and no result yet (recording phase) */}
       {sentence && !diffResult && !floatHasBlob && (
-        <div className="fixed bottom-24 sm:bottom-10 left-1/2 -translate-x-1/2 flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4">
-          <div className="pointer-events-auto flex flex-col gap-2 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
+          <div className="pointer-events-auto flex flex-col gap-2 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full duration-300">
             {/* Status indicator row */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -1028,14 +1028,14 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                   type="button"
                   onClick={() => handleStartRecording("repeating")}
                   disabled={isLoadingSentence || isTranscribing}
-                  className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 transition shadow-sm active:scale-95 min-h-[48px] cursor-pointer"
+                  className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 ring-1 ring-blue-400/30 disabled:opacity-50 transition active:scale-95 min-h-[48px] cursor-pointer"
                   title="お手本音声を停止し、自分のペースで発話録音します"
                 >
                   <span className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <span>🗣️</span>
                     <span>リピーティング録音</span>
                   </span>
-                  <span className="text-[10px] text-muted-foreground font-normal">
+                  <span className="text-[10px] text-blue-100/90 font-normal">
                     (お手本停止・自習)
                   </span>
                 </button>
@@ -1044,14 +1044,14 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                   type="button"
                   onClick={() => handleStartRecording("shadowing")}
                   disabled={isLoadingSentence || isTranscribing}
-                  className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 disabled:opacity-50 transition active:scale-95 min-h-[48px] cursor-pointer ring-1 ring-blue-400/30"
+                  className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-500/20 ring-1 ring-purple-400/30 disabled:opacity-50 transition active:scale-95 min-h-[48px] cursor-pointer"
                   title="模範音声と同時に発話し、終了後1.5秒で自動採点します"
                 >
                   <span className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <span>🎧</span>
                     <span>シャドーイング録音</span>
                   </span>
-                  <span className="text-[10px] text-blue-100/90 font-normal">
+                  <span className="text-[10px] text-purple-100/90 font-normal">
                     (イヤホンを装着してください)
                   </span>
                 </button>
@@ -1076,8 +1076,8 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       {/* ── Floating Next Phrase Bar ── */}
       {/* Shown after practice result is displayed, guiding user smoothly to the next phrase */}
       {sentence && diffResult && !isTranscribing && (
-        <div className="fixed bottom-24 sm:bottom-10 left-1/2 -translate-x-1/2 flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
-          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-orange-500/30 shadow-2xl shadow-orange-500/20 ring-1 ring-white/20 w-full animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
+          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-orange-500/30 shadow-2xl shadow-orange-500/20 ring-1 ring-white/20 w-full duration-300">
             {/* Status / Score Badge */}
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">

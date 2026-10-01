@@ -34,7 +34,7 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-dvh flex flex-col bg-background">
       {/* Global Campaign Announcement Popup Modal */}
       <AnnouncementModal />
 
@@ -127,7 +127,7 @@ export default function DashboardLayout({
       </footer>
 
       {/* Bottom Tab Navigation — mobile only */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/80 shadow-lg sm:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/80 shadow-lg sm:hidden [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
         <div className="flex items-stretch justify-around h-16">
           {navItems.map((item) => {
             const Icon = item.icon;

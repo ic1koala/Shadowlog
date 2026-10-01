@@ -957,7 +957,7 @@ export default function SettingsPage() {
           type="button"
           onClick={scrollToTop}
           aria-label="ページ最上部へ戻る"
-          className="fixed bottom-20 right-4 sm:bottom-8 sm:right-8 z-40 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-full bg-card/95 border border-border shadow-xl backdrop-blur-md hover:bg-primary hover:text-primary-foreground hover:border-primary text-foreground transition-all duration-300 active:scale-95 flex items-center gap-1.5 group animate-in fade-in slide-in-from-bottom-3"
+          className="fixed bottom-20 right-4 sm:bottom-8 sm:right-8 z-40 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-full bg-card/95 border border-border shadow-xl backdrop-blur-md hover:bg-primary hover:text-primary-foreground hover:border-primary text-foreground transition-all duration-300 active:scale-95 flex items-center gap-1.5 group animate-in fade-in slide-in-from-bottom-3 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]"
         >
           <ArrowUp className="w-4 h-4 text-primary group-hover:text-primary-foreground group-hover:-translate-y-0.5 transition-transform" />
           <span className="text-xs font-bold">TOP</span>

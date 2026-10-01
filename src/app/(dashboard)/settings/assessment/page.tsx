@@ -556,8 +556,8 @@ export default function AssessmentPage() {
 
       {/* ── Floating Recording Bar ── */}
       {sentence && !diffResult && !floatHasBlob && (
-        <div className="fixed bottom-24 sm:bottom-10 left-1/2 -translate-x-1/2 flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
-          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
+          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full duration-300">
             {/* Status indicator */}
             <div className="flex items-center gap-2">
               {floatIsRecording ? (

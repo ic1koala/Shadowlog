@@ -63,22 +63,16 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Prevent text size adjustment on orientation change */
+/* Prevent text size adjustment on orientation change & outer rubber-band pull detachment */
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overscroll-behavior-y: none;
 }
 
 /* Better touch targets — prevent accidental double-tap zoom */
 button, a, [role="button"] {
   touch-action: manipulation;
-}
-
-/* Smooth scrolling */
-@media (prefers-reduced-motion: no-preference) {
-  html {
-    scroll-behavior: smooth;
-  }
 }
 
 /* Hide scrollbar in horizontal scroll containers on mobile */

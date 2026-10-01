@@ -46,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20">
+      <body className="min-h-dvh bg-background text-foreground antialiased selection:bg-primary/20">
         {children}
         <PageTracker />
         <Analytics />
