@@ -86,34 +86,6 @@ export function SentenceCard({
   const rafIdRef = useRef<number | null>(null);
   const playDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Toggle word flip between English and Japanese
-  const toggleWordFlip = useCallback(
-    (idx: number, rawWord: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      setFlippedWordIndices((prev) => {
-        const next = new Set(prev);
-        if (next.has(idx)) {
-          next.delete(idx);
-        } else {
-          next.add(idx);
-        }
-        return next;
-      });
-
-      // Background contextual refinement for any word not covered by static dictionary
-      const cleaned = cleanWord(rawWord);
-      const currentTrans = dynamicTranslations[cleaned] || getWordTranslation(rawWord);
-      if (currentTrans.startsWith("訳: ") && sentence?.english) {
-        fetchWordTranslationAsync(rawWord, sentence.english).then((refined) => {
-          if (refined && refined !== currentTrans) {
-            setDynamicTranslations((prev) => ({ ...prev, [cleaned]: refined }));
-          }
-        });
-      }
-    },
-    [dynamicTranslations, sentence?.english]
-  );
-
   // Smooth sliding karaoke pill state & refs
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -196,6 +168,70 @@ export function SentenceCard({
     window.addEventListener("shadowlog:stop-model-audio", handleForceStop);
     return () => window.removeEventListener("shadowlog:stop-model-audio", handleForceStop);
   }, [stopModelAudio]);
+
+  // Pronounce an individual English word via SpeechSynthesis (User request ②)
+  const speakSingleWord = useCallback(
+    (rawWord: string) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+      const cleaned = cleanWord(rawWord);
+      if (!cleaned) return;
+
+      try {
+        // If whole sentence model audio is playing, pause it so single word pronunciation is clearly audible
+        if (isPlaying) {
+          stopModelAudio();
+        }
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleaned);
+        utterance.lang = "en-US";
+        utterance.rate = 0.85; // Clean, natural, articulate pronunciation pace for single-word learning
+        utterance.pitch = 1.0;
+
+        const bestVoice = findBestEnglishVoice(voicesRef.current);
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+          utterance.lang = bestVoice.lang;
+        }
+
+        window.speechSynthesis.speak(utterance);
+      } catch (err) {
+        console.warn("Single-word speech synthesis error:", err);
+      }
+    },
+    [isPlaying, stopModelAudio]
+  );
+
+  // Toggle word flip between English and Japanese, and pronounce the word
+  const toggleWordFlip = useCallback(
+    (idx: number, rawWord: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setFlippedWordIndices((prev) => {
+        const next = new Set(prev);
+        if (next.has(idx)) {
+          next.delete(idx);
+        } else {
+          next.add(idx);
+        }
+        return next;
+      });
+
+      // Pronounce the English word on tap (User request ②)
+      speakSingleWord(rawWord);
+
+      // Background contextual refinement for any word not covered by static dictionary
+      const cleaned = cleanWord(rawWord);
+      const currentTrans = dynamicTranslations[cleaned] || getWordTranslation(rawWord);
+      if (currentTrans.startsWith("訳: ") && sentence?.english) {
+        fetchWordTranslationAsync(rawWord, sentence.english).then((refined) => {
+          if (refined && refined !== currentTrans) {
+            setDynamicTranslations((prev) => ({ ...prev, [cleaned]: refined }));
+          }
+        });
+      }
+    },
+    [dynamicTranslations, sentence?.english, speakSingleWord]
+  );
 
   // Parse English sentence into words with weighted timing distribution for natural speech pacing
   const parsedWords = useMemo<ParsedWord[]>(() => {
@@ -656,8 +692,8 @@ export function SentenceCard({
                     type="button"
                     onClick={(e) => toggleWordFlip(idx, w.text, e)}
                     className="group/word inline-grid word-flip-perspective cursor-pointer focus:outline-hidden align-baseline"
-                    title={isFlipped ? "タップで英語に戻す" : `タップで「${translation}」にフリップ`}
-                    aria-label={isFlipped ? `${w.text} (日本語: ${translation})` : w.text}
+                    title={isFlipped ? "タップで英語に戻す（発音再生）" : `タップで「${translation}」にフリップ（発音再生）`}
+                    aria-label={isFlipped ? `${w.text} (日本語: ${translation}、発音再生)` : `${w.text} (発音再生)`}
                   >
                     <span
                       className={`grid grid-cols-1 grid-rows-1 items-center justify-center transition-transform duration-350 ease-out word-flip-preserve-3d ${

@@ -11,7 +11,7 @@ import {
   SlidersHorizontal,
   Headphones,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface AudioRecorderProps {
   onAudioReady: (blob: Blob, durationSeconds: number) => void;
@@ -25,6 +25,7 @@ interface AudioRecorderProps {
     start: (mode?: "repeating" | "shadowing") => void;
     stop: () => void;
     reset: () => void;
+    submit: () => void;
   }) => void;
 }
 
@@ -92,14 +93,22 @@ export function AudioRecorder({
     onRecordingStateChange?.(isRecording, !!audioBlob);
   }, [isRecording, audioBlob, onRecordingStateChange]);
 
-  // Expose start/stop/reset controls to parent (for floating action bar)
+  const handleTranscribeClick = useCallback(() => {
+    if (audioBlob) {
+      setHasSubmitted(true);
+      onAudioReady(audioBlob, lastDurationRef.current || 1);
+    }
+  }, [audioBlob, onAudioReady]);
+
+  // Expose start/stop/reset/submit controls to parent (for floating action bar)
   useEffect(() => {
     onRegisterControls?.({
       start: (mode = "repeating") => startRecording(mode),
       stop: stopRecording,
       reset: resetRecording,
+      submit: handleTranscribeClick,
     });
-  }, [onRegisterControls, startRecording, stopRecording, resetRecording]);
+  }, [onRegisterControls, startRecording, stopRecording, resetRecording, handleTranscribeClick]);
 
   const togglePlayRecorded = () => {
     if (!audioUrl) return;
@@ -113,13 +122,6 @@ export function AudioRecorder({
       setIsPlayingRecorded(false);
     } else {
       audioPreviewRef.current.play().then(() => setIsPlayingRecorded(true)).catch(() => setIsPlayingRecorded(false));
-    }
-  };
-
-  const handleTranscribeClick = () => {
-    if (audioBlob) {
-      setHasSubmitted(true);
-      onAudioReady(audioBlob, lastDurationRef.current || 1);
     }
   };
 
@@ -290,13 +292,22 @@ export function AudioRecorder({
                 className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl transition text-sm min-h-[48px] cursor-pointer ${
                   isEvaluatedOrSubmitted
                     ? "bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold shadow-md shadow-blue-500/20"
-                    : "border border-border text-muted-foreground hover:text-foreground font-medium hover:bg-muted"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold border border-border/80 shadow-2xs active:scale-95"
                 }`}
+                title="録音を破棄してもう一度練習します（判定前に何度でもやり直せます）"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-4 h-4 text-primary" />
                 <span className="sm:inline">取り直す</span>
               </button>
             </div>
+
+            {/* Reassurance note for pre-evaluation retries (User request ③) */}
+            {!isEvaluatedOrSubmitted && (
+              <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center gap-1.5 pt-1 text-center">
+                <span className="text-primary font-bold">💡</span>
+                <span>判定前に納得がいくまで、何度でも「取り直す」で再録音・練習できます（チケット消費なし）</span>
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -38,6 +38,7 @@ import {
   Sparkles,
   Square,
   CheckCircle2,
+  Send,
 } from "lucide-react";
 
 export default function PracticePage() {
@@ -74,6 +75,7 @@ export default function PracticePage() {
     start: (mode?: "repeating" | "shadowing") => void;
     stop: () => void;
     reset?: () => void;
+    submit?: () => void;
   } | null>(null);
   const shadowingAutoStopTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -974,7 +976,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
 
       {/* ── Floating Recording Bar ── */}
       {/* Shown while sentence is active and no result yet (recording phase) */}
-      {sentence && !diffResult && !floatHasBlob && (
+      {sentence && !diffResult && !floatHasBlob && !showProModal && (
         <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
           <div className="pointer-events-auto flex flex-col gap-2 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full duration-300">
             {/* Status indicator row */}
@@ -1054,9 +1056,46 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         </div>
       )}
 
+      {/* ── Floating Pre-Evaluation Bar (Recorded, awaiting evaluation or retry) ── */}
+      {/* Shown after recording is complete, before evaluation — allows retrying or submitting right from bottom */}
+      {sentence && !diffResult && floatHasBlob && !showProModal && (
+        <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
+          <div className="pointer-events-auto flex items-center justify-between gap-2.5 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full duration-300">
+            {/* Retry button */}
+            <button
+              type="button"
+              onClick={handleRetry}
+              disabled={isTranscribing}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/80 transition active:scale-95 min-h-[44px] cursor-pointer shadow-2xs"
+              title="録音を破棄してもう一度練習します（判定前に何度でもやり直せます）"
+            >
+              <RotateCcw className="w-4 h-4 text-primary shrink-0" />
+              <span>取り直す（再練習）</span>
+            </button>
+
+            {/* Evaluate button */}
+            <button
+              type="button"
+              onClick={() => recorderControlsRef.current?.submit?.()}
+              disabled={isTranscribing}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-lg shadow-primary/25 active:scale-95 min-h-[44px] cursor-pointer"
+            >
+              {isTranscribing ? (
+                <span>解析中...</span>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>判定する</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Floating Next Phrase Bar ── */}
       {/* Shown after practice result is displayed, guiding user smoothly to the next phrase */}
-      {sentence && diffResult && !isTranscribing && (
+      {sentence && diffResult && !isTranscribing && !showProModal && (
         <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
           <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-orange-500/30 shadow-2xl shadow-orange-500/20 ring-1 ring-white/20 w-full duration-300">
             {/* Status / Score Badge */}

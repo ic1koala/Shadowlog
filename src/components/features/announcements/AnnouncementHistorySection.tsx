@@ -86,7 +86,7 @@ export function AnnouncementHistorySection() {
 
       {/* History Modal */}
       {isOpenModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
           <div className="relative w-full max-w-2xl bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[82dvh] sm:max-h-[85dvh] my-auto animate-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="shrink-0 flex items-center justify-between p-4 px-6 border-b border-border bg-muted/30">
@@ -164,7 +164,7 @@ export function AnnouncementHistorySection() {
 
       {/* Detail Modal */}
       {selectedAnn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
           <div className="relative w-full max-w-lg bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[82dvh] sm:max-h-[85dvh] my-auto animate-in zoom-in-95 duration-200">
             <div className="shrink-0 flex items-center justify-between p-4 px-6 border-b border-border bg-muted/30">
               <div className="flex items-center gap-2">
