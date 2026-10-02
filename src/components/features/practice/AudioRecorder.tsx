@@ -297,7 +297,7 @@ export function AudioRecorder({
                 title="録音を破棄してもう一度練習します（判定前に何度でもやり直せます）"
               >
                 <RotateCcw className="w-4 h-4 text-primary" />
-                <span className="sm:inline">取り直す</span>
+                <span className="sm:inline">録り直す</span>
               </button>
             </div>
 
@@ -305,7 +305,7 @@ export function AudioRecorder({
             {!isEvaluatedOrSubmitted && (
               <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center gap-1.5 pt-1 text-center">
                 <span className="text-primary font-bold">💡</span>
-                <span>判定前に納得がいくまで、何度でも「取り直す」で再録音・練習できます（チケット消費なし）</span>
+                <span>判定前に納得がいくまで、何度でも「録り直す」で再録音・練習できます（チケット消費なし）</span>
               </p>
             )}
           </div>

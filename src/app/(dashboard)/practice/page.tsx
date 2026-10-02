@@ -1070,7 +1070,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               title="録音を破棄してもう一度練習します（判定前に何度でもやり直せます）"
             >
               <RotateCcw className="w-4 h-4 text-primary shrink-0" />
-              <span>取り直す（再練習）</span>
+              <span>録り直す（再練習）</span>
             </button>
 
             {/* Evaluate button */}
