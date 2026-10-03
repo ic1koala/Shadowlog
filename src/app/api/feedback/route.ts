@@ -15,20 +15,19 @@ function getResendClient() {
 function getSupabaseAdmin() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "https://placeholder-project.supabase.co";
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "placeholder-key";
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || "shadowlog.app@gmail.com";
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "ShadowLog Support <onboarding@resend.dev>";
+const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_MIMES = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"]);
 
 const CATEGORY_LABELS: Record<string, string> = {
   bug: "🐛 不具合・エラー報告",
@@ -62,7 +61,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const categoryLabel = CATEGORY_LABELS[category] || category;
+    const categoryLabel = CATEGORY_LABELS[category] || String(category);
+    const safeEmail = escapeHtml(String(email));
+    const safeCategoryLabel = escapeHtml(String(categoryLabel));
     let screenshotUrl: string | null = null;
     let screenshotBuffer: Buffer | null = null;
 
@@ -71,26 +72,31 @@ export async function POST(req: NextRequest) {
       try {
         const matches = screenshotBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
         if (matches && matches.length === 3) {
-          const mimeType = matches[1];
+          const mimeType = matches[1].toLowerCase();
           const base64Data = matches[2];
-          screenshotBuffer = Buffer.from(base64Data, "base64");
-          const extension = mimeType.split("/")[1] || "png";
-          const fileName = `feedback_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${extension}`;
+          if (ALLOWED_IMAGE_MIMES.has(mimeType)) {
+            const buf = Buffer.from(base64Data, "base64");
+            if (buf.byteLength <= MAX_SCREENSHOT_BYTES) {
+              screenshotBuffer = buf;
+              const extension = mimeType.split("/")[1] || "png";
+              const fileName = `feedback_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${extension}`;
 
-          const { error: uploadError } = await supabaseAdmin.storage
-            .from("feedback-attachments")
-            .upload(fileName, screenshotBuffer, {
-              contentType: mimeType,
-              upsert: true,
-            });
+              const { error: uploadError } = await supabaseAdmin.storage
+                .from("feedback-attachments")
+                .upload(fileName, screenshotBuffer, {
+                  contentType: mimeType,
+                  upsert: true,
+                });
 
-          if (!uploadError) {
-            const { data: publicUrlData } = supabaseAdmin.storage
-              .from("feedback-attachments")
-              .getPublicUrl(fileName);
-            screenshotUrl = publicUrlData.publicUrl;
-          } else {
-            console.error("[Feedback] Supabase Storage upload error:", uploadError);
+              if (!uploadError) {
+                const { data: publicUrlData } = supabaseAdmin.storage
+                  .from("feedback-attachments")
+                  .getPublicUrl(fileName);
+                screenshotUrl = publicUrlData.publicUrl;
+              } else {
+                console.error("[Feedback] Supabase Storage upload error:", uploadError);
+              }
+            }
           }
         }
       } catch (err) {
@@ -141,9 +147,13 @@ export async function POST(req: NextRequest) {
     if (resend) {
       // A. Admin notification email — MUST succeed (recipient is the Resend account owner)
       try {
-        const envDetails = environmentInfo
+        const envDetails = environmentInfo && typeof environmentInfo === "object"
           ? Object.entries(environmentInfo)
-              .map(([key, val]) => `<tr><td style="padding:4px 8px;font-weight:bold;color:#475569;border-bottom:1px solid #e2e8f0;">${key}</td><td style="padding:4px 8px;color:#1e293b;border-bottom:1px solid #e2e8f0;word-break:break-all;">${typeof val === "object" ? JSON.stringify(val) : String(val)}</td></tr>`)
+              .map(([key, val]) => {
+                const safeKey = escapeHtml(String(key));
+                const safeVal = escapeHtml(typeof val === "object" ? JSON.stringify(val) : String(val));
+                return `<tr><td style="padding:4px 8px;font-weight:bold;color:#475569;border-bottom:1px solid #e2e8f0;">${safeKey}</td><td style="padding:4px 8px;color:#1e293b;border-bottom:1px solid #e2e8f0;word-break:break-all;">${safeVal}</td></tr>`;
+              })
               .join("")
           : "<tr><td colspan='2' style='padding:8px;color:#64748b;'>なし</td></tr>";
 
@@ -158,33 +168,33 @@ export async function POST(req: NextRequest) {
               <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
                 <tr>
                   <td style="padding: 8px; font-weight: bold; width: 120px; color: #64748b;">カテゴリ</td>
-                  <td style="padding: 8px; font-weight: bold; color: #2563eb;">${categoryLabel}</td>
+                  <td style="padding: 8px; font-weight: bold; color: #2563eb;">${safeCategoryLabel}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px; font-weight: bold; color: #64748b;">送信者</td>
-                  <td style="padding: 8px;"><a href="mailto:${email}" style="color: #2563eb; text-decoration: underline;">${email}</a></td>
+                  <td style="padding: 8px;"><a href="mailto:${safeEmail}" style="color: #2563eb; text-decoration: underline;">${safeEmail}</a></td>
                 </tr>
                 <tr>
                   <td style="padding: 8px; font-weight: bold; color: #64748b;">受信日時</td>
                   <td style="padding: 8px;">${new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}</td>
                 </tr>
-                ${ticketId ? `<tr><td style="padding: 8px; font-weight: bold; color: #64748b;">チケットID</td><td style="padding: 8px; font-family: monospace; font-size: 12px;">${ticketId}</td></tr>` : ""}
+                ${ticketId ? `<tr><td style="padding: 8px; font-weight: bold; color: #64748b;">チケットID</td><td style="padding: 8px; font-family: monospace; font-size: 12px;">${escapeHtml(String(ticketId))}</td></tr>` : ""}
               </table>
 
               <div style="margin-bottom: 24px;">
                 <h3 style="font-size: 14px; font-weight: bold; color: #475569; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">報告・問い合わせ内容</h3>
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${escapeHtml(content)}</div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${escapeHtml(String(content))}</div>
               </div>
 
               ${screenshotUrl ? `
                 <div style="margin-bottom: 24px;">
                   <h3 style="font-size: 14px; font-weight: bold; color: #475569; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">添付スクリーンショット</h3>
                   <div style="text-align: center; background: #0f172a; padding: 12px; border-radius: 8px;">
-                    <a href="${screenshotUrl}" target="_blank" rel="noopener noreferrer">
-                      <img src="${screenshotUrl}" alt="添付画像" style="max-width: 100%; max-height: 350px; border-radius: 4px; object-fit: contain;" />
+                    <a href="${escapeHtml(screenshotUrl)}" target="_blank" rel="noopener noreferrer">
+                      <img src="${escapeHtml(screenshotUrl)}" alt="添付画像" style="max-width: 100%; max-height: 350px; border-radius: 4px; object-fit: contain;" />
                     </a>
                   </div>
-                  <p style="margin-top: 6px; font-size: 12px; color: #64748b;"><a href="${screenshotUrl}" target="_blank" style="color: #2563eb;">画像を別タブで拡大表示</a></p>
+                  <p style="margin-top: 6px; font-size: 12px; color: #64748b;"><a href="${escapeHtml(screenshotUrl)}" target="_blank" style="color: #2563eb;">画像を別タブで拡大表示</a></p>
                 </div>
               ` : ""}
 
@@ -197,7 +207,7 @@ export async function POST(req: NextRequest) {
             </div>
 
             <div style="background: #f1f5f9; padding: 12px 24px; font-size: 12px; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0;">
-              このメールに直接返信すると、ユーザー（${email}）に返信されます。
+              このメールに直接返信すると、ユーザー（${safeEmail}）に返信されます。
             </div>
           </div>
         `;

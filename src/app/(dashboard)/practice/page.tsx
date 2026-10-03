@@ -355,8 +355,13 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     void prefetchNextSentence(industry, newLvl, practiceMode);
   };
 
+  const hasInitializedRef = useRef<boolean>(false);
+
   // Load preferences from localStorage on mount and immediately display an untried starter sentence
   useEffect(() => {
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
+
     // Check URL search params for direct review repetition
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
@@ -410,7 +415,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
 
     // Generate initial sentence with AI + OpenAI TTS-1 generated model audio
     void fetchNewSentence(initialInd, initialLvl, initialMode);
-  }, [fetchNewSentence]); // Run ONCE on mount
+  }, [fetchNewSentence, prefetchNextSentence]);
 
   const handleStartRecording = useCallback(
     (mode: "repeating" | "shadowing" = "repeating") => {
@@ -518,7 +523,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           wpm: data.wpmInfo?.wpm,
         });
 
-        await fetch("/api/stats", {
+        const statsRes = await fetch("/api/stats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -534,10 +539,13 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
             coachFeedback: data.coachFeedback,
           }),
         });
+        const statsJson = await statsRes.json().catch(() => ({}));
 
-        // Asynchronously sync to Supabase DB if logged in
+        // Asynchronously sync to Supabase DB if not already persisted by /api/stats
         import("@/lib/storage/sync-service").then(({ savePracticeSessionToSupabase, updateWeakWordMasteredInSupabase }) => {
-          savePracticeSessionToSupabase(saved.session).catch(() => {});
+          if (!statsJson?.persistedToSupabase) {
+            savePracticeSessionToSupabase(saved.session).catch(() => {});
+          }
           if (saved.autoMasteredWords && saved.autoMasteredWords.length > 0) {
             for (const w of saved.autoMasteredWords) {
               updateWeakWordMasteredInSupabase(w, true).catch(() => {});
@@ -622,10 +630,13 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           coachFeedback,
         }),
       });
+      const statsJson = await res.json().catch(() => ({}));
 
-      // 3. Asynchronously sync to Supabase DB if logged in
+      // 3. Asynchronously sync to Supabase DB if not already persisted by /api/stats
       import("@/lib/storage/sync-service").then(({ savePracticeSessionToSupabase, updateWeakWordMasteredInSupabase }) => {
-        savePracticeSessionToSupabase(saved.session).catch(() => {});
+        if (!statsJson?.persistedToSupabase) {
+          savePracticeSessionToSupabase(saved.session).catch(() => {});
+        }
         if (saved.autoMasteredWords && saved.autoMasteredWords.length > 0) {
           for (const w of saved.autoMasteredWords) {
             updateWeakWordMasteredInSupabase(w, true).catch(() => {});

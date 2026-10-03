@@ -2,14 +2,10 @@ import { Metadata } from "next";
 import Link from "next/link";
 import {
   Sparkles,
-  Volume2,
   CheckCircle2,
-  Target,
   Zap,
   TrendingUp,
-  ShieldCheck,
   Coffee,
-  HelpCircle,
   ArrowRight,
   Headphones,
 } from "lucide-react";

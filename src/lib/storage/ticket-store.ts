@@ -1,6 +1,5 @@
 import { UserPlanType } from "@/types";
 import {
-  isVipEmail,
   getVipType,
   VipType,
   CAMPAIGN_REGISTRATION_DEADLINE,

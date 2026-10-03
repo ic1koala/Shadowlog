@@ -33,7 +33,6 @@ export function AudioRecorder({
   onAudioReady,
   isTranscribing,
   hasEvaluated = false,
-  isAdmin = false,
   onRetry,
   onRecordingStateChange,
   onRegisterControls,

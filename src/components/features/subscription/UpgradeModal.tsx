@@ -220,7 +220,7 @@ export function UpgradeModal({
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    業界別英文（IT/医療/金融/法務）即時生成
+                    4ジャンル別英文（IT・ビジネス・マーケ・日常）即時生成
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />

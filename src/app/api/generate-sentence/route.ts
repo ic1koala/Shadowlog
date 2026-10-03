@@ -18,11 +18,27 @@ import {
   pickFromSentenceBank,
   saveToSentenceBank,
 } from "@/lib/ai/sentence-bank";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 const VALID_LEVELS: DifficultyLevel[] = ["beginner", "intermediate", "advanced"];
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, {
+      namespace: "generate-sentence",
+      maxRequests: 30,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "リクエスト回数の上限に達しました。少し時間をおいて再試行してください。" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     let body: {
       industry?: string;
       level?: string;
@@ -48,7 +64,7 @@ export async function POST(req: NextRequest) {
       : "intermediate";
 
     const mode: PracticeMode = body.mode === "passage" ? "passage" : "sentence";
-    const topic = typeof body.topic === "string" ? body.topic.trim() : undefined;
+    const topic = typeof body.topic === "string" ? body.topic.trim().slice(0, 100) : undefined;
     const weakWords: string[] = Array.isArray(body.weakWords)
       ? body.weakWords.filter((w): w is string => typeof w === "string").slice(0, 5)
       : [];

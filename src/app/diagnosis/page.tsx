@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Award, Zap, ShieldCheck } from "lucide-react";
+import { Sparkles, ArrowRight } from "lucide-react";
 import { ToeicDiagnosisClient } from "@/components/features/assessment/ToeicDiagnosisClient";
 import { VipRemainingBadge } from "@/components/features/waitlist/VipRemainingBadge";
 

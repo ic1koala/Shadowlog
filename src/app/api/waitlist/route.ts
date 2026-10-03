@@ -18,12 +18,10 @@ const memoryWaitlist = new Map<string, WaitlistSubscriber>();
 function isSupabaseConfigured(): boolean {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "";
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     "";
   return Boolean(
@@ -34,13 +32,11 @@ function isSupabaseConfigured(): boolean {
 function getSupabaseAdmin() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "https://placeholder-project.supabase.co";
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     "placeholder-key";
 
@@ -235,9 +231,11 @@ export async function GET(req: NextRequest) {
   try {
     // Check if requester is admin
     let userIsAdmin = false;
-    const mockAdminHeader = req.headers.get("x-mock-admin-email");
-    if (mockAdminHeader && isAdminEmail(mockAdminHeader)) {
-      userIsAdmin = true;
+    if (process.env.NODE_ENV === "test") {
+      const mockAdminHeader = req.headers.get("x-mock-admin-email");
+      if (mockAdminHeader && isAdminEmail(mockAdminHeader)) {
+        userIsAdmin = true;
+      }
     }
 
     if (!userIsAdmin) {

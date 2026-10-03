@@ -10,7 +10,6 @@ import {
   Clock,
   Coins,
   Zap,
-  HelpCircle,
   Award,
 } from "lucide-react";
 

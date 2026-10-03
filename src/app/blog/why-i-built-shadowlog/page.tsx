@@ -4,16 +4,9 @@ import {
   Sparkles,
   ArrowRight,
   Clock,
-  BookOpen,
   CheckCircle2,
-  TrendingUp,
-  Zap,
-  Award,
   ChevronLeft,
   Heart,
-  Target,
-  MessageSquare,
-  Volume2,
 } from "lucide-react";
 
 export const metadata: Metadata = {

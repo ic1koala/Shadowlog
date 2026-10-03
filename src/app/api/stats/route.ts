@@ -20,44 +20,42 @@ export async function GET() {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        let query = supabase
-          .from("practice_sessions")
-          .select("*")
-          .order("created_at", { ascending: false });
-
         if (user?.id) {
-          query = query.eq("user_id", user.id);
-        }
+          const { data, error } = await supabase
+            .from("practice_sessions")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
 
-        const { data, error } = await query;
+          if (!error && data) {
+            const rows = data as unknown as PracticeSessionRow[];
+            sessions = rows.map((row) => {
+              const sentenceText = row.text_en || row.sentence || "";
+              const transcriptionText = row.transcribed_text || row.transcription || "";
+              const words = sentenceText.split(/\s+/).filter(Boolean);
+              const accuracy = Number(row.accuracy_score) || 0;
+              const wordCount = row.word_count ?? words.length;
+              const matchedWordCount = row.matched_word_count ?? Math.round((wordCount * accuracy) / 100);
 
-        if (!error && data) {
-          const rows = data as unknown as PracticeSessionRow[];
-          sessions = rows.map((row) => {
-            const sentenceText = row.text_en || row.sentence || "";
-            const transcriptionText = row.transcribed_text || row.transcription || "";
-            const words = sentenceText.split(/\s+/).filter(Boolean);
-            const accuracy = Number(row.accuracy_score) || 0;
-            const wordCount = row.word_count ?? words.length;
-            const matchedWordCount = row.matched_word_count ?? Math.round((wordCount * accuracy) / 100);
-
-            return {
-              id: row.sentence_id || row.id,
-              userId: row.user_id || undefined,
-              sentence: sentenceText,
-              transcription: transcriptionText,
-              wordCount,
-              matchedWordCount,
-              accuracyScore: accuracy,
-              wpm: row.wpm !== null && row.wpm !== undefined ? Number(row.wpm) : undefined,
-              createdAt: row.created_at,
-            };
-          });
+              return {
+                id: row.sentence_id || row.id,
+                userId: row.user_id || undefined,
+                sentence: sentenceText,
+                transcription: transcriptionText,
+                wordCount,
+                matchedWordCount,
+                accuracyScore: accuracy,
+                wpm: row.wpm !== null && row.wpm !== undefined ? Number(row.wpm) : undefined,
+                createdAt: row.created_at,
+              };
+            });
+          }
         } else {
-          sessions = mockSessionsStore;
+          // Guest user when Supabase is configured: do not query other users' sessions
+          sessions = [];
         }
       } catch {
-        sessions = mockSessionsStore;
+        sessions = [];
       }
     } else {
       sessions = mockSessionsStore;
@@ -137,40 +135,48 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
       !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder-project");
 
+    let persistedToSupabase = false;
+
     if (isSupabaseConfigured) {
       try {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        const insertPayload: PracticeSessionInsert = {
-          user_id: user?.id || null,
-          sentence_id: newSession.id,
-          text_en: newSession.sentence,
-          text_jp: japanese,
-          transcribed_text: newSession.transcription || null,
-          accuracy_score: newSession.accuracyScore,
-          wpm: typeof newSession.wpm === "number" ? newSession.wpm : 0,
-          diff_result: diff,
-          coach_feedback: coachFeedback,
-          created_at: newSession.createdAt,
-        };
+        if (user?.id) {
+          const insertPayload: PracticeSessionInsert = {
+            user_id: user.id,
+            sentence_id: newSession.id,
+            text_en: newSession.sentence,
+            text_jp: japanese,
+            transcribed_text: newSession.transcription || null,
+            accuracy_score: newSession.accuracyScore,
+            wpm: typeof newSession.wpm === "number" ? newSession.wpm : 0,
+            diff_result: diff,
+            coach_feedback: coachFeedback,
+            created_at: newSession.createdAt,
+          };
 
-        const { error: insertError } = await supabase.from("practice_sessions").insert(insertPayload);
-        if (insertError) {
-          console.warn("Failed to persist to Supabase practice_sessions:", insertError);
+          const { error: insertError } = await supabase.from("practice_sessions").insert(insertPayload);
+          if (insertError) {
+            console.warn("Failed to persist to Supabase practice_sessions:", insertError);
+          } else {
+            persistedToSupabase = true;
+          }
         }
       } catch (dbErr) {
         console.warn("Failed to persist to Supabase, saving to memory:", dbErr);
       }
+    } else {
+      mockSessionsStore.unshift(newSession);
     }
 
-    mockSessionsStore.unshift(newSession);
-
-    const updatedStats = calculateUserStats(mockSessionsStore);
+    const sessionsForStats = isSupabaseConfigured ? [newSession] : mockSessionsStore;
+    const updatedStats = calculateUserStats(sessionsForStats);
 
     return NextResponse.json(
       {
         success: true,
+        persistedToSupabase,
         session: newSession,
         stats: updatedStats,
       },

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Clock, BookOpen, Search, Tag, TrendingUp, Award, Layers } from "lucide-react";
+import { Sparkles, ArrowRight, BookOpen, Award, Layers } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "ShadowLog 公式ブログ | 英語シャドーイング・WPM向上・AI英語学習ノウハウ",

@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient } from "@/lib/ai/openai";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, {
+      namespace: "translate-word",
+      maxRequests: 60,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many translation requests. Please try again shortly." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     const body = await req.json();
-    const word = typeof body.word === "string" ? body.word.trim() : "";
-    const sentence = typeof body.sentence === "string" ? body.sentence.trim() : "";
+    const word = typeof body.word === "string" ? body.word.trim().slice(0, 60) : "";
+    const sentence = typeof body.sentence === "string" ? body.sentence.trim().slice(0, 500) : "";
 
     if (!word) {
       return NextResponse.json({ error: "Word is required" }, { status: 400 });

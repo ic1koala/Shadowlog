@@ -7,13 +7,11 @@ import { getVipType, VipType } from "@/lib/auth/vip-checker";
 function getSupabaseAdmin() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "https://placeholder-project.supabase.co";
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     "placeholder-key";
 

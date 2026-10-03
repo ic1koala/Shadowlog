@@ -9,22 +9,22 @@ interface WordToken {
   spoken?: string;
 }
 
+const INITIAL_WORDS: WordToken[] = [
+  { word: "Artificial", status: "pending" },
+  { word: "intelligence", status: "pending" },
+  { word: "optimizes", status: "pending" },
+  { word: "our", status: "pending", spoken: "all" }, // intentional mismatch simulation
+  { word: "deployment", status: "pending" },
+  { word: "pipeline.", status: "pending" },
+];
+
 export function InteractiveShadowingDemo() {
   // Demo simulation phases: 'idle' -> 'model_audio' -> 'user_speech' -> 'result'
   const [phase, setPhase] = useState<"idle" | "model_audio" | "user_speech" | "result">("model_audio");
   const [isPlaying, setIsPlaying] = useState(true);
   const [activeWordIndex, setActiveWordIndex] = useState(0);
 
-  const initialWords: WordToken[] = [
-    { word: "Artificial", status: "pending" },
-    { word: "intelligence", status: "pending" },
-    { word: "optimizes", status: "pending" },
-    { word: "our", status: "pending", spoken: "all" }, // intentional mismatch simulation
-    { word: "deployment", status: "pending" },
-    { word: "pipeline.", status: "pending" },
-  ];
-
-  const [words, setWords] = useState<WordToken[]>(initialWords);
+  const [words, setWords] = useState<WordToken[]>(INITIAL_WORDS);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -39,7 +39,7 @@ export function InteractiveShadowingDemo() {
       }, 2200);
     } else if (phase === "user_speech") {
       // Simulate real-time word recognition every 400ms
-      if (activeWordIndex < initialWords.length) {
+      if (activeWordIndex < INITIAL_WORDS.length) {
         timer = setTimeout(() => {
           setWords((prev) =>
             prev.map((item, idx) => {
@@ -65,7 +65,7 @@ export function InteractiveShadowingDemo() {
       // Hold result for 3.5s then loop
       timer = setTimeout(() => {
         // Reset
-        setWords(initialWords);
+        setWords(INITIAL_WORDS);
         setActiveWordIndex(0);
         setPhase("model_audio");
       }, 3800);
@@ -75,7 +75,7 @@ export function InteractiveShadowingDemo() {
   }, [phase, activeWordIndex, isPlaying]);
 
   const handleRestart = () => {
-    setWords(initialWords);
+    setWords(INITIAL_WORDS);
     setActiveWordIndex(0);
     setPhase("model_audio");
     setIsPlaying(true);

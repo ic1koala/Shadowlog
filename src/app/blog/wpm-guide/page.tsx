@@ -5,15 +5,8 @@ import {
   ArrowRight,
   Clock,
   BookOpen,
-  CheckCircle2,
-  TrendingUp,
   Zap,
-  Award,
-  Share2,
   ChevronLeft,
-  Target,
-  BarChart2,
-  Brain,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -178,7 +171,7 @@ export default function ChunkWpmGuideBlogPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
                 <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-800/50">
                   <span className="font-bold text-rose-400 block mb-1">❌ 1単語ごとの戻り読み</span>
-                  <p className="text-slate-300">"I went to the store" → 「私は」「行った」「〜へ」「その」「店」と後ろから訳すためリスニングで遅れが発生する。</p>
+                  <p className="text-slate-300">&quot;I went to the store&quot; → 「私は」「行った」「〜へ」「その」「店」と後ろから訳すためリスニングで遅れが発生する。</p>
                 </div>
                 <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/50">
                   <span className="font-bold text-emerald-400 block mb-1">⭕ チャンクごとの直読直解</span>

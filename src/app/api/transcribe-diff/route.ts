@@ -8,6 +8,10 @@ import {
 } from "@/lib/ai/prompts";
 import { calculateWPM } from "@/lib/diff/wpm-calculator";
 import { CoachFeedback, TranscribeDiffResponse, PracticeMode, WPMInfo } from "@/types";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
+
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10MB max audio upload size
+const MAX_TEXT_LENGTH = 2000;
 
 /**
  * Maps audio MIME types to file extensions supported by OpenAI Whisper API.
@@ -31,6 +35,21 @@ function getExtensionFromMime(mimeType: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, {
+      namespace: "transcribe-diff",
+      maxRequests: 20,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "リクエスト回数の上限に達しました。少し時間をおいて再試行してください。" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     let originalText = "";
     let audioFile: File | null = null;
     let audioBase64: string | null = null;
@@ -70,8 +89,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Header mock support for deterministic testing
-    const mockTranscription = req.headers.get("x-mock-transcription");
+    originalText = originalText.trim().slice(0, MAX_TEXT_LENGTH);
+
+    // Header mock support for deterministic testing (restricted to test environment)
+    const mockTranscription =
+      process.env.NODE_ENV === "test" ? req.headers.get("x-mock-transcription") : null;
     if (mockTranscription !== null) {
       const diff = calculateDiff(originalText, mockTranscription);
       const coachFeedback = generateFallbackCoachFeedback(diff);
@@ -98,6 +120,12 @@ export async function POST(req: NextRequest) {
 
       let fileToTranscribe: File;
       if (audioFile) {
+        if (audioFile.size > MAX_AUDIO_BYTES) {
+          return NextResponse.json(
+            { error: "音声ファイルのサイズが大きすぎます（上限10MB）。" },
+            { status: 413 }
+          );
+        }
         // Ensure the file has the correct extension for Whisper API
         const ext = getExtensionFromMime(audioFile.type);
         const fileName = `recording.${ext}`;
@@ -106,6 +134,12 @@ export async function POST(req: NextRequest) {
         });
       } else if (audioBase64) {
         const buffer = Buffer.from(audioBase64, "base64");
+        if (buffer.byteLength > MAX_AUDIO_BYTES) {
+          return NextResponse.json(
+            { error: "音声ファイルのサイズが大きすぎます（上限10MB）。" },
+            { status: 413 }
+          );
+        }
         fileToTranscribe = new File([buffer], "recording.webm", {
           type: "audio/webm",
         });

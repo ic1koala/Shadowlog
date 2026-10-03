@@ -832,21 +832,23 @@ export default function ReviewPage() {
               </div>
             </div>
 
-            {/* Test Plan Toggle */}
-            <div className="p-4 rounded-xl bg-muted/60 border border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold text-foreground">プラン切り替え（動作確認用）</p>
-                <p className="text-[11px] text-muted-foreground">
-                  現在のステータス: <span className="font-bold text-primary">{plan === "pro" ? "Pro会員 (無制限)" : "体験版 (制限あり)"}</span>
-                </p>
+            {/* Test Plan Toggle (development only) */}
+            {process.env.NODE_ENV === "development" && (
+              <div className="p-4 rounded-xl bg-muted/60 border border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-foreground">プラン切り替え（動作確認用）</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    現在のステータス: <span className="font-bold text-primary">{plan === "pro" ? "Pro会員 (無制限)" : "体験版 (制限あり)"}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={handleTogglePlan}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-xs"
+                >
+                  {plan === "pro" ? "体験版に戻す" : "Pro会員に切り替える（制限解除）"}
+                </button>
               </div>
-              <button
-                onClick={handleTogglePlan}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-xs"
-              >
-                {plan === "pro" ? "体験版に戻す" : "Pro会員に切り替える（制限解除）"}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}

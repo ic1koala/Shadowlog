@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient } from "@/lib/ai/openai";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, {
+      namespace: "tts",
+      maxRequests: 60,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many TTS requests. Please try again shortly." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const rawText = searchParams.get("text");
 
