@@ -15,11 +15,12 @@ import {
 } from "lucide-react";
 import { InteractiveShadowingDemo } from "@/components/features/waitlist/InteractiveShadowingDemo";
 import { WaitlistForm } from "@/components/features/waitlist/WaitlistForm";
+import { VipRemainingBadge } from "@/components/features/waitlist/VipRemainingBadge";
 
 export const metadata: Metadata = {
   title: "ShadowLog - 気軽な価格で、生活に英語を発する機会を。",
   description:
-    "音声AIがあなたの発音・話速を1単語単位で可視化。1回3分から始めるシャドーイング習慣化アプリ「ShadowLog」の事前登録（14日間無料クーポン付き）受付中。",
+    "音声AIがあなたの発音・話速を1単語単位で可視化。1回3分から始めるシャドーイング習慣化アプリ「ShadowLog」の事前登録・先着20名VIPモニター受付中。",
   openGraph: {
     title: "ShadowLog - 気軽な価格で、生活に英語を発する機会を。",
     description:
@@ -42,7 +43,14 @@ export default function WaitlistPage() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/diagnosis"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>30秒TOEIC診断</span>
+            </Link>
             <Link
               href="/login"
               className="text-xs sm:text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
@@ -53,7 +61,7 @@ export default function WaitlistPage() {
               href="#register"
               className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all"
             >
-              <span>事前登録する</span>
+              <span>事前登録・VIP申込</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -68,10 +76,7 @@ export default function WaitlistPage() {
 
           <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
             {/* Promo Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shadow-sm animate-pulse">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span>🎁 事前登録限定：14日間無料体験クーポンプレゼント</span>
-            </div>
+            <VipRemainingBadge variant="compact" />
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground leading-[1.2] sm:leading-[1.15]">
@@ -84,6 +89,9 @@ export default function WaitlistPage() {
               音声AIがあなたの発音・話速を1単語単位で可視化。
               1回3分からスキマ時間で無理なく続けられる、次世代シャドーイング習慣化アプリ「ShadowLog」
             </p>
+
+            {/* VIP 20-User Cap Status & Diagnosis Handoff Banner */}
+            <VipRemainingBadge variant="card" showDiagnosisBanner={true} />
 
             {/* Waitlist Form Card in Hero */}
             <div id="register" className="max-w-xl mx-auto pt-2 scroll-mt-24">

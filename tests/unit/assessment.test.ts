@@ -196,6 +196,9 @@ describe("Adaptive Assessment Engine", () => {
       expect(result.overallWPMFollowRate).toBe(65); // (70+60+65)/3 = 65
       expect(result.overallComposite).toBe(67); // (75+60+65)/3 = 66.67 -> 67
       expect(result.answers).toHaveLength(3);
+      expect(result.estimatedToeicScore).toBeGreaterThanOrEqual(300);
+      expect(result.estimatedToeicScore).toBeLessThanOrEqual(990);
+      expect(result.estimatedToeicScore % 5).toBe(0);
     });
 
     it("handles empty answers gracefully with B1 fallback", () => {
@@ -203,6 +206,45 @@ describe("Adaptive Assessment Engine", () => {
       expect(result.recommendedLevel).toBe("B1");
       expect(result.overallComposite).toBe(0);
       expect(result.answers).toHaveLength(0);
+    });
+
+    it("stops after 3 questions when maxQuestions=3 is specified", () => {
+      const answers: AssessmentAnswer[] = [
+        {
+          questionNumber: 1,
+          assessmentLevel: "B1",
+          accuracyScore: 90,
+          wpmFollowRate: 90,
+          compositeScore: 90,
+          userWPM: 140,
+          durationSeconds: 5,
+          wordCount: 12,
+        },
+        {
+          questionNumber: 2,
+          assessmentLevel: "B2",
+          accuracyScore: 85,
+          wpmFollowRate: 85,
+          compositeScore: 85,
+          userWPM: 145,
+          durationSeconds: 5,
+          wordCount: 12,
+        },
+        {
+          questionNumber: 3,
+          assessmentLevel: "C1",
+          accuracyScore: 88,
+          wpmFollowRate: 88,
+          compositeScore: 88,
+          userWPM: 155,
+          durationSeconds: 5,
+          wordCount: 14,
+        },
+      ];
+      expect(getNextQuestion(answers, 3)).toBeNull();
+      const res = calculateAssessmentResult(answers);
+      expect(res.estimatedToeicScore).toBeGreaterThanOrEqual(750);
+      expect(res.effectiveWPM).toBeGreaterThan(120);
     });
   });
 });

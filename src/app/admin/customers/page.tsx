@@ -507,7 +507,27 @@ export default function AdminCustomersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                <Link
+                  href="/diagnosis"
+                  target="_blank"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition"
+                >
+                  <Flame className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">30秒TOEIC診断 (/diagnosis)</span>
+                  <ExternalLink className="w-3 h-3 opacity-70 shrink-0" />
+                </Link>
+
+                <Link
+                  href="/waitlist"
+                  target="_blank"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/30 hover:bg-purple-500/25 transition"
+                >
+                  <Crown className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">紹介＆VIP登録LP (/waitlist)</span>
+                  <ExternalLink className="w-3 h-3 opacity-70 shrink-0" />
+                </Link>
+
                 <Link
                   href="/compare/shadoten"
                   target="_blank"

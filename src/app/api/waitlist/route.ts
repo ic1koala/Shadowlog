@@ -256,21 +256,32 @@ export async function GET(req: NextRequest) {
 
     let subscribers: WaitlistSubscriber[] = [];
     let count = 0;
+    let profileCount = 0;
+    const VIP_MAX_LIMIT = 20;
 
     if (isSupabaseConfigured()) {
       try {
         const supabaseAdmin = getSupabaseAdmin();
-        const { data, count: dbCount, error } = await supabaseAdmin
-          .from("waitlist_subscribers")
-          .select("id, email, status, metadata, created_at", { count: "exact" })
-          .order("created_at", { ascending: false });
+        const [waitlistRes, profilesRes] = await Promise.all([
+          supabaseAdmin
+            .from("waitlist_subscribers")
+            .select("id, email, status, metadata, created_at", { count: "exact" })
+            .order("created_at", { ascending: false }),
+          supabaseAdmin
+            .from("profiles")
+            .select("id", { count: "exact", head: true }),
+        ]);
 
-        if (!error && data) {
-          subscribers = data as WaitlistSubscriber[];
-          count = dbCount ?? data.length;
+        if (!waitlistRes.error && waitlistRes.data) {
+          subscribers = waitlistRes.data as WaitlistSubscriber[];
+          count = waitlistRes.count ?? waitlistRes.data.length;
         } else {
           subscribers = Array.from(memoryWaitlist.values());
           count = subscribers.length;
+        }
+
+        if (!profilesRes.error && typeof profilesRes.count === "number") {
+          profileCount = profilesRes.count;
         }
       } catch {
         subscribers = Array.from(memoryWaitlist.values());
@@ -281,10 +292,16 @@ export async function GET(req: NextRequest) {
       count = subscribers.length;
     }
 
+    const vipCount = Math.min(VIP_MAX_LIMIT, Math.max(count + profileCount, count));
+    const vipRemaining = Math.max(0, VIP_MAX_LIMIT - vipCount);
+
     // If admin, return full list + count; otherwise return count only for public/landing display
     if (userIsAdmin) {
       return NextResponse.json({
         count,
+        vipLimit: VIP_MAX_LIMIT,
+        vipCount,
+        vipRemaining,
         subscribers,
         isAdmin: true,
       });
@@ -292,6 +309,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       count,
+      vipLimit: VIP_MAX_LIMIT,
+      vipCount,
+      vipRemaining,
       isAdmin: false,
     });
   } catch (error) {
