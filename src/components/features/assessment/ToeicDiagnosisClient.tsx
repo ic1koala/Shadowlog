@@ -29,11 +29,14 @@ import {
 import {
   ArrowRight,
   Award,
+  CheckCircle2,
   Crown,
   ExternalLink,
   RotateCcw,
+  Send,
   Share2,
   Sparkles,
+  Square,
   Target,
   X,
   Zap,
@@ -69,13 +72,16 @@ export function ToeicDiagnosisClient({
 
   // Floating recording bar state
   const [floatIsRecording, setFloatIsRecording] = useState(false);
-  const [, setFloatHasBlob] = useState(false);
+  const [floatHasBlob, setFloatHasBlob] = useState(false);
   const recorderControlsRef = useRef<{
     start: (mode?: "repeating" | "shadowing") => void;
     stop: () => void;
     reset: () => void;
     submit: () => void;
   } | null>(null);
+  const shadowingAutoStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const lastRecordingDurationRef = useRef<number>(0);
 
   const isComplete = result !== null;
@@ -111,6 +117,62 @@ export function ToeicDiagnosisClient({
       loadQuestionSentence();
     }
   }, [currentQuestion, loadQuestionSentence]);
+
+  const handleStartRecording = useCallback(
+    (recMode: "repeating" | "shadowing" = "repeating") => {
+      setRecordingModeUsed(recMode);
+      if (recMode === "shadowing" && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("shadowlog:play-model-audio"));
+      }
+      recorderControlsRef.current?.start?.(recMode);
+    },
+    []
+  );
+
+  const handleStopRecording = useCallback(() => {
+    if (shadowingAutoStopTimerRef.current) {
+      clearTimeout(shadowingAutoStopTimerRef.current);
+      shadowingAutoStopTimerRef.current = null;
+    }
+    recorderControlsRef.current?.stop?.();
+  }, []);
+
+  const handleRetryCurrent = useCallback(() => {
+    recorderControlsRef.current?.reset?.();
+    setFloatHasBlob(false);
+    setFloatIsRecording(false);
+    setDiffResult(null);
+    setWpmInfo(undefined);
+    setTranscription("");
+  }, []);
+
+  // Shadowing auto-stop listener: When model audio ends in shadowing mode, wait 1.5s then auto stop
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleModelAudioEnded = () => {
+      if (recordingModeUsed === "shadowing" && floatIsRecording) {
+        if (shadowingAutoStopTimerRef.current) {
+          clearTimeout(shadowingAutoStopTimerRef.current);
+        }
+        shadowingAutoStopTimerRef.current = setTimeout(() => {
+          handleStopRecording();
+        }, 1500);
+      }
+    };
+
+    window.addEventListener("shadowlog:model-audio-ended", handleModelAudioEnded);
+    return () => {
+      window.removeEventListener(
+        "shadowlog:model-audio-ended",
+        handleModelAudioEnded
+      );
+      if (shadowingAutoStopTimerRef.current) {
+        clearTimeout(shadowingAutoStopTimerRef.current);
+        shadowingAutoStopTimerRef.current = null;
+      }
+    };
+  }, [recordingModeUsed, floatIsRecording, handleStopRecording]);
 
   // Handle audio recording result
   const handleAudioReady = async (audioBlob: Blob, durationSeconds: number) => {
@@ -424,64 +486,7 @@ export function ToeicDiagnosisClient({
           )}
         </div>
 
-        {/* 3. Funnel Section: LP Introduction & 20-User Limited VIP Invitation */}
-        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-indigo-500/40 shadow-2xl space-y-6">
-          <div className="text-center space-y-3">
-            <VipRemainingBadge variant="compact" />
-
-            <h2 className="text-xl sm:text-2xl font-black leading-snug pt-1">
-              診断された弱点を、毎日3分の声出しで克服しませんか？
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg mx-auto">
-              『ShadowLog』は、あなたのレベル（{result.levelInfo.label}）と職種に合わせた英文を毎日生成し、AIが1単語単位で発音とWPMを可視化するシャドーイング習慣化アプリです。
-            </p>
-          </div>
-
-          {/* Step-by-Step Funnel Buttons */}
-          <div className="space-y-3">
-            {/* Primary Funnel CTA 1: See what kind of app ShadowLog is (LP) */}
-            <Link
-              href="/waitlist"
-              className="w-full py-4 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30"
-            >
-              <Sparkles className="w-5 h-5 text-amber-300 shrink-0" />
-              <span>ShadowLogがどんなアプリか詳しく見る（紹介LP・特典へ）</span>
-              <ArrowRight className="w-5 h-5 shrink-0" />
-            </Link>
-
-            {/* Secondary Funnel CTA 2: Direct VIP Registration or Waitlist */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <Link
-                href="/signup?vip=1"
-                className="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-md"
-              >
-                <Crown className="w-4 h-4 shrink-0" />
-                <span>先着20名VIP枠で今すぐ始める</span>
-              </Link>
-
-              <Link
-                href="/compare/shadoten"
-                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition flex items-center justify-center gap-1.5"
-              >
-                <span>他社（シャドテン）との比較を見る</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          {mode === "settings" && (
-            <div className="pt-2 border-t border-slate-800 text-center">
-              <button
-                onClick={() => router.push("/practice")}
-                className="text-xs font-bold text-indigo-300 hover:text-white underline underline-offset-4 cursor-pointer"
-              >
-                現在のアカウントでそのまま練習画面へ進む →
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* 4. SNS Share Box */}
+        {/* 3. SNS Share Box */}
         <div className="bg-card rounded-2xl p-5 border border-border text-center space-y-3">
           <p className="text-xs font-bold text-foreground flex items-center justify-center gap-1.5">
             <Share2 className="w-4 h-4 text-primary" />
@@ -517,6 +522,60 @@ export function ToeicDiagnosisClient({
             </button>
           </div>
         </div>
+
+        {/* 4. Bottom Funnel Section: LP Introduction & 20-User Limited VIP Invitation */}
+        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-indigo-500/40 shadow-2xl space-y-6">
+          <div className="text-center space-y-3">
+            <VipRemainingBadge variant="compact" />
+
+            <h2 className="text-xl sm:text-2xl font-black leading-snug pt-1">
+              診断された弱点を、毎日3分の声出しで克服しませんか？
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg mx-auto">
+              『ShadowLog』は、あなたのレベル（{result.levelInfo.label}）と職種に合わせた英文を毎日生成し、AIが1単語単位で発音とWPMを可視化するシャドーイング習慣化アプリです。
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Link
+              href="/waitlist"
+              className="w-full py-4 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30"
+            >
+              <Sparkles className="w-5 h-5 text-amber-300 shrink-0" />
+              <span>ShadowLogがどんなアプリか詳しく見る（紹介LP・特典へ）</span>
+              <ArrowRight className="w-5 h-5 shrink-0" />
+            </Link>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <Link
+                href="/signup?vip=1"
+                className="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-md"
+              >
+                <Crown className="w-4 h-4 shrink-0" />
+                <span>先着20名VIP枠で今すぐ始める</span>
+              </Link>
+
+              <Link
+                href="/compare/shadoten"
+                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition flex items-center justify-center gap-1.5"
+              >
+                <span>他社（シャドテン）との比較を見る</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {mode === "settings" && (
+            <div className="pt-2 border-t border-slate-800 text-center">
+              <button
+                onClick={() => router.push("/practice")}
+                className="text-xs font-bold text-indigo-300 hover:text-white underline underline-offset-4 cursor-pointer"
+              >
+                現在のアカウントでそのまま練習画面へ進む →
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -527,7 +586,7 @@ export function ToeicDiagnosisClient({
   const levelInfo = ASSESSMENT_LEVELS[currentLevel];
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5 pb-32">
+    <div className="max-w-2xl mx-auto space-y-5 pb-40">
       {/* Progress Header Card */}
       <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border shadow-xs space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -597,13 +656,14 @@ export function ToeicDiagnosisClient({
         />
       )}
 
-      {/* Audio Recorder (Supports Dual Recording Modes) */}
+      {/* Audio Recorder (Microphone Selector & Visualizer) */}
       {sentence && (
         <AudioRecorder
           key={sentence.id}
           onAudioReady={handleAudioReady}
           isTranscribing={isTranscribing}
           hasEvaluated={Boolean(diffResult)}
+          onRetry={handleRetryCurrent}
           onRecordingStateChange={(isRec, hasBlob) => {
             setFloatIsRecording(isRec);
             setFloatHasBlob(hasBlob);
@@ -622,6 +682,7 @@ export function ToeicDiagnosisClient({
               diff={diffResult}
               transcription={transcription}
               wpmInfo={wpmInfo}
+              onRetry={handleRetryCurrent}
             />
 
             <button
@@ -634,6 +695,164 @@ export function ToeicDiagnosisClient({
                   : "🏆 3問完了！TOEIC換算＆診断カルテを見る"}
               </span>
               <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Page Bottom LP Introduction Banner (Always visible at bottom of /diagnosis) ── */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-xl space-y-4 mt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-300">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>AI英語シャドーイング習慣化アプリ『ShadowLog』</span>
+            </div>
+            <h3 className="text-base sm:text-lg font-black text-white">
+              毎日3分、自分の声で英語を話すきっかけを作ろう。
+            </h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              1単語単位のリアルタイムAI発音判定・3D単語翻訳・WPM自動計測。現在、先着20名限定でPro機能使い放題のVIPモニター枠を開放中！
+            </p>
+          </div>
+
+          <Link
+            href="/waitlist"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs sm:text-sm shrink-0 transition shadow-lg shadow-indigo-600/30"
+          >
+            <span>どんなアプリか詳しく見る（紹介LPへ）</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Floating Recording Bar (Fixed at bottom of screen) ── */}
+      {sentence && !diffResult && !floatHasBlob && (
+        <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4">
+          <div className="pointer-events-auto flex flex-col gap-2 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full">
+            <div className="flex items-center justify-between gap-2">
+              {floatIsRecording ? (
+                <span className="flex items-center gap-2 text-xs font-bold text-destructive animate-pulse">
+                  <span className="w-2.5 h-2.5 rounded-full bg-destructive" />
+                  <span>
+                    {recordingModeUsed === "shadowing"
+                      ? "🎧 シャドーイング録音中..."
+                      : "🗣️ リピーティング録音中..."}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  録音モードを選択して発話スタート（STEP {currentQNum}/3）
+                </span>
+              )}
+            </div>
+
+            {floatIsRecording ? (
+              <div className="flex items-center justify-between gap-3 pt-0.5">
+                <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                  {recordingModeUsed === "shadowing"
+                    ? "※模範音声終了＋1.5秒で自動停止します"
+                    : "※発話が終わったら録音を終了してください"}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleStopRecording}
+                  className="w-full sm:w-auto ml-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 transition shadow-lg active:scale-95 min-h-[44px] cursor-pointer"
+                >
+                  <Square className="w-4 h-4 fill-current" />
+                  録音を終了
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleStartRecording("repeating")}
+                  disabled={isTranscribing}
+                  className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 ring-1 ring-blue-400/30 disabled:opacity-50 transition active:scale-95 min-h-[48px] cursor-pointer"
+                >
+                  <span className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <span>🗣️</span>
+                    <span>リピーティング録音</span>
+                  </span>
+                  <span className="text-[10px] text-blue-100/90 font-normal">
+                    (お手本停止・自分のペース)
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleStartRecording("shadowing")}
+                  disabled={isTranscribing}
+                  className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-500/20 ring-1 ring-purple-400/30 disabled:opacity-50 transition active:scale-95 min-h-[48px] cursor-pointer"
+                >
+                  <span className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <span>🎧</span>
+                    <span>シャドーイング録音</span>
+                  </span>
+                  <span className="text-[10px] text-purple-100/90 font-normal">
+                    (お手本と同時・高スコア補正)
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Floating Pre-Evaluation Bar (Recorded, awaiting evaluation or retry) ── */}
+      {sentence && !diffResult && floatHasBlob && (
+        <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
+          <div className="pointer-events-auto flex items-center justify-between gap-2.5 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full">
+            <button
+              type="button"
+              onClick={handleRetryCurrent}
+              disabled={isTranscribing}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/80 transition active:scale-95 min-h-[44px] cursor-pointer shadow-2xs"
+            >
+              <RotateCcw className="w-4 h-4 text-primary shrink-0" />
+              <span>録り直す</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => recorderControlsRef.current?.submit?.()}
+              disabled={isTranscribing}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-lg shadow-primary/25 active:scale-95 min-h-[44px] cursor-pointer"
+            >
+              {isTranscribing ? (
+                <span>AI採点中...</span>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>判定する</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Floating Next Step Bar (After evaluation is ready) ── */}
+      {sentence && diffResult && !isTranscribing && (
+        <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
+          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/95 backdrop-blur-xl border border-amber-500/30 shadow-2xl shadow-amber-500/20 ring-1 ring-white/20 w-full">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>正解率 {diffResult.accuracyScore}%</span>
+            </span>
+
+            <button
+              onClick={handleNext}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs sm:text-sm bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 transition shadow-lg min-h-[44px] cursor-pointer"
+            >
+              <span>
+                {currentQNum < MAX_QUESTIONS
+                  ? `次の問題へ (${currentQNum}/3)`
+                  : "🏆 診断カルテを見る"}
+              </span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
