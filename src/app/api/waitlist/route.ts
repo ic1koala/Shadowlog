@@ -18,11 +18,14 @@ const memoryWaitlist = new Map<string, WaitlistSubscriber>();
 function isSupabaseConfigured(): boolean {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "";
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "";
   return Boolean(
     url && key && !url.includes("placeholder-project") && !key.includes("placeholder")
@@ -32,12 +35,15 @@ function isSupabaseConfigured(): boolean {
 function getSupabaseAdmin() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "https://placeholder-project.supabase.co";
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "placeholder-key";
 
   return createSupabaseClient(supabaseUrl, supabaseServiceKey, {

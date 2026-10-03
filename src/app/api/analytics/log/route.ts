@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { createClient as createServerSupabase } from "@/lib/supabase/server";
-import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 interface DailyMetrics {
   date: string; // YYYY-MM-DD
@@ -17,11 +15,14 @@ const analyticsStore = new Map<string, DailyMetrics>();
 function isSupabaseConfigured(): boolean {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "";
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "";
   return Boolean(url && key && !url.includes("placeholder-project") && !key.includes("placeholder"));
 }
@@ -29,12 +30,15 @@ function isSupabaseConfigured(): boolean {
 function getSupabaseAdmin() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "https://placeholder-project.supabase.co";
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "placeholder-key";
 
   return createSupabaseClient(supabaseUrl, supabaseServiceKey, {
@@ -190,22 +194,6 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
-    if (process.env.NODE_ENV !== "test") {
-      let authorized = false;
-      try {
-        const supabase = await createServerSupabase();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user?.email && isAdminEmail(user.email)) {
-          authorized = true;
-        }
-      } catch {}
-      if (!authorized) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
-
     const today = getTodayKey();
 
     // 1. Attempt to fetch from Supabase daily_analytics if configured

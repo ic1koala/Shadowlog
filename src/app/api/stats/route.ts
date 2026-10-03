@@ -7,13 +7,20 @@ import { createClient } from "@/lib/supabase/server";
 // Fallback in-memory store for development/testing when Supabase is unconfigured (starts empty)
 const mockSessionsStore: PracticeSession[] = [];
 
+function checkSupabaseConfigured(): boolean {
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    "";
+  return Boolean(url && !url.includes("placeholder-project"));
+}
+
 export async function GET() {
   try {
     let sessions: PracticeSession[] = [];
 
-    const isSupabaseConfigured =
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder-project");
+    const isSupabaseConfigured = checkSupabaseConfigured();
 
     if (isSupabaseConfigured) {
       try {
@@ -131,9 +138,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    const isSupabaseConfigured =
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder-project");
+    const isSupabaseConfigured = checkSupabaseConfigured();
 
     let persistedToSupabase = false;
 
@@ -194,9 +199,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE() {
   try {
     mockSessionsStore.length = 0;
-    const isSupabaseConfigured =
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder-project");
+    const isSupabaseConfigured = checkSupabaseConfigured();
 
     if (isSupabaseConfigured) {
       try {

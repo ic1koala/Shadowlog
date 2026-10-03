@@ -4,15 +4,21 @@ import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import { getVipType, VipType } from "@/lib/auth/vip-checker";
 
+export const dynamic = "force-dynamic";
+
 function getSupabaseAdmin() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "https://placeholder-project.supabase.co";
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
     "placeholder-key";
 
   return createSupabaseClient(supabaseUrl, supabaseServiceKey, {
@@ -412,7 +418,12 @@ export async function GET(req: NextRequest) {
       },
     };
 
-    return NextResponse.json(responseData, { status: 200 });
+    return NextResponse.json(responseData, {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    });
   } catch (error) {
     console.error("[Admin API] Unexpected error:", error);
     return NextResponse.json(

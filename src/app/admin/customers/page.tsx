@@ -79,14 +79,22 @@ export default function AdminCustomersPage() {
           data: { session },
         } = await supabase.auth.getSession();
 
-        const userEmail = session?.user?.email;
+        let userEmail = session?.user?.email;
+        const accessToken = session?.access_token;
+
+        if (!userEmail) {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          userEmail = user?.email;
+        }
 
         if (userEmail && isAdminEmail(userEmail)) {
           if (mounted) {
             setIsAuthorized(true);
             setAdminEmail(userEmail);
             setAuthChecking(false);
-            fetchCustomers(session.access_token);
+            fetchCustomers(accessToken);
           }
         } else {
           if (mounted) {
@@ -130,7 +138,10 @@ export default function AdminCustomersPage() {
         headers["Authorization"] = `Bearer ${authToken}`;
       }
 
-      const res = await fetch("/api/admin/customers", { headers });
+      const res = await fetch(`/api/admin/customers?t=${Date.now()}`, {
+        headers,
+        cache: "no-store",
+      });
 
       if (!res.ok) {
         if (res.status === 403) {
