@@ -65,6 +65,130 @@ function getSupportedMimeType(): string {
   return "";
 }
 
+/**
+ * Checks if a microphone device label corresponds to Bluetooth / wireless earbuds.
+ */
+export function isBluetoothMicLabel(label: string): boolean {
+  if (!label) return false;
+  return /airpods|bluetooth|headset|wireless|buds|galaxy\s*buds|pixel\s*buds|wh-|wf-|earbuds|hands-free|ハンズフリー/i.test(
+    label
+  );
+}
+
+/**
+ * Checks if the current browser is running on Android.
+ */
+export function isAndroidBrowser(userAgent?: string): boolean {
+  const ua =
+    userAgent ??
+    (typeof navigator !== "undefined" ? navigator.userAgent : "");
+  return /android/i.test(ua);
+}
+
+/**
+ * Builds optimal MediaTrackConstraints for the given recording mode.
+ * On Android (e.g. Galaxy S26 + Galaxy Buds FE), leaving noiseSuppression or autoGainControl
+ * enabled in shadowing mode triggers WebRTC VOICE_COMMUNICATION / HAL DSP ducking, which
+ * severely attenuates model audio playback. Disabling all DSP flags in shadowing mode keeps
+ * the audio stream in raw capture mode without ducking media output.
+ */
+export function buildAudioConstraints(
+  mode: "repeating" | "shadowing",
+  deviceId?: string
+): MediaTrackConstraints & Record<string, unknown> {
+  const isShadowing = mode === "shadowing";
+  const constraints: MediaTrackConstraints & Record<string, unknown> = {
+    echoCancellation: !isShadowing,
+    noiseSuppression: !isShadowing,
+    autoGainControl: !isShadowing,
+  };
+
+  if (deviceId) {
+    constraints.deviceId = { ideal: deviceId };
+  }
+
+  if (isShadowing) {
+    // Chromium-specific flags to prevent Android WebRTC AudioManager from entering voice-call DSP mode
+    constraints.googEchoCancellation = false;
+    constraints.googAutoGainControl = false;
+    constraints.googAutoGainControl2 = false;
+    constraints.googNoiseSuppression = false;
+    constraints.googHighpassFilter = false;
+    constraints.googTypingNoiseDetection = false;
+  }
+
+  return constraints;
+}
+
+/**
+ * Selects the best microphone device based on platform and user preferences.
+ * - On Android: Opening a Bluetooth earbud microphone (e.g., Galaxy Buds FE) forces the OS
+ *   to switch Bluetooth from A2DP (high-volume stereo media) to HFP/SCO (call mode, heavily ducked).
+ *   Therefore, unless the user explicitly manually chose a Bluetooth mic, Android automatically
+ *   prefers the phone's built-in microphone for input while keeping Bluetooth earbuds on A2DP for output.
+ * - On iOS / Desktop: Continues to auto-select AirPods / Bluetooth headsets when connected.
+ */
+export function pickPreferredMicDevice(
+  audioInputs: MediaDeviceInfo[],
+  options: {
+    isAndroid: boolean;
+    savedId?: string | null;
+    savedLabel?: string | null;
+    isManualSelection?: boolean;
+  }
+): MediaDeviceInfo | undefined {
+  if (audioInputs.length === 0) return undefined;
+  const labelsPresent = audioInputs.some((d) => Boolean(d.label));
+
+  // 1. If user manually selected a device, or if on iOS/Desktop with a saved device
+  if (options.savedId || options.savedLabel) {
+    let savedMatch = audioInputs.find(
+      (d) => d.deviceId && d.deviceId === options.savedId
+    );
+    if (!savedMatch && options.savedLabel) {
+      savedMatch = audioInputs.find(
+        (d) => d.label && d.label === options.savedLabel
+      );
+    }
+
+    if (savedMatch) {
+      // On Android, ignore previously auto-saved Bluetooth mics unless manually chosen by the user
+      if (
+        options.isAndroid &&
+        !options.isManualSelection &&
+        isBluetoothMicLabel(savedMatch.label)
+      ) {
+        savedMatch = undefined;
+      } else {
+        return savedMatch;
+      }
+    }
+  }
+
+  if (!labelsPresent) return undefined;
+
+  // 2. Android default: Prefer built-in phone mic (non-Bluetooth) so wireless earbuds stay in A2DP stereo output mode
+  if (options.isAndroid) {
+    const nonBtDevices = audioInputs.filter(
+      (d) =>
+        d.deviceId &&
+        d.deviceId !== "communications" &&
+        !isBluetoothMicLabel(d.label)
+    );
+    // Prefer explicitly labeled built-in / phone / speakerphone mic if present, otherwise first non-BT mic
+    const explicitBuiltIn = nonBtDevices.find((d) =>
+      /本体|内蔵|built-in|phone|speakerphone|スピーカーフォン|bottom|handset/i.test(
+        d.label
+      )
+    );
+    return explicitBuiltIn || nonBtDevices[0];
+  }
+
+  // 3. iOS / Desktop smart suggestion: auto-pick AirPods or Bluetooth headset
+  const btDevice = audioInputs.find((d) => isBluetoothMicLabel(d.label));
+  return btDevice;
+}
+
 export function useAudioRecorder() {
   const [state, setState] = useState<AudioRecorderState>({
     isRecording: false,
@@ -83,28 +207,34 @@ export function useAudioRecorder() {
 
   const STORAGE_KEY_ID = "shadowlog_mic_device_id";
   const STORAGE_KEY_LABEL = "shadowlog_mic_device_label";
+  const STORAGE_KEY_MANUAL = "shadowlog_mic_manual_select";
 
-  // Select device and persist to localStorage
-  const setSelectedDeviceId = useCallback((deviceId: string) => {
-    setSelectedDeviceIdState(deviceId);
-    try {
-      if (typeof window !== "undefined") {
-        if (deviceId) {
-          localStorage.setItem(STORAGE_KEY_ID, deviceId);
-          // Also save label if available to survive deviceId regenerating on Bluetooth reconnect
-          const found = devices.find((d) => d.deviceId === deviceId);
-          if (found && found.label) {
-            localStorage.setItem(STORAGE_KEY_LABEL, found.label);
+  // Select device (explicit user action) and persist to localStorage
+  const setSelectedDeviceId = useCallback(
+    (deviceId: string) => {
+      setSelectedDeviceIdState(deviceId);
+      try {
+        if (typeof window !== "undefined") {
+          if (deviceId) {
+            localStorage.setItem(STORAGE_KEY_ID, deviceId);
+            localStorage.setItem(STORAGE_KEY_MANUAL, "true");
+            // Also save label if available to survive deviceId regenerating on Bluetooth reconnect
+            const found = devices.find((d) => d.deviceId === deviceId);
+            if (found && found.label) {
+              localStorage.setItem(STORAGE_KEY_LABEL, found.label);
+            }
+          } else {
+            localStorage.removeItem(STORAGE_KEY_ID);
+            localStorage.removeItem(STORAGE_KEY_LABEL);
+            localStorage.removeItem(STORAGE_KEY_MANUAL);
           }
-        } else {
-          localStorage.removeItem(STORAGE_KEY_ID);
-          localStorage.removeItem(STORAGE_KEY_LABEL);
         }
+      } catch {
+        // ignore localStorage errors
       }
-    } catch {
-      // ignore localStorage errors
-    }
-  }, [devices]);
+    },
+    [devices]
+  );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -116,7 +246,11 @@ export function useAudioRecorder() {
 
   // Enumerate audio input devices (Bluetooth, internal, USB) and restore previous selection
   const refreshDevices = useCallback(async () => {
-    if (typeof window === "undefined" || !navigator.mediaDevices?.enumerateDevices) return;
+    if (
+      typeof window === "undefined" ||
+      !navigator.mediaDevices?.enumerateDevices
+    )
+      return;
     try {
       const allDevices = await navigator.mediaDevices.enumerateDevices();
       const audioInputs = allDevices.filter(
@@ -127,31 +261,20 @@ export function useAudioRecorder() {
       const labelsPresent = audioInputs.some((d) => Boolean(d.label));
       setHasLabels(labelsPresent);
 
-      // Restore previously saved microphone (by deviceId or label)
+      // Restore previously saved microphone or apply platform-appropriate smart suggestion
       try {
         const savedId = localStorage.getItem(STORAGE_KEY_ID);
         const savedLabel = localStorage.getItem(STORAGE_KEY_LABEL);
+        const isManualSelection =
+          localStorage.getItem(STORAGE_KEY_MANUAL) === "true";
+        const isAndroid = isAndroidBrowser();
 
-        let matched: MediaDeviceInfo | undefined;
-
-        if (savedId || savedLabel) {
-          // 1. Try matching by deviceId
-          matched = audioInputs.find((d) => d.deviceId && d.deviceId === savedId);
-          // 2. Fallback: match by label (useful for Bluetooth reconnects where deviceId changes)
-          if (!matched && savedLabel) {
-            matched = audioInputs.find((d) => d.label && d.label === savedLabel);
-          }
-        }
-
-        // 3. Smart suggestion: if user has AirPods or Bluetooth connected and no selection made, auto-pick it
-        if (!matched && labelsPresent) {
-          const airpods = audioInputs.find((d) =>
-            /airpods|bluetooth|headset|wireless|buds|wh-|wf-/i.test(d.label)
-          );
-          if (airpods) {
-            matched = airpods;
-          }
-        }
+        const matched = pickPreferredMicDevice(audioInputs, {
+          isAndroid,
+          savedId,
+          savedLabel,
+          isManualSelection,
+        });
 
         if (matched) {
           setSelectedDeviceIdState(matched.deviceId);
@@ -161,6 +284,11 @@ export function useAudioRecorder() {
           if (matched.label) {
             localStorage.setItem(STORAGE_KEY_LABEL, matched.label);
           }
+        } else if (isAndroid && !isManualSelection && savedLabel && isBluetoothMicLabel(savedLabel)) {
+          // Clear legacy auto-saved Bluetooth mic on Android so it doesn't force HFP/SCO call mode
+          setSelectedDeviceIdState("");
+          localStorage.removeItem(STORAGE_KEY_ID);
+          localStorage.removeItem(STORAGE_KEY_LABEL);
         }
       } catch {
         // ignore localStorage errors
@@ -172,7 +300,8 @@ export function useAudioRecorder() {
 
   // Proactively request microphone access to unlock device labels (AirPods / External mics)
   const requestDeviceAccess = useCallback(async () => {
-    if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) return false;
+    if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia)
+      return false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // Immediately release track so recording indicator turns off
@@ -180,7 +309,10 @@ export function useAudioRecorder() {
       await refreshDevices();
       return true;
     } catch (err) {
-      console.warn("Microphone permission request was cancelled or denied:", err);
+      console.warn(
+        "Microphone permission request was cancelled or denied:",
+        err
+      );
       return false;
     }
   }, [refreshDevices]);
@@ -210,7 +342,10 @@ export function useAudioRecorder() {
       }
     }
 
-    if (typeof window !== "undefined" && navigator.mediaDevices?.addEventListener) {
+    if (
+      typeof window !== "undefined" &&
+      navigator.mediaDevices?.addEventListener
+    ) {
       const handler = () => {
         refreshDevices();
       };
@@ -230,7 +365,10 @@ export function useAudioRecorder() {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
-    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+    if (
+      audioContextRef.current &&
+      audioContextRef.current.state !== "closed"
+    ) {
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
@@ -256,80 +394,132 @@ export function useAudioRecorder() {
     animationFrameRef.current = requestAnimationFrame(updateVolumeMeter);
   }, []);
 
-  const startRecording = useCallback(async (mode: "repeating" | "shadowing" = "repeating") => {
-    // If repeating: stop any playing model audio before opening the microphone
-    if (mode === "repeating" && typeof window !== "undefined") {
-      window.dispatchEvent(new Event("shadowlog:stop-model-audio"));
-    }
-    cleanupAudio();
-    setState((prev) => ({
-      ...prev,
-      error: null,
-      audioBlob: null,
-      audioUrl: null,
-      recordingTime: 0,
-      volumeLevel: 0,
-    }));
-    audioChunksRef.current = [];
-
-    try {
-      // Check browser support first
-      const supportError = checkRecordingSupport();
-      if (supportError) {
-        throw new Error(supportError);
+  const startRecording = useCallback(
+    async (mode: "repeating" | "shadowing" = "repeating") => {
+      // If repeating: stop any playing model audio before opening the microphone
+      if (mode === "repeating" && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("shadowlog:stop-model-audio"));
       }
-
-      // Request microphone stream with selected device or fallback
-      // When mode is 'shadowing', earphones are assumed so echoCancellation is set to false to prevent ducking
-      let stream: MediaStream;
-      const baseConstraints: MediaTrackConstraints = {
-        deviceId: selectedDeviceId ? { ideal: selectedDeviceId } : undefined,
-        echoCancellation: mode === "shadowing" ? false : true,
-        noiseSuppression: true,
-      };
+      cleanupAudio();
+      setState((prev) => ({
+        ...prev,
+        error: null,
+        audioBlob: null,
+        audioUrl: null,
+        recordingTime: 0,
+        volumeLevel: 0,
+      }));
+      audioChunksRef.current = [];
 
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: baseConstraints,
-        });
-      } catch (constraintErr) {
-        // Fallback for Bluetooth headsets that fail with strict DSP filters (SCO profile issue)
-        console.warn("Retrying getUserMedia with relaxed constraints for Bluetooth compatibility:", constraintErr);
+        // Check browser support first
+        const supportError = checkRecordingSupport();
+        if (supportError) {
+          throw new Error(supportError);
+        }
+
+        // Determine effective device ID.
+        // On Android in shadowing mode, avoid Bluetooth earbud mic unless manually forced by user,
+        // so wireless earbuds (e.g. Galaxy Buds FE) stay in high-volume A2DP stereo mode.
+        let effectiveDeviceId = selectedDeviceId;
+        const isAndroid = isAndroidBrowser();
+        if (isAndroid && mode === "shadowing") {
+          let isManual = false;
+          try {
+            isManual = localStorage.getItem(STORAGE_KEY_MANUAL) === "true";
+          } catch {
+            // ignore
+          }
+          const currentDev = devices.find((d) => d.deviceId === effectiveDeviceId);
+          if (!isManual && (!currentDev || isBluetoothMicLabel(currentDev.label))) {
+            const preferredNonBt = pickPreferredMicDevice(devices, {
+              isAndroid: true,
+              isManualSelection: false,
+            });
+            if (preferredNonBt?.deviceId) {
+              effectiveDeviceId = preferredNonBt.deviceId;
+            }
+          }
+        }
+
+        // Request microphone stream with full DSP bypass in shadowing mode
+        let stream: MediaStream;
+        const baseConstraints = buildAudioConstraints(mode, effectiveDeviceId || undefined);
+
         try {
           stream = await navigator.mediaDevices.getUserMedia({
-            audio: selectedDeviceId
-              ? {
-                  deviceId: { ideal: selectedDeviceId },
-                  echoCancellation: mode === "shadowing" ? false : true,
-                }
-              : {
-                  echoCancellation: mode === "shadowing" ? false : true,
-                },
+            audio: baseConstraints,
           });
-        } catch {
-          // Final fallback: any microphone
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: mode === "shadowing" ? false : true,
-            },
-          });
+        } catch (constraintErr) {
+          // Fallback 1: Standard constraints without Chromium goog* extensions
+          console.warn(
+            "Retrying getUserMedia with standard constraints for Bluetooth compatibility:",
+            constraintErr
+          );
+          const isShadowing = mode === "shadowing";
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: effectiveDeviceId
+                ? {
+                    deviceId: { ideal: effectiveDeviceId },
+                    echoCancellation: !isShadowing,
+                    noiseSuppression: !isShadowing,
+                    autoGainControl: !isShadowing,
+                  }
+                : {
+                    echoCancellation: !isShadowing,
+                    noiseSuppression: !isShadowing,
+                    autoGainControl: !isShadowing,
+                  },
+            });
+          } catch {
+            // Final fallback: any microphone with raw shadowing flags
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: !isShadowing,
+                noiseSuppression: !isShadowing,
+                autoGainControl: !isShadowing,
+              },
+            });
+          }
         }
-      }
 
-      streamRef.current = stream;
+        streamRef.current = stream;
 
-      // Refresh devices to get device labels if permission was just granted
-      await refreshDevices();
-
-      // Save the active track's label to ensure Bluetooth device name is remembered even on first grant
-      const activeTrack = stream.getAudioTracks()[0];
-      if (activeTrack && activeTrack.label && selectedDeviceId) {
-        try {
-          localStorage.setItem(STORAGE_KEY_LABEL, activeTrack.label);
-        } catch {
-          // ignore
+        // Re-assert raw track constraints on active track in shadowing mode
+        const activeTrack = stream.getAudioTracks()[0];
+        if (mode === "shadowing" && activeTrack?.applyConstraints) {
+          activeTrack
+            .applyConstraints({
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false,
+            })
+            .catch(() => {});
         }
-      }
+
+        // Refresh devices to get device labels if permission was just granted
+        await refreshDevices();
+
+        // Save the active track's label only if not an unwanted Bluetooth auto-capture on Android
+        if (
+          activeTrack &&
+          activeTrack.label &&
+          effectiveDeviceId &&
+          (!isAndroid || !isBluetoothMicLabel(activeTrack.label))
+        ) {
+          try {
+            localStorage.setItem(STORAGE_KEY_LABEL, activeTrack.label);
+          } catch {
+            // ignore
+          }
+        }
+
+        // Notify listeners (e.g. SentenceCard) that the mic stream is active so model audio
+        // can resume/boost volume if Android OS briefly ducked or suspended playback during mic init
+        if (mode === "shadowing" && typeof window !== "undefined") {
+          window.dispatchEvent(new Event("shadowlog:shadowing-mic-ready"));
+        }
 
       // Check MediaRecorder availability
       if (typeof MediaRecorder === "undefined") {
@@ -346,7 +536,10 @@ export function useAudioRecorder() {
 
       if (AudioCtx) {
         try {
-          const audioCtx = new AudioCtx();
+          const audioCtx =
+            mode === "shadowing"
+              ? new AudioCtx({ latencyHint: "playback" })
+              : new AudioCtx();
           audioContextRef.current = audioCtx;
 
           if (audioCtx.state === "suspended") {
@@ -451,7 +644,7 @@ export function useAudioRecorder() {
         error: errorMsg,
       }));
     }
-  }, [cleanupAudio, updateVolumeMeter, selectedDeviceId, refreshDevices]);
+  }, [cleanupAudio, updateVolumeMeter, selectedDeviceId, devices, refreshDevices]);
 
   const stopRecording = useCallback(() => {
     if (

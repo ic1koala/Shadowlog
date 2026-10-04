@@ -1,6 +1,10 @@
 "use client";
 
-import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import {
+  useAudioRecorder,
+  isBluetoothMicLabel,
+  isAndroidBrowser,
+} from "@/hooks/use-audio-recorder";
 import {
   Mic,
   RotateCcw,
@@ -56,8 +60,13 @@ export function AudioRecorder({
 
   const [isPlayingRecorded, setIsPlayingRecorded] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
   const lastDurationRef = useRef<number>(0);
+
+  useEffect(() => {
+    setIsAndroid(isAndroidBrowser());
+  }, []);
 
   // Keep track of the final duration before timer resets
   useEffect(() => {
@@ -138,6 +147,13 @@ export function AudioRecorder({
   };
 
   const isEvaluatedOrSubmitted = hasEvaluated || hasSubmitted || isTranscribing;
+  const selectedDevice = devices.find((d) => d.deviceId === selectedDeviceId);
+  const isBluetoothSelected = Boolean(
+    selectedDevice && isBluetoothMicLabel(selectedDevice.label)
+  );
+  const hasAnyBluetoothDevice = devices.some((d) =>
+    isBluetoothMicLabel(d.label)
+  );
 
   return (
     <div className="w-full bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5 sm:space-y-6">
@@ -158,7 +174,7 @@ export function AudioRecorder({
             {/* Device Selector */}
             {devices.length > 0 && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 px-2.5 py-1.5 rounded-xl border border-border/60 shadow-2xs">
-                {devices.find((d) => d.deviceId === selectedDeviceId && /airpods|bluetooth|headset|wireless|buds|wh-|wf-/i.test(d.label)) ? (
+                {isBluetoothSelected ? (
                   <Headphones className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                 ) : (
                   <SlidersHorizontal className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -177,7 +193,7 @@ export function AudioRecorder({
                 >
                   <option value="">デフォルトマイク</option>
                   {devices.map((device, idx) => {
-                    const isBt = /airpods|bluetooth|headset|wireless|buds|wh-|wf-/i.test(device.label);
+                    const isBt = isBluetoothMicLabel(device.label);
                     return (
                       <option key={device.deviceId || idx} value={device.deviceId}>
                         {isBt ? "🎧 " : ""}{device.label || `マイク ${idx + 1}`}
@@ -194,22 +210,34 @@ export function AudioRecorder({
                 type="button"
                 onClick={requestDeviceAccess}
                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition shadow-2xs cursor-pointer shrink-0"
-                title="ブラウザのマイク許可を有効にしてAirPods等の名称を表示"
+                title="ブラウザのマイク許可を有効にしてイヤホン・マイクの名称を表示"
               >
                 <Headphones className="w-3 h-3" />
-                <span>AirPods等の名前を表示</span>
+                <span>マイク・イヤホン名を表示</span>
               </button>
             )}
 
-            {/* AirPods active badge */}
-            {devices.some((d) => d.deviceId === selectedDeviceId && /airpods|bluetooth|headset|wireless|buds|wh-|wf-/i.test(d.label)) && (
+            {/* Bluetooth / Android Audio Mode status badge */}
+            {isBluetoothSelected ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-500/20 shrink-0">
-                🎧 AirPods接続中
+                🎧 Bluetoothマイク選択中
               </span>
-            )}
+            ) : isAndroid && hasAnyBluetoothDevice ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 shrink-0">
+                🔊 高音質メディア維持モード（本体マイク入力）
+              </span>
+            ) : null}
           </div>
         )}
       </div>
+
+      {/* Android + Bluetooth Earbuds Tip when user manually picked a Bluetooth mic */}
+      {isAndroid && isBluetoothSelected && !isRecording && (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-[11px] sm:text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+          💡 <strong>Android＋ワイヤレスイヤホン（Galaxy Buds等）をご利用の方へ：</strong>
+          イヤホン側のマイクを入力に使うとAndroidの仕様上「通話モード」に切り替わりお手本音量が下がる場合があります。お手本が小さい場合は、上のマイク選択で<strong>「スピーカーフォン / 本体マイク」</strong>を選ぶか、上の<strong>「🔊 音量ブースト ON」</strong>をご利用ください。
+        </div>
+      )}
 
       {/* Error Message Box */}
       {error && (

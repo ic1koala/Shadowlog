@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Play, Pause, RotateCcw, Sparkles } from "lucide-react";
+import { Play, Pause, RotateCcw, Sparkles, Volume2 } from "lucide-react";
 import { SentenceResponse } from "@/types";
 import { getChunkSlashIndices } from "@/lib/diff/chunk-splitter";
 import { calculatePlaybackWpmMap, PlaybackSpeed } from "@/lib/diff/wpm-calculator";
@@ -10,6 +10,12 @@ import {
   fetchWordTranslationAsync,
   cleanWord,
 } from "@/lib/practice/word-dictionary";
+import { isAndroidBrowser } from "@/hooks/use-audio-recorder";
+
+const VOLUME_BOOST_STORAGE_KEY = "shadowlog_volume_boost";
+// Gain multipliers (> 1.0 amplifies HTMLAudioElement via Web Audio API GainNode + Compressor limiter)
+const BOOST_GAIN_NORMAL = 2.2;
+const BOOST_GAIN_SHADOWING = 2.6;
 
 interface SentenceCardProps {
   sentence: SentenceResponse | null;
@@ -80,11 +86,134 @@ export function SentenceCard({
   const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, string>>({});
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
+  const [isVolumeBoosted, setIsVolumeBoosted] = useState<boolean>(false);
   const [, setVoicesLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackAudioCtxRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const connectedElementsRef = useRef<WeakSet<HTMLAudioElement>>(new WeakSet());
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const rafIdRef = useRef<number | null>(null);
   const playDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize volume boost preference (auto-enabled by default on Android to counteract Bluetooth/OS ducking)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(VOLUME_BOOST_STORAGE_KEY);
+      if (saved === "true") {
+        setIsVolumeBoosted(true);
+      } else if (saved === "false") {
+        setIsVolumeBoosted(false);
+      } else if (isAndroidBrowser()) {
+        setIsVolumeBoosted(true);
+      }
+    } catch {
+      if (isAndroidBrowser()) {
+        setIsVolumeBoosted(true);
+      }
+    }
+  }, []);
+
+  // Compute target Web Audio gain value
+  const getTargetGain = useCallback(
+    (boosted: boolean, rec: boolean, recType?: "repeating" | "shadowing") => {
+      if (!boosted) return 1.0;
+      return rec && recType === "shadowing"
+        ? BOOST_GAIN_SHADOWING
+        : BOOST_GAIN_NORMAL;
+    },
+    []
+  );
+
+  // Connect HTMLAudioElement to Web Audio API GainNode + DynamicsCompressorNode (soft limiter)
+  const ensureWebAudioBoost = useCallback(
+    (audio: HTMLAudioElement) => {
+      if (typeof window === "undefined") return;
+      audio.volume = 1.0;
+
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!AudioCtx) return;
+
+      try {
+        let ctx = playbackAudioCtxRef.current;
+        if (!ctx || ctx.state === "closed") {
+          ctx = new AudioCtx({ latencyHint: "playback" });
+          playbackAudioCtxRef.current = ctx;
+
+          const gainNode = ctx.createGain();
+          gainNode.gain.value = getTargetGain(
+            isVolumeBoosted,
+            isRecording,
+            recordingType
+          );
+
+          // Soft limiter so boosted audio never clips even at 2.6x gain
+          const compressor = ctx.createDynamicsCompressor();
+          compressor.threshold.value = -3;
+          compressor.knee.value = 6;
+          compressor.ratio.value = 12;
+          compressor.attack.value = 0.003;
+          compressor.release.value = 0.15;
+
+          gainNode.connect(compressor);
+          compressor.connect(ctx.destination);
+          gainNodeRef.current = gainNode;
+        }
+
+        if (ctx.state === "suspended") {
+          ctx.resume().catch(() => {});
+        }
+
+        if (gainNodeRef.current) {
+          gainNodeRef.current.gain.value = getTargetGain(
+            isVolumeBoosted,
+            isRecording,
+            recordingType
+          );
+        }
+
+        if (!connectedElementsRef.current.has(audio) && gainNodeRef.current) {
+          const source = ctx.createMediaElementSource(audio);
+          source.connect(gainNodeRef.current);
+          connectedElementsRef.current.add(audio);
+        }
+      } catch (err) {
+        // Fallback gracefully to standard HTMLAudioElement output if Web Audio API fails
+        console.warn("Web Audio API boost connection skipped:", err);
+      }
+    },
+    [getTargetGain, isVolumeBoosted, isRecording, recordingType]
+  );
+
+  // Dynamically update GainNode whenever boost toggle or shadowing state changes
+  useEffect(() => {
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = getTargetGain(
+        isVolumeBoosted,
+        isRecording,
+        recordingType
+      );
+    }
+    if (audioRef.current) {
+      audioRef.current.volume = 1.0;
+    }
+  }, [isVolumeBoosted, isRecording, recordingType, getTargetGain]);
+
+  const toggleVolumeBoost = useCallback(() => {
+    setIsVolumeBoosted((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(VOLUME_BOOST_STORAGE_KEY, String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
 
   // Smooth sliding karaoke pill state & refs
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -168,6 +297,40 @@ export function SentenceCard({
     window.addEventListener("shadowlog:stop-model-audio", handleForceStop);
     return () => window.removeEventListener("shadowlog:stop-model-audio", handleForceStop);
   }, [stopModelAudio]);
+
+  // When shadowing mic finishes opening on Android, re-assert AudioContext resume & boosted gain
+  // in case Android OS briefly suspended or ducked the media stream during getUserMedia initialization
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleShadowingMicReady = () => {
+      if (audioRef.current) {
+        audioRef.current.volume = 1.0;
+        ensureWebAudioBoost(audioRef.current);
+      }
+      if (
+        playbackAudioCtxRef.current &&
+        playbackAudioCtxRef.current.state === "suspended"
+      ) {
+        playbackAudioCtxRef.current.resume().catch(() => {});
+      }
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = getTargetGain(
+          isVolumeBoosted || isAndroidBrowser(),
+          true,
+          "shadowing"
+        );
+      }
+    };
+    window.addEventListener(
+      "shadowlog:shadowing-mic-ready",
+      handleShadowingMicReady
+    );
+    return () =>
+      window.removeEventListener(
+        "shadowlog:shadowing-mic-ready",
+        handleShadowingMicReady
+      );
+  }, [ensureWebAudioBoost, getTargetGain, isVolumeBoosted]);
 
   // Pronounce an individual English word via SpeechSynthesis (User request ②)
   const speakSingleWord = useCallback(
@@ -448,6 +611,7 @@ export function SentenceCard({
       utterance.lang = "en-US";
       utterance.rate = playbackSpeed;
       utterance.pitch = 1.0;
+      utterance.volume = 1.0;
 
       const bestVoice = findBestEnglishVoice(voicesRef.current);
       if (bestVoice) {
@@ -529,6 +693,13 @@ export function SentenceCard({
       }
 
       audioRef.current.playbackRate = playbackSpeed;
+      audioRef.current.volume = 1.0;
+
+      // Connect Web Audio API gain boost when volume boost is enabled (auto-enabled on Android)
+      // or if this audio element was already routed through the Web Audio graph
+      if (isVolumeBoosted || connectedElementsRef.current.has(audioRef.current)) {
+        ensureWebAudioBoost(audioRef.current);
+      }
 
       clearPendingPlay();
       // Immediately highlight the first word to draw focus and prepare learner
@@ -540,6 +711,13 @@ export function SentenceCard({
       // Delay audio playback start slightly (~250ms) so user is ready and highlight firmly leads
       playDelayTimerRef.current = setTimeout(() => {
         if (!audioRef.current) return;
+        audioRef.current.volume = 1.0;
+        if (
+          playbackAudioCtxRef.current &&
+          playbackAudioCtxRef.current.state === "suspended"
+        ) {
+          playbackAudioCtxRef.current.resume().catch(() => {});
+        }
         audioRef.current.currentTime = 0;
         audioRef.current
           .play()
@@ -560,6 +738,8 @@ export function SentenceCard({
   }, [
     sentence,
     playbackSpeed,
+    isVolumeBoosted,
+    ensureWebAudioBoost,
     parsedWords,
     clearPendingPlay,
     speakWithSpeechSynthesis,
@@ -804,6 +984,32 @@ export function SentenceCard({
               WPM
             </span>
           </div>
+
+          {/* Volume Boost Button (counteracts Android/Bluetooth earphone ducking during shadowing) */}
+          <button
+            type="button"
+            onClick={() => {
+              const nextBoost = !isVolumeBoosted;
+              toggleVolumeBoost();
+              if (nextBoost && audioRef.current) {
+                ensureWebAudioBoost(audioRef.current);
+              }
+            }}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition min-h-[40px] shrink-0 cursor-pointer border ${
+              isVolumeBoosted
+                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 shadow-2xs"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground border-border/60"
+            }`}
+            title="Android＋ワイヤレスイヤホン（Galaxy Buds等）でのシャドーイング時に、お手本音声が小さくなる現象を防ぐ音量増幅モードです"
+            aria-pressed={isVolumeBoosted}
+          >
+            <Volume2
+              className={`w-3.5 h-3.5 shrink-0 ${
+                isVolumeBoosted ? "text-amber-500" : "text-muted-foreground"
+              }`}
+            />
+            <span>{isVolumeBoosted ? "音量ブースト ON" : "音量ブースト"}</span>
+          </button>
         </div>
 
         {flippedWordIndices.size > 0 && (

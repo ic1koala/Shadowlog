@@ -91,6 +91,7 @@
 - [x] **【完了・FB-029】①ポップアップz-index最前面化（`z-[9999]`）＆モーダル表示時バー非表示、②単語フリップ時のネイティブ発音音声自動再生、③判定前「録り直す」導線強化（チケット未消費案内＆判定前フローティングバー新設）**
 - [x] **【完了・FB-030】管理者専用ダッシュボード（`/admin/customers`）のレイアウトガタつき全面修正（ヘッダー縮小・KPIカード高さ均一化・検索/フィルター配置整流化・モバイルカード2x2均一枠組み・デスクトップテーブル垂直中央揃え・列幅固定・余白ハック廃止）**
 - [x] **【完了・FB-031】アプリ全体コード監査 ＆ セキュリティ・データ整合性・品質の一括修正（Stripe以外全項目：`/api/waitlist`認証修正、OpenAI系APIレート制限＆サイズ制限、`sentence-bank/rotate`・`analytics/log`認証保護、`/api/feedback` HTMLエスケープ強化、練習セッションSupabase二重保存解消、`/practice`初回マウント多重発火防止、ESLintエラー全24件解消）**
+- [x] **【完了・FB-032】Android（Galaxy S26＋Galaxy Buds FE等）シャドーイング録音時の音量低下対策（①Androidでの本体マイク自動優先によるBluetooth A2DP維持・HFP通話モード移行防止、②WebRTC DSP `echoCancellation / noiseSuppression / autoGainControl / goog*` 全面OFF、③Web Audio API `GainNode` 2.2x〜2.6x増幅＋リミッター＆「🔊 音量ブースト」ボタン新設）**
 - [ ] **【着手準備】Phase 2: 弱点データ蓄積基盤（Supabase `user_weaknesses` ＆ `/api/transcribe-diff`）**
 - [ ] **【着手準備】Phase 3: リベンジ例文自動生成プロンプト注入（`/api/generate-sentence`）**
 - [ ] 【進行中】クローズドβテスター（第1陣5名 ➔ 30〜50名）の利用ログ・フィードバック定点観測
