@@ -30,6 +30,7 @@ import {
   Megaphone,
   MessageSquare,
   BookOpen,
+  Bell,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -42,6 +43,7 @@ import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
 import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
 import { PlanComparisonSection } from "@/components/features/settings/PlanComparisonSection";
 import { AnnouncementHistorySection } from "@/components/features/announcements/AnnouncementHistorySection";
+import { ReminderSettingsSection } from "@/components/features/settings/ReminderSettingsSection";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 
@@ -108,6 +110,7 @@ export default function SettingsPage() {
   const quickNavItems = [
     { id: "section-account", label: "アカウント", icon: User },
     { id: "section-announcements", label: "お知らせ", icon: Megaphone },
+    { id: "section-reminder", label: "リマインド", icon: Bell },
     { id: "section-assessment", label: "レベル判定", icon: Target },
     { id: "section-learning", label: "学習設定", icon: Briefcase },
     { id: "section-mic", label: "マイク設定", icon: Mic },
@@ -577,6 +580,11 @@ export default function SettingsPage() {
       {/* ── 2. お知らせ・キャンペーン履歴 ── */}
       <div id="section-announcements">
         <AnnouncementHistorySection />
+      </div>
+
+      {/* ── 2.5 毎日の学習リマインド通知（Webプッシュ） ── */}
+      <div id="section-reminder">
+        <ReminderSettingsSection />
       </div>
 
       {/* ── 3. レベル判定テスト ── */}

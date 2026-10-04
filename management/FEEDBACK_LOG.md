@@ -53,6 +53,7 @@ flowchart LR
 | FB-030 | 2026/10/02 | オーナー | 管理画面UI・レスポンシブ | 管理者専用ダッシュボード（/admin/customers）のレイアウトガタつき全面修正（ヘッダー縮小・KPIカード高さ均一化・検索/フィルター配置整流化・モバイルカード2x2均一枠組み・デスクトップテーブル垂直中央揃え・列幅固定・余白ハック廃止） | 高 | 完了 | /admin/customers/page.tsx を全面改修。ヘッダーの折り返し防止、KPIカードのh-full均等化、検索・フィルタのグリッド化、モバイルカード2x2の全セル枠線統一、テーブルの各列幅固定＆align-middle＆負マージン除去を実装 |
 | FB-031 | 2026/10/04 | オーナー・全体監査 | セキュリティ・データ整合性・品質 | アプリ全体のコード監査および修正（Stripe以外すべて）：①/api/waitlist管理者ヘッダーバイパス修正、②/reviewデモ切替ボタンのdevelopment限定化、③OpenAI系4APIのレート制限＆音声10MB制限、④/api/sentence-bank/rotate＆/api/analytics/log認証保護、⑤/api/feedbackのHTMLエスケープ＆画像5MB制限、⑥練習履歴Supabase二重保存解消＆/api/statsユーザー分離、⑦/practice初回マウント多重発火防止、⑧UpgradeModalジャンル表記更新、⑨環境変数誤記整理・全ESLintエラー解消・npm audit fix適用 | 最高 | 完了 | rate-limiter.ts新設、全API・フロントエンド・Lint修正完了（TypeScriptエラー0件、ESLintエラー0件、Vitest全153テスト合格、本番ビルド成功） |
 | FB-032 | 2026/10/04 | テスター・オーナー | 録音・音響制御（Android＋無線イヤホン） | Android（Galaxy S26＋Galaxy Buds FE）でのシャドーイング録音中にお手本音声が小さくなる現象の対策と修正 | 最高 | 完了 | ①AndroidでBluetoothマイクの自動選択を廃止し本体マイク入力＋A2DP高音質ステレオ出力維持を優先、②シャドーイング時のWebRTC全DSP（echoCancellation/noiseSuppression/autoGainControl/goog*）完全無効化、③Web Audio API（GainNode 2.2x〜2.6x＋Compressorリミッター）による音量ブースト（Android自動ON・切替ボタン付）を実装（全155テスト合格） |
+| FB-033 | 2026/10/04 | オーナー | 習慣化・通知UX | メール通知は溜まって嫌がられるため行わず、「① Webプッシュ通知」のみで習慣化リマインド機能を実装（iPhone用ホーム画面追加ガイド＆当日練習済み自動スキップ＆テスト通知ボタン付き） | 高 | 完了 | WEB_PUSH_REMINDER_SPEC.md 準拠、Service Worker (`public/sw.js`)・設定画面リマインドカード・iPhoneホーム画面3ステップ案内・当日練習済み自動スキップ・テスト通知・DB/Cron APIを実装（全160テスト合格） |
 
 ---
 

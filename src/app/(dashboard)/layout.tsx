@@ -7,6 +7,13 @@ import { Mic, BarChart2, Settings, Sparkles, GraduationCap } from "lucide-react"
 import { TicketBadge } from "@/components/features/subscription/TicketBadge";
 import { AnnouncementModal } from "@/components/features/announcements/AnnouncementModal";
 import { hasUnreadLaterAnnouncements } from "@/lib/storage/announcement-store";
+import {
+  getReminderSettings,
+  hasPracticedToday,
+  registerServiceWorker,
+  shouldFireDailyReminder,
+  triggerDailyReminderNotification,
+} from "@/lib/notifications/push-manager";
 
 export default function DashboardLayout({
   children,
@@ -24,6 +31,46 @@ export default function DashboardLayout({
 
     window.addEventListener("shadowlog:announcements-update", updateRedDot);
     return () => window.removeEventListener("shadowlog:announcements-update", updateRedDot);
+  }, []);
+
+  // Smart Web Push Reminder schedule monitor (fires at most once/day if user hasn't practiced today)
+  useEffect(() => {
+    const checkAndTriggerReminder = () => {
+      const settings = getReminderSettings();
+      if (!settings.enabled) return;
+      const practiced = hasPracticedToday();
+      if (shouldFireDailyReminder(settings, practiced)) {
+        void triggerDailyReminderNotification();
+      }
+    };
+
+    const initialSettings = getReminderSettings();
+    if (initialSettings.enabled) {
+      void registerServiceWorker();
+      checkAndTriggerReminder();
+    }
+
+    const intervalId = setInterval(checkAndTriggerReminder, 60_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkAndTriggerReminder();
+      }
+    };
+
+    window.addEventListener(
+      "shadowlog:reminder-settings-update",
+      checkAndTriggerReminder
+    );
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener(
+        "shadowlog:reminder-settings-update",
+        checkAndTriggerReminder
+      );
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const navItems = [
