@@ -67,9 +67,12 @@ function getSupportedMimeType(): string {
 
 /**
  * Checks if a microphone device label corresponds to Bluetooth / wireless earbuds.
+ * Wired headsets, the phone's earpiece mic ("Headset earpiece" on Android Chrome) and USB mics
+ * are NOT Bluetooth and do not trigger HFP/SCO call mode, so they are excluded.
  */
 export function isBluetoothMicLabel(label: string): boolean {
   if (!label) return false;
+  if (/wired|earpiece|有線|usb/i.test(label)) return false;
   return /airpods|bluetooth|headset|wireless|buds|galaxy\s*buds|pixel\s*buds|wh-|wf-|earbuds|hands-free|ハンズフリー/i.test(
     label
   );
@@ -86,28 +89,48 @@ export function isAndroidBrowser(userAgent?: string): boolean {
 }
 
 /**
+ * Checks if the current browser is running on iOS / iPadOS (including iPadOS desktop-mode UA).
+ */
+export function isIOSBrowser(userAgent?: string, maxTouchPoints?: number): boolean {
+  const ua =
+    userAgent ??
+    (typeof navigator !== "undefined" ? navigator.userAgent : "");
+  if (/iphone|ipad|ipod/i.test(ua)) return true;
+  const touch =
+    maxTouchPoints ??
+    (typeof navigator !== "undefined" ? navigator.maxTouchPoints || 0 : 0);
+  // iPadOS 13+ reports a Macintosh UA; distinguish by touch support
+  return /macintosh/i.test(ua) && touch > 1;
+}
+
+/**
  * Builds optimal MediaTrackConstraints for the given recording mode.
- * On Android (e.g. Galaxy S26 + Galaxy Buds FE), leaving noiseSuppression or autoGainControl
- * enabled in shadowing mode triggers WebRTC VOICE_COMMUNICATION / HAL DSP ducking, which
- * severely attenuates model audio playback. Disabling all DSP flags in shadowing mode keeps
- * the audio stream in raw capture mode without ducking media output.
+ * - Repeating: full DSP (AEC / NS / AGC) for clean speech capture.
+ * - Shadowing on Android (e.g. Galaxy S26 + Galaxy Buds FE): leaving noiseSuppression or
+ *   autoGainControl enabled triggers WebRTC VOICE_COMMUNICATION / HAL DSP ducking, which
+ *   severely attenuates model audio playback, so ALL DSP flags are disabled.
+ * - Shadowing on iOS / Desktop: keeps the previously verified behavior (AEC off only), so
+ *   iPhone + earphones (already confirmed fixed) and PC recording levels are not regressed.
  */
 export function buildAudioConstraints(
   mode: "repeating" | "shadowing",
-  deviceId?: string
+  deviceId?: string,
+  isAndroid: boolean = isAndroidBrowser()
 ): MediaTrackConstraints & Record<string, unknown> {
   const isShadowing = mode === "shadowing";
-  const constraints: MediaTrackConstraints & Record<string, unknown> = {
-    echoCancellation: !isShadowing,
-    noiseSuppression: !isShadowing,
-    autoGainControl: !isShadowing,
-  };
+  const fullBypass = isShadowing && isAndroid;
+
+  const constraints: MediaTrackConstraints & Record<string, unknown> = isShadowing
+    ? fullBypass
+      ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      : { echoCancellation: false, noiseSuppression: true }
+    : { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
 
   if (deviceId) {
     constraints.deviceId = { ideal: deviceId };
   }
 
-  if (isShadowing) {
+  if (fullBypass) {
     // Chromium-specific flags to prevent Android WebRTC AudioManager from entering voice-call DSP mode
     constraints.googEchoCancellation = false;
     constraints.googAutoGainControl = false;
@@ -167,21 +190,27 @@ export function pickPreferredMicDevice(
 
   if (!labelsPresent) return undefined;
 
-  // 2. Android default: Prefer built-in phone mic (non-Bluetooth) so wireless earbuds stay in A2DP stereo output mode
+  // 2. Android: only intervene when a Bluetooth input exists (to keep earbuds in A2DP stereo mode).
+  //    Without Bluetooth (wired earphones / no earphones), keep the OS default exactly as before.
   if (options.isAndroid) {
+    const hasBluetoothInput = audioInputs.some((d) => isBluetoothMicLabel(d.label));
+    if (!hasBluetoothInput) return undefined;
+
     const nonBtDevices = audioInputs.filter(
       (d) =>
         d.deviceId &&
+        d.deviceId !== "default" &&
         d.deviceId !== "communications" &&
         !isBluetoothMicLabel(d.label)
     );
-    // Prefer explicitly labeled built-in / phone / speakerphone mic if present, otherwise first non-BT mic
+    // Prefer wired headset mic (best quality, no HFP), then phone built-in / speakerphone mic
+    const wired = nonBtDevices.find((d) => /wired|有線|usb/i.test(d.label));
     const explicitBuiltIn = nonBtDevices.find((d) =>
-      /本体|内蔵|built-in|phone|speakerphone|スピーカーフォン|bottom|handset/i.test(
+      /本体|内蔵|built-in|speakerphone|スピーカーフォン|bottom|handset|microphone|マイク/i.test(
         d.label
       )
     );
-    return explicitBuiltIn || nonBtDevices[0];
+    return wired || explicitBuiltIn || nonBtDevices[0];
   }
 
   // 3. iOS / Desktop smart suggestion: auto-pick AirPods or Bluetooth headset
@@ -442,9 +471,18 @@ export function useAudioRecorder() {
           }
         }
 
-        // Request microphone stream with full DSP bypass in shadowing mode
+        // Request microphone stream (full DSP bypass only for Android shadowing)
         let stream: MediaStream;
-        const baseConstraints = buildAudioConstraints(mode, effectiveDeviceId || undefined);
+        const baseConstraints = buildAudioConstraints(mode, effectiveDeviceId || undefined, isAndroid);
+
+        // Standard-only version (without Chromium goog* extensions) for fallbacks
+        const standardConstraints = (withDevice: boolean): MediaTrackConstraints => {
+          const { echoCancellation, noiseSuppression, autoGainControl } = baseConstraints;
+          const c: MediaTrackConstraints = { echoCancellation, noiseSuppression };
+          if (autoGainControl !== undefined) c.autoGainControl = autoGainControl;
+          if (withDevice && effectiveDeviceId) c.deviceId = { ideal: effectiveDeviceId };
+          return c;
+        };
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -456,39 +494,23 @@ export function useAudioRecorder() {
             "Retrying getUserMedia with standard constraints for Bluetooth compatibility:",
             constraintErr
           );
-          const isShadowing = mode === "shadowing";
           try {
             stream = await navigator.mediaDevices.getUserMedia({
-              audio: effectiveDeviceId
-                ? {
-                    deviceId: { ideal: effectiveDeviceId },
-                    echoCancellation: !isShadowing,
-                    noiseSuppression: !isShadowing,
-                    autoGainControl: !isShadowing,
-                  }
-                : {
-                    echoCancellation: !isShadowing,
-                    noiseSuppression: !isShadowing,
-                    autoGainControl: !isShadowing,
-                  },
+              audio: standardConstraints(true),
             });
           } catch {
-            // Final fallback: any microphone with raw shadowing flags
+            // Final fallback: any microphone
             stream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                echoCancellation: !isShadowing,
-                noiseSuppression: !isShadowing,
-                autoGainControl: !isShadowing,
-              },
+              audio: standardConstraints(false),
             });
           }
         }
 
         streamRef.current = stream;
 
-        // Re-assert raw track constraints on active track in shadowing mode
+        // Re-assert raw track constraints on Android shadowing only (iOS/desktop keep verified behavior)
         const activeTrack = stream.getAudioTracks()[0];
-        if (mode === "shadowing" && activeTrack?.applyConstraints) {
+        if (mode === "shadowing" && isAndroid && activeTrack?.applyConstraints) {
           activeTrack
             .applyConstraints({
               echoCancellation: false,

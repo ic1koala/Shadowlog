@@ -10,7 +10,7 @@ import {
   fetchWordTranslationAsync,
   cleanWord,
 } from "@/lib/practice/word-dictionary";
-import { isAndroidBrowser } from "@/hooks/use-audio-recorder";
+import { isAndroidBrowser, isIOSBrowser } from "@/hooks/use-audio-recorder";
 
 const VOLUME_BOOST_STORAGE_KEY = "shadowlog_volume_boost";
 // Gain multipliers (> 1.0 amplifies HTMLAudioElement via Web Audio API GainNode + Compressor limiter)
@@ -87,6 +87,9 @@ export function SentenceCard({
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [isVolumeBoosted, setIsVolumeBoosted] = useState<boolean>(false);
+  // Web Audio boost is disabled on iOS: routing <audio> through AudioContext there makes playback
+  // follow the silent switch and can go silent if the context is suspended. iPhone doesn't need it.
+  const [isBoostSupported, setIsBoostSupported] = useState<boolean>(false);
   const [, setVoicesLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playbackAudioCtxRef = useRef<AudioContext | null>(null);
@@ -99,6 +102,16 @@ export function SentenceCard({
   // Initialize volume boost preference (auto-enabled by default on Android to counteract Bluetooth/OS ducking)
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const hasWebAudio = Boolean(
+      window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    );
+    const supported = hasWebAudio && !isIOSBrowser();
+    setIsBoostSupported(supported);
+    if (!supported) {
+      setIsVolumeBoosted(false);
+      return;
+    }
     try {
       const saved = localStorage.getItem(VOLUME_BOOST_STORAGE_KEY);
       if (saved === "true") {
@@ -113,6 +126,18 @@ export function SentenceCard({
         setIsVolumeBoosted(true);
       }
     }
+  }, []);
+
+  // Close the playback AudioContext on unmount to avoid leaking audio contexts
+  useEffect(() => {
+    return () => {
+      const ctx = playbackAudioCtxRef.current;
+      if (ctx && ctx.state !== "closed") {
+        ctx.close().catch(() => {});
+      }
+      playbackAudioCtxRef.current = null;
+      gainNodeRef.current = null;
+    };
   }, []);
 
   // Compute target Web Audio gain value
@@ -131,6 +156,7 @@ export function SentenceCard({
     (audio: HTMLAudioElement) => {
       if (typeof window === "undefined") return;
       audio.volume = 1.0;
+      if (!isBoostSupported) return;
 
       const AudioCtx =
         window.AudioContext ||
@@ -186,7 +212,7 @@ export function SentenceCard({
         console.warn("Web Audio API boost connection skipped:", err);
       }
     },
-    [getTargetGain, isVolumeBoosted, isRecording, recordingType]
+    [getTargetGain, isVolumeBoosted, isRecording, recordingType, isBoostSupported]
   );
 
   // Dynamically update GainNode whenever boost toggle or shadowing state changes
@@ -298,15 +324,20 @@ export function SentenceCard({
     return () => window.removeEventListener("shadowlog:stop-model-audio", handleForceStop);
   }, [stopModelAudio]);
 
-  // When shadowing mic finishes opening on Android, re-assert AudioContext resume & boosted gain
-  // in case Android OS briefly suspended or ducked the media stream during getUserMedia initialization
+  // When the shadowing mic finishes opening, re-assert AudioContext resume & gain
+  // in case Android OS briefly suspended the media stream during getUserMedia initialization.
+  // Only touches the Web Audio graph if the audio element is ALREADY routed through it
+  // (never re-routes mid-playback), and respects the user's boost ON/OFF setting.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handleShadowingMicReady = () => {
       if (audioRef.current) {
         audioRef.current.volume = 1.0;
-        ensureWebAudioBoost(audioRef.current);
       }
+      if (!isBoostSupported) return;
+      const audio = audioRef.current;
+      if (!audio || !connectedElementsRef.current.has(audio)) return;
+
       if (
         playbackAudioCtxRef.current &&
         playbackAudioCtxRef.current.state === "suspended"
@@ -315,7 +346,7 @@ export function SentenceCard({
       }
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.value = getTargetGain(
-          isVolumeBoosted || isAndroidBrowser(),
+          isVolumeBoosted,
           true,
           "shadowing"
         );
@@ -330,7 +361,7 @@ export function SentenceCard({
         "shadowlog:shadowing-mic-ready",
         handleShadowingMicReady
       );
-  }, [ensureWebAudioBoost, getTargetGain, isVolumeBoosted]);
+  }, [getTargetGain, isVolumeBoosted, isBoostSupported]);
 
   // Pronounce an individual English word via SpeechSynthesis (User request ②)
   const speakSingleWord = useCallback(
@@ -985,7 +1016,8 @@ export function SentenceCard({
             </span>
           </div>
 
-          {/* Volume Boost Button (counteracts Android/Bluetooth earphone ducking during shadowing) */}
+          {/* Volume Boost Button (counteracts Android/Bluetooth earphone ducking during shadowing; hidden on iOS) */}
+          {isBoostSupported && (
           <button
             type="button"
             onClick={() => {
@@ -1010,6 +1042,7 @@ export function SentenceCard({
             />
             <span>{isVolumeBoosted ? "音量ブースト ON" : "音量ブースト"}</span>
           </button>
+          )}
         </div>
 
         {flippedWordIndices.size > 0 && (
