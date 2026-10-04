@@ -99,9 +99,12 @@ flowchart TD
   - **スライディングカラオケハイライト ＆ Diff凡例最適化**: 再生中テキストの滑らかなカラオケハイライトと、文字起こし結果直下へのDiff凡例配置（`4e2f95d`）。
   - **採点結果画面のフローティング「次のフレーズへ」バー ＆ ボタン状態制御**: 下部固定オレンジ色バー（スコアバッジ付）による即座の次問遷移。採点完了後は「判定する」ボタンをグレーアウトし、「録り直す」ボタンを青色ハイライトして誤操作を防止（`da3abeb`, `b1d50fe`）。
   - **バックグラウンド1問先読み（Prefetch 0.0秒遷移）**: `prefetchedItemRef` により1問目練習中に次問テキスト・TTS音声を裏で取得し、待ち時間 `0.0秒` で次問へ切り替え（`2605ee2`）。
-  - **録音開始時のモデル音声自動停止（リピーティング）＆ イヤホン推奨「シャドーイング同時録音」モード**:
-    - 一般画面および「🗣️ リピーティング録音」ではスピーカー再生音のマイク回り込みをゼロにするため録音開始時に模範音声を自動停止（`3e70ade`）。
-    - 管理者限定プレビューでは「🗣️ リピーティング録音」と「🎧 シャドーイング録音（イヤホン推奨）」の2ボタンに分割し、シャドーイング録音時は `echoCancellation: false` でダッキング（音量減衰）を防ぎつつ模範音声と録音をシンクロ開始＋音声終了1.5秒後に自動停止・採点へ遷移（`955a355`）。
+  - **2ボタン分割録音モード全ユーザー開放（リピーティング青 ／ シャドーイング紫）＆ Android音量ブースト**:
+    - 「🗣️ リピーティング録音（お手本停止・自習）」と「🎧 シャドーイング録音（イヤホンを装着し、しっかりと発声）」の2ボタン分割を全ユーザーへ正式開放。
+    - シャドーイング録音時は WebRTC DSP（`echoCancellation / noiseSuppression / autoGainControl`）を完全無効化してダッキング（音量低下）を防止し、Androidでは本体マイク入力優先＋Web Audio API（`GainNode` 2.2x〜2.6x増幅＋リミッター）による音量ブーストを実装。
+  - **習慣化Webプッシュ通知リマインド（メール通知なし・当日練習済み自動スキップ）**:
+    - 設定画面（`/settings`）の「🔔 リマインド」にて、希望時刻のWebプッシュ通知をON/OFF設定可能（Service Worker `/sw.js` 連携・即時テスト通知ボタン付）。
+    - iPhone Safari（未PWA）閲覧時には3ステップの「📲 ホーム画面に追加」案内カードを自動表示し、その日に1回でも練習済みの場合は通知を自動スキップするスマート判定（`FB-033`, `8d377c7`）。
   - **ダッシュボードWPM推移チャート（120 WPM目安ライン動的スケーリング）**: ユーザーの最大WPMに応じて「120 WPM目安ライン」のY座標を動的に計算・描画（`950c2d9`）。
   - **設定画面（`/settings`）の整理・アコーディオン化**: 上部クイックナビ、業種・難易度設定のアコーディオン折りたたみ、未読お知らせ時の「未読あり」バッジ表示（`e03fa66`, `1f59808`）。
   - **管理者限定プレビューモード**: `shadowlog.app@gmail.com` 専用 `🧪 テストボタンモード` トグル（新機能の段階的検証基盤、`5c294c4`, `bca75fc`, `955a355`）。
@@ -115,6 +118,7 @@ flowchart TD
   - `user_tickets`: tickets_used, pro_trials_used, daily_practice_count, last_practice_date
   - `practice_sessions`: id, user_id, text_en, text_jp, transcribed_text, accuracy_score, wpm, diff_result, coach_feedback, created_at
   - `weak_words`: user_id, word, fail_count, is_mastered, last_practiced_at
+  - `push_subscriptions`: id, user_id, endpoint, p256dh, auth, reminder_time, timezone, enabled, last_notified_date（Webプッシュ通知リマインド用、`8d377c7`）
   - `feedback_tickets`: id, category, email, content, screenshot_url, environment_info, status, created_at
   - `daily_analytics`: date, pv, uu, user_types, path_counts（日次アクセス永続保存）
 
