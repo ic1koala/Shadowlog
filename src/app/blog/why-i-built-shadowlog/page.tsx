@@ -173,7 +173,7 @@ export default function WhyIBuiltShadowlogBlogPage() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white">自分に関わる業界・興味に合わせた英文生成</strong>
-                    <p className="text-slate-400 mt-0.5">IT・営業・医療・日常会話など、自分が関わる範囲のフレーズがAIによって最適化されて生成されます。</p>
+                    <p className="text-slate-400 mt-0.5">IT・ビジネス・マーケティング・日常会話など、自分が関わる範囲のフレーズがAIによって最適化されて生成されます。</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2.5">

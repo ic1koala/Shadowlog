@@ -703,7 +703,7 @@ export default function SettingsPage() {
                   </span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-                  IT、ビジネス、金融など学習する業界特有の表現を選択
+                  IT・テック、ビジネス、マーケティング、日常会話から学習ジャンルを選択
                 </p>
               </div>
             </div>

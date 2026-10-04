@@ -225,7 +225,7 @@ export function PlanComparisonSection({
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>業界別特化英文生成（Tech / ビジネス / 医療など全開放）</span>
+                <span>業界別特化英文生成（Tech / ビジネス / マーケティング / 日常会話）</span>
               </li>
             </ul>
           </div>

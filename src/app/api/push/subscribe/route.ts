@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isValidReminderTime } from "@/lib/notifications/push-manager";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 function getAdminClient() {
   const url =
@@ -19,6 +20,17 @@ function getAdminClient() {
 }
 
 export async function POST(req: NextRequest) {
+  const rateLimit = checkRateLimit(req, "push-subscribe", 20, 60_000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      }
+    );
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const endpoint =
@@ -108,6 +120,17 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const rateLimit = checkRateLimit(req, "push-subscribe", 20, 60_000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      }
+    );
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const endpoint =

@@ -39,8 +39,19 @@ export function getClientIp(req: NextRequest): string {
  */
 export function checkRateLimit(
   req: NextRequest,
-  options: RateLimitOptions
+  optionsOrNamespace: RateLimitOptions | string,
+  maxRequestsArg?: number,
+  windowMsArg?: number
 ): RateLimitResult {
+  const options: RateLimitOptions =
+    typeof optionsOrNamespace === "string"
+      ? {
+          namespace: optionsOrNamespace,
+          maxRequests: maxRequestsArg ?? 20,
+          windowMs: windowMsArg ?? 60_000,
+        }
+      : optionsOrNamespace;
+
   if (process.env.NODE_ENV === "test") {
     return {
       allowed: true,
