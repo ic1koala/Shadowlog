@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
       topic?: string;
       mode?: string;
       weakWords?: string[];
+      customWords?: string[];
       excludeIds?: string[];
       preferBank?: boolean;
     } = {};
@@ -68,14 +69,22 @@ export async function POST(req: NextRequest) {
     const weakWords: string[] = Array.isArray(body.weakWords)
       ? body.weakWords.filter((w): w is string => typeof w === "string").slice(0, 5)
       : [];
+    const customWords: string[] = Array.isArray(body.customWords)
+      ? body.customWords
+          .filter((w): w is string => typeof w === "string")
+          .map((w) => w.trim().slice(0, 40))
+          .filter((w) => w.length > 0)
+          .slice(0, 3)
+      : [];
+    const hasCustomWords = customWords.length > 0;
     const excludeIds: string[] = Array.isArray(body.excludeIds)
       ? body.excludeIds.filter((id): id is string => typeof id === "string")
       : [];
     const preferBank = Boolean(body.preferBank);
 
-    // 1. If the sentence bank slot has reached 300 (or preferBank is requested), serve from the bank
-    const slotFull = await isSlotFull(industry, level, mode);
-    if (slotFull || preferBank) {
+    // 1. If the sentence bank slot has reached 300 (or preferBank is requested) and no customWords are specified, serve from the bank
+    const slotFull = !hasCustomWords && (await isSlotFull(industry, level, mode));
+    if (!hasCustomWords && (slotFull || preferBank)) {
       const banked = await pickFromSentenceBank({
         industry,
         level,
@@ -94,7 +103,7 @@ export async function POST(req: NextRequest) {
       const { systemPrompt, userPrompt } =
         mode === "passage"
           ? getPassageGenerationPrompt(industry, level, topic)
-          : getSentenceGenerationPrompt(industry, level, topic, weakWords);
+          : getSentenceGenerationPrompt(industry, level, topic, weakWords, undefined, customWords);
 
       // Generate sentence text with GPT-4o-mini
       const completion = await openai.chat.completions.create({
@@ -146,33 +155,48 @@ export async function POST(req: NextRequest) {
         mode,
       };
 
-      // Save newly generated sentence to the bank (up to 300 per slot)
-      const savedRecord = await saveToSentenceBank(responsePayload);
-      if (savedRecord) {
-        responsePayload.id = savedRecord.id;
+      // Save newly generated sentence to the shared bank only when not a personalized custom-word generation
+      if (!hasCustomWords) {
+        const savedRecord = await saveToSentenceBank(responsePayload);
+        if (savedRecord) {
+          responsePayload.id = savedRecord.id;
+        }
       }
 
       return NextResponse.json(responsePayload, { status: 200 });
     } catch (openaiErr) {
       console.warn("OpenAI API call failed, checking sentence bank or fallback:", openaiErr);
 
-      // Try sentence bank before static fallback
-      const banked = await pickFromSentenceBank({
-        industry,
-        level,
-        mode,
-        excludeIds,
-        weakWords,
-      });
-      if (banked) {
-        return NextResponse.json(banked, { status: 200 });
+      // Try sentence bank before static fallback (unless customWords were specifically requested)
+      if (!hasCustomWords) {
+        const banked = await pickFromSentenceBank({
+          industry,
+          level,
+          mode,
+          excludeIds,
+          weakWords,
+        });
+        if (banked) {
+          return NextResponse.json(banked, { status: 200 });
+        }
       }
 
       // Graceful fallback for offline / development / missing key
       let fallbackText = "";
       let fallbackJa = "";
 
-      if (mode === "passage") {
+      if (hasCustomWords) {
+        const [w1, w2, w3] = customWords;
+        const joinedEn = [w1, w2, w3].filter(Boolean).join(", ");
+        if (level === "beginner") {
+          fallbackText = `We need to focus on ${w1 || "quality"}${w2 ? ` and ${w2}` : ""} today.${w3 ? ` Let us check ${w3} together.` : ""}`;
+        } else if (level === "advanced") {
+          fallbackText = `To achieve sustainable growth this quarter, our team must prioritize ${w1 || "innovation"}${w2 ? ` while carefully managing ${w2}` : ""}.${w3 ? ` Furthermore, addressing ${w3} early will strengthen our long-term strategy.` : ""}`;
+        } else {
+          fallbackText = `Our team decided to focus on ${w1 || "efficiency"}${w2 ? ` and improve ${w2}` : ""} before the next milestone.${w3 ? ` This approach will help us resolve ${w3} smoothly.` : ""}`;
+        }
+        fallbackJa = `マイ単語（${joinedEn}）を取り入れた実践トレーニング用のカスタム英文です。`;
+      } else if (mode === "passage") {
         const passage = getFallbackPassage(industry, level);
         fallbackText = passage.english;
         fallbackJa = passage.japanese;

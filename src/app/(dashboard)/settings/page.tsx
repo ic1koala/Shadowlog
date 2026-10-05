@@ -44,6 +44,7 @@ import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
 import { PlanComparisonSection } from "@/components/features/settings/PlanComparisonSection";
 import { AnnouncementHistorySection } from "@/components/features/announcements/AnnouncementHistorySection";
 import { ReminderSettingsSection } from "@/components/features/settings/ReminderSettingsSection";
+import { CustomWordsSection } from "@/components/features/settings/CustomWordsSection";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 
@@ -815,6 +816,9 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {/* ── 5.5 カスタム生成用マイ単語（3単語登録） ── */}
+        <CustomWordsSection industry={industry} />
+
         {/* ── 6. 学習設定を保存するボタン ── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
           <div className="text-xs text-muted-foreground text-center sm:text-left">
@@ -837,6 +841,13 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
+
+        {/* ── 6.5 カスタム生成用マイ単語（3単語登録） ── */}
+        <CustomWordsSection
+          industry={industry}
+          plan={ticketStatus?.plan || "free"}
+          isLoggedIn={isLoggedIn}
+        />
       </div>
 
       {/* ── 7. 録音マイクの設定 ── */}

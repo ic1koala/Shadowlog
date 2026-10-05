@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { SentenceCard } from "@/components/features/practice/SentenceCard";
 import { AudioRecorder } from "@/components/features/practice/AudioRecorder";
 import { DiffViewer } from "@/components/features/practice/DiffViewer";
@@ -27,6 +28,12 @@ import {
   TicketStatus,
   getCurrentUserEmail,
 } from "@/lib/storage/ticket-store";
+import {
+  getCustomWords,
+  getCustomGenerationQuota,
+  consumeCustomGenerationQuota,
+  CustomGenerationQuota,
+} from "@/lib/storage/custom-words-store";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import {
@@ -66,6 +73,10 @@ export default function PracticePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeWeakWords, setActiveWeakWords] = useState<string[]>([]);
+  const [registeredCustomWords, setRegisteredCustomWords] = useState<string[]>([]);
+  const [activeCustomWords, setActiveCustomWords] = useState<string[]>([]);
+  const [customQuota, setCustomQuota] = useState<CustomGenerationQuota | null>(null);
+  const [customUpsellNotice, setCustomUpsellNotice] = useState<string | null>(null);
 
   // Floating recording bar state
   const [floatIsRecording, setFloatIsRecording] = useState(false);
@@ -98,6 +109,15 @@ export default function PracticePage() {
     setTicketStatus(s);
     setPlan(s.plan);
     setUserEmail(getCurrentUserEmail());
+    setRegisteredCustomWords(getCustomWords());
+    setCustomQuota(getCustomGenerationQuota());
+
+    const handleCustomWordsSync = () => {
+      setRegisteredCustomWords(getCustomWords());
+      setCustomQuota(getCustomGenerationQuota());
+    };
+    window.addEventListener("shadowlog:custom-words-update", handleCustomWordsSync);
+    window.addEventListener("shadowlog:ticket-update", handleCustomWordsSync);
 
     // Recover unsynced local sessions to Supabase and confirm authenticated email on mount
     if (typeof window !== "undefined") {
@@ -134,6 +154,7 @@ export default function PracticePage() {
         setUpgradeSuccess(`🎉 ${upgradedPlan === "pro" ? "Proプラン" : "ベースプラン"} へのアップグレードが完了しました！`);
         const updatedStatus = getTicketStatus();
         setTicketStatus(updatedStatus);
+        setCustomQuota(getCustomGenerationQuota());
         window.dispatchEvent(new Event("shadowlog:ticket-update"));
 
         // Clean up URL parameters so refresh doesn't trigger repeatedly
@@ -141,6 +162,11 @@ export default function PracticePage() {
         window.history.replaceState({}, "", cleanUrl);
       }
     }
+
+    return () => {
+      window.removeEventListener("shadowlog:custom-words-update", handleCustomWordsSync);
+      window.removeEventListener("shadowlog:ticket-update", handleCustomWordsSync);
+    };
   }, []);
 
   // Silently prefetches the next question in the background while the user is practicing
@@ -202,11 +228,17 @@ export default function PracticePage() {
     async (
       overrideIndustry?: Industry,
       overrideLevel?: DifficultyLevel,
-      overrideMode?: PracticeMode
+      overrideMode?: PracticeMode,
+      overrideCustomWords?: string[]
     ) => {
       const targetIndustry = normalizeIndustry(overrideIndustry || industry);
       const targetLevel = overrideLevel || level;
       const targetMode = overrideMode || practiceMode;
+      const customWordsToUse =
+        Array.isArray(overrideCustomWords) && overrideCustomWords.length > 0
+          ? overrideCustomWords
+          : [];
+      const isCustomGeneration = customWordsToUse.length > 0;
 
       // Check ticket limits before generating
       const currentStatus = getTicketStatus();
@@ -234,10 +266,12 @@ export default function PracticePage() {
       setActiveRetryTip(null);
       setIsSaved(false);
       setErrorMessage(null);
+      setCustomUpsellNotice(null);
 
-      // 0.0s instant swap if background-prefetched sentence is ready for the same conditions
+      // 0.0s instant swap if background-prefetched sentence is ready for the same conditions (and not a custom word generation)
       const prefetched = prefetchedSentenceRef.current;
       if (
+        !isCustomGeneration &&
         prefetched &&
         prefetched.industry === targetIndustry &&
         prefetched.level === targetLevel &&
@@ -245,6 +279,7 @@ export default function PracticePage() {
       ) {
         prefetchedSentenceRef.current = null;
         seenSentenceIdsRef.current.add(prefetched.sentence.id);
+        setActiveCustomWords([]);
         setSentence(prefetched.sentence);
         setIsLoadingSentence(false);
         void prefetchNextSentence(
@@ -257,6 +292,7 @@ export default function PracticePage() {
       }
 
       setIsLoadingSentence(true);
+      setActiveCustomWords(isCustomGeneration ? customWordsToUse : []);
 
       try {
         const res = await fetch("/api/generate-sentence", {
@@ -266,7 +302,8 @@ export default function PracticePage() {
             industry: targetIndustry,
             level: targetLevel,
             mode: targetMode,
-            weakWords: targetMode === "sentence" ? activeWeakWords : [],
+            weakWords: !isCustomGeneration && targetMode === "sentence" ? activeWeakWords : [],
+            customWords: isCustomGeneration ? customWordsToUse : undefined,
             excludeIds: Array.from(seenSentenceIdsRef.current),
           }),
         });
@@ -298,6 +335,38 @@ export default function PracticePage() {
     },
     [industry, level, practiceMode, activeWeakWords, prefetchNextSentence]
   );
+
+  const handleCustomWordGenerate = useCallback(() => {
+    const words = getCustomWords();
+    setRegisteredCustomWords(words);
+    if (words.length === 0) return;
+
+    const currentQuota = getCustomGenerationQuota();
+    setCustomQuota(currentQuota);
+
+    if (!currentQuota.canGenerate) {
+      if (currentQuota.plan === "base") {
+        setCustomUpsellNotice(
+          "本日のカスタム生成枠（3回）を使い切りました。Proプランなら1日10回までマイ単語生成を利用できます！"
+        );
+      } else if (currentQuota.plan === "pro") {
+        setCustomUpsellNotice(
+          "本日のカスタム生成枠（10回）を使い切りました。明日0:00（JST）にリセットされます。"
+        );
+      } else {
+        setCustomUpsellNotice(
+          "お試しカスタム生成枠（2回）を使い切りました。ベーシックプラン（1日3回）またはProプラン（1日10回）で毎日利用できます！"
+        );
+      }
+      return;
+    }
+
+    const { success, quota: nextQuota } = consumeCustomGenerationQuota();
+    setCustomQuota(nextQuota);
+    if (!success) return;
+
+    void fetchNewSentence(industry, level, "sentence", words);
+  }, [industry, level, fetchNewSentence]);
 
 const INDUSTRY_OPTIONS: Array<{ key: Industry; label: string }> = [
   { key: "tech", label: "Tech (IT・開発)" },
@@ -839,7 +908,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         ) : (
           <div className="space-y-2.5">
             {/* Quick condition bar when sentence is active */}
-            <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span>設定:</span>
                 <span className="font-bold text-foreground">
@@ -851,22 +920,88 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                 </span>
               </div>
               {sentence && (
-                <button
-                  onClick={() => {
-                    setSentence(null);
-                    setDiffResult(null);
-                    setTranscription("");
-                    setWpmInfo(undefined);
-                  }}
-                  className="text-primary hover:underline font-bold text-xs"
-                >
-                  条件を変更する
-                </button>
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                  {registeredCustomWords.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={handleCustomWordGenerate}
+                      disabled={isLoadingSentence}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-bold transition active:scale-95 disabled:opacity-50 ${
+                        customQuota && !customQuota.canGenerate
+                          ? "bg-muted/60 border-border text-muted-foreground hover:bg-muted"
+                          : "bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/35 text-amber-700 dark:text-amber-300 shadow-2xs"
+                      }`}
+                    >
+                      <span>
+                        ✨ マイ単語で生成 (
+                        {customQuota?.isDaily
+                          ? `本日残り ${customQuota.remainingCount}/${customQuota.maxLimit}`
+                          : `残り ${customQuota?.remainingCount ?? 0}/${customQuota?.maxLimit ?? 2}`}
+                        )
+                      </span>
+                    </button>
+                  ) : (
+                    <Link
+                      href="/settings#section-custom-words"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold text-[11px] sm:text-xs transition"
+                    >
+                      <span>✨ カスタム設定</span>
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setSentence(null);
+                      setDiffResult(null);
+                      setTranscription("");
+                      setWpmInfo(undefined);
+                      setActiveCustomWords([]);
+                    }}
+                    className="text-primary hover:underline font-bold text-xs"
+                  >
+                    条件を変更する
+                  </button>
+                </div>
               )}
             </div>
 
-            {/* Personalization badge: shown when weak words are being reinforced */}
-            {activeWeakWords.length > 0 && sentence && (
+            {/* Quota upsell notice when daily/trial custom generation limit is reached */}
+            {customUpsellNotice && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs animate-in fade-in-50">
+                <p className="font-medium leading-relaxed">{customUpsellNotice}</p>
+                {customQuota?.plan !== "pro" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowProModal(true)}
+                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-bold text-[11px] hover:bg-primary/90 transition shrink-0"
+                  >
+                    <Crown className="w-3.5 h-3.5" />
+                    <span>プラン詳細を見る</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Active Custom Words Badge */}
+            {activeCustomWords.length > 0 && sentence && (
+              <div className="flex items-center justify-between gap-2 flex-wrap px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] sm:text-xs font-semibold animate-in fade-in-50">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span>✨ マイ単語適用中:</span>
+                  <span className="font-bold text-foreground">
+                    [{activeCustomWords.join(", ")}]
+                  </span>
+                </div>
+                <Link
+                  href="/settings#section-custom-words"
+                  className="text-primary hover:underline font-bold text-[11px] shrink-0"
+                >
+                  単語変更 ↗
+                </Link>
+              </div>
+            )}
+
+            {/* Personalization badge: shown when weak words are being reinforced (and not custom word mode) */}
+            {activeCustomWords.length === 0 && activeWeakWords.length > 0 && sentence && (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-[11px] font-semibold w-fit animate-in fade-in-50">
                 <span>🎯</span>
                 <span>苦手単語『{activeWeakWords.slice(0, 2).join("」「")}』の特訓問題</span>

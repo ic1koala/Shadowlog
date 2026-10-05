@@ -55,6 +55,7 @@ flowchart LR
 | FB-032 | 2026/10/04 | テスター・オーナー | 録音・音響制御（Android＋無線イヤホン） | Android（Galaxy S26＋Galaxy Buds FE）でのシャドーイング録音中にお手本音声が小さくなる現象の対策と修正 | 最高 | 完了 | ①AndroidでBluetoothマイクの自動選択を廃止し本体マイク入力＋A2DP高音質ステレオ出力維持を優先、②シャドーイング時のWebRTC全DSP（echoCancellation/noiseSuppression/autoGainControl/goog*）完全無効化、③Web Audio API（GainNode 2.2x〜2.6x＋Compressorリミッター）による音量ブースト（Android自動ON・切替ボタン付）を実装（全155テスト合格） |
 | FB-033 | 2026/10/04 | オーナー | 習慣化・通知UX | メール通知は溜まって嫌がられるため行わず、「① Webプッシュ通知」のみで習慣化リマインド機能を実装（iPhone用ホーム画面追加ガイド＆当日練習済み自動スキップ＆テスト通知ボタン付き） | 高 | 完了 | WEB_PUSH_REMINDER_SPEC.md 準拠、Service Worker (`public/sw.js`)・設定画面リマインドカード・iPhoneホーム画面3ステップ案内・当日練習済み自動スキップ・テスト通知・DB/Cron APIを実装（全160テスト合格） |
 | FB-034 | 2026/10/05 | オーナー・月曜定期点検 | 文言統一・API保護 | ①旧ジャンル表記（医療・金融）3箇所を現在の4大ジャンル（Tech / ビジネス / マーケティング / 日常会話）へ統一、②`/api/push/subscribe` へのレートリミッター適用（20回/分） | 中 | 完了 | PlanComparisonSection.tsx・settings/page.tsx・blog/why-i-built-shadowlog の3箇所を4大ジャンル表記に統一し、`/api/push/subscribe` (POST/DELETE) に `checkRateLimit` 保護を実装 |
+| FB-035 | 2026/10/05 | オーナー | 独自機能・AI生成 | 学びたい英単語3つを設定画面で登録（候補自動提示あり・随時変更可）し、初級/中級/上級の語数に合わせてオリジナル作成（1文に限定せず自然な構成）。練習画面の「条件を変更する」ボタン付近にカスタム設定ボタンを配置（Base:1日3回 / Pro:1日10回） | 高 | 完了 | CUSTOM_TOPIC_WORDS_SPEC.md 準拠、custom-words-store.ts・CustomWordsSection.tsx・generate-sentence API・practice/page.tsx 実装完了（全166テスト合格） |
 
 ---
 

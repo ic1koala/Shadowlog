@@ -174,16 +174,32 @@ export function getSentenceGenerationPrompt(
   level: DifficultyLevel,
   topic?: string,
   weakWords?: string[],
-  referenceDate?: Date
+  referenceDate?: Date,
+  customWords?: string[]
 ): PromptTemplate {
-  const levelGuidelines: Record<DifficultyLevel, string> = {
-    beginner:
-      "Target length: 6 to 10 words. Use simple subject-verb-object structures, clear basic vocabulary, and no difficult jargon. Suitable for A1-A2 CEFR level.",
-    intermediate:
-      "Target length: 12 to 18 words. Use compound sentences, business idioms or domain terminology, and natural phrasing. Suitable for B1-B2 CEFR level.",
-    advanced:
-      "Target length: 20 to 30 words. Use complex sentence structures (relative clauses, conditionals, participial constructions), sophisticated industry vocabulary, and natural rhythm suitable for professional presentations or executive meetings. Suitable for C1 CEFR level.",
-  };
+  const cleanCustomWords = Array.isArray(customWords)
+    ? customWords.map((w) => w.trim()).filter((w) => w.length > 0).slice(0, 3)
+    : [];
+  const hasCustomWords = cleanCustomWords.length > 0;
+  const customWordList = hasCustomWords ? cleanCustomWords.join(", ") : null;
+
+  const levelGuidelines: Record<DifficultyLevel, string> = hasCustomWords
+    ? {
+        beginner:
+          "Target length: 10 to 14 words across 1 to 2 simple, connected sentences. Use clear basic structures Suitable for A1-A2 CEFR level.",
+        intermediate:
+          "Target length: 15 to 20 words across 1 to 2 natural, connected sentences. Use practical business or conversational phrasing Suitable for B1-B2 CEFR level.",
+        advanced:
+          "Target length: 21 to 28 words across 1 to 2 sophisticated, connected sentences. Suitable for C1 CEFR level.",
+      }
+    : {
+        beginner:
+          "Target length: 6 to 10 words. Use simple subject-verb-object structures, clear basic vocabulary, and no difficult jargon. Suitable for A1-A2 CEFR level.",
+        intermediate:
+          "Target length: 12 to 18 words. Use compound sentences, business idioms or domain terminology, and natural phrasing. Suitable for B1-B2 CEFR level.",
+        advanced:
+          "Target length: 20 to 30 words. Use complex sentence structures (relative clauses, conditionals, participial constructions), sophisticated industry vocabulary, and natural rhythm suitable for professional presentations or executive meetings. Suitable for C1 CEFR level.",
+      };
 
   const normInd = normalizeIndustry(industry);
   const situations = INDUSTRY_SITUATIONS[normInd] || INDUSTRY_SITUATIONS.tech;
@@ -191,22 +207,33 @@ export function getSentenceGenerationPrompt(
   const randomSeed = Math.random().toString(36).substring(2, 8);
   const seasonal = getSeasonalTrendContext(normInd, referenceDate);
 
-  const hasWeakWords = weakWords && weakWords.length > 0;
-  const weakWordList = hasWeakWords ? weakWords.slice(0, 3).join(", ") : null;
+  const hasWeakWords = !hasCustomWords && weakWords && weakWords.length > 0;
+  const weakWordList = hasWeakWords ? weakWords!.slice(0, 3).join(", ") : null;
 
   const systemPrompt = `You are an expert English language coach specializing in shadowing practice.
-Your task is to generate ONE fresh, authentic, contextually rich English sentence along with its natural Japanese translation.
+Your task is to generate ${hasCustomWords ? "a fresh, authentic 1-to-2 sentence English phrase" : "ONE fresh, authentic, contextually rich English sentence"} along with its natural Japanese translation.
 IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets (e.g., TOEIC, TOEFL), or copyrighted materials. All generated content must be 100% original and dynamically created.
 NEVER generate generic, repetitive, or cliché template sentences.
 
 Season & Trend Awareness:
-Subtly weave in realistic seasonal timing cues (such as current quarter or annual business cycle themes) and contemporary industry trends (such as modern tech tools, agile business, or digital workflows). The sentence must feel fresh, timely, and relevant to modern professionals, rather than generic textbook English.${hasWeakWords ? `
-\nPersonalization: The learner struggles with these words: [${weakWordList}]. Naturally incorporate 1 to 2 of these words into the sentence without forcing them awkwardly.` : ""}
+Subtly weave in realistic seasonal timing cues (such as current quarter or annual business cycle themes) and contemporary industry trends (such as modern tech tools, agile business, or digital workflows). The sentence must feel fresh, timely, and relevant to modern professionals, rather than generic textbook English.${
+    hasCustomWords
+      ? `
+
+Custom Topic Words Requirement (CRITICAL):
+- The user wants to practice these specific words/keywords: [${customWordList}].
+- If any of the user's words are written in Japanese, translate them into the most natural, idiomatic English words or phrases for this context.
+- You MUST naturally incorporate all of these user-specified words into the English text.
+- Do NOT awkwardly cram them into a single unnatural clause. Instead, compose 1 to 2 naturally connected sentences matching the target word count for the selected difficulty (${levelGuidelines[level]}) so the topic flows smoothly and authentically.`
+      : hasWeakWords
+      ? `\n\nPersonalization: The learner struggles with these words: [${weakWordList}]. Naturally incorporate 1 to 2 of these words into the sentence without forcing them awkwardly.`
+      : ""
+  }
 
 Strict Output Format:
 Return ONLY a valid JSON object with the following schema:
 {
-  "english": "The exact English sentence to practice.",
+  "english": "The exact English sentence(s) to practice.",
   "japanese": "自然な日本語訳。"
 }
 Do NOT include markdown fences, extra commentary, or additional fields.`;
@@ -217,11 +244,21 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
 - Seasonal Timing & Cycle: ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
 - Modern Trend Angle: ${seasonal.trendingTopic}
 - Difficulty Level: ${level} (${levelGuidelines[level]})
-- Variation Seed: ${randomSeed}${hasWeakWords ? `\n- Weak Words to reinforce: ${weakWordList}` : ""}
+- Variation Seed: ${randomSeed}${
+    hasCustomWords
+      ? `\n- Required Custom Words (translate to natural English if Japanese): ${customWordList}`
+      : hasWeakWords
+      ? `\n- Weak Words to reinforce: ${weakWordList}`
+      : ""
+  }
 
 Requirements:
 - Make the vocabulary, syntax, and sentence structure novel and distinct from typical textbook examples.
-- Naturally harmonize the context with current seasonal business cycles and modern trends where appropriate.
+- Naturally harmonize the context with current seasonal business cycles and modern trends where appropriate.${
+    hasCustomWords
+      ? `\n- Seamlessly weave [${customWordList}] into a natural 1-to-2 sentence flow within the target word count (${level === "beginner" ? "10-14 words" : level === "intermediate" ? "15-20 words" : "21-28 words"}).`
+      : ""
+  }
 - Ensure natural conversational or business cadence and rhythm suitable for oral shadowing practice.`;
 
   return { systemPrompt, userPrompt };

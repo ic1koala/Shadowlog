@@ -94,6 +94,7 @@
 - [x] **【完了・FB-032】Android（Galaxy S26＋Galaxy Buds FE等）シャドーイング録音時の音量低下対策（①Androidでの本体マイク自動優先によるBluetooth A2DP維持・HFP通話モード移行防止、②WebRTC DSP `echoCancellation / noiseSuppression / autoGainControl / goog*` 全面OFF、③Web Audio API `GainNode` 2.2x〜2.6x増幅＋リミッター＆「🔊 音量ブースト」ボタン新設）**
 - [x] **【完了・FB-033】習慣化Webプッシュ通知リマインド機能の実装（メール通知なし／iPhoneホーム画面追加ガイド・時刻指定・練習済み自動スキップ・テスト通知ボタン：`WEB_PUSH_REMINDER_SPEC.md` 準拠・全160テスト合格）**
 - [x] **【完了・FB-034】月曜定期点検承認事項：①旧ジャンル表記（医療・金融）3箇所の4大ジャンル（Tech / ビジネス / マーケティング / 日常会話）統一 ＆ ②`/api/push/subscribe` へのレートリミッター（20回/分）適用**
+- [x] **【完了・FB-035】3単語カスタム例文生成機能の実装（設定画面での3単語事前登録＋おすすめ候補提示、初級/中級/上級の語数に合わせた1〜2文生成、練習画面「条件を変更する」横のカスタム設定ボタン、Base 3回/日・Pro 10回/日：`CUSTOM_TOPIC_WORDS_SPEC.md` 準拠・全166テスト合格）**
 - [ ] **【着手準備】Phase 2: 弱点データ蓄積基盤（Supabase `user_weaknesses` ＆ `/api/transcribe-diff`）**
 - [ ] **【着手準備】Phase 3: リベンジ例文自動生成プロンプト注入（`/api/generate-sentence`）**
 - [ ] 【進行中】クローズドβテスター（第1陣5名 ➔ 30〜50名）の利用ログ・フィードバック定点観測
