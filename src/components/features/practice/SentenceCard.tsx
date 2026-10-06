@@ -828,6 +828,9 @@ export function SentenceCard({
           playDelayTimerRef.current = null;
         }
 
+        audio.pause();
+        audio.currentTime = 0;
+
         setIsPlaying(true);
         if (isShadowingMode) {
           setIsPreparingAudio(true);

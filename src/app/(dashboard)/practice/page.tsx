@@ -88,7 +88,6 @@ export default function PracticePage() {
     reset?: () => void;
     submit?: () => void;
   } | null>(null);
-  const shadowingAutoStopTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const recorderSectionRef = useRef<HTMLDivElement | null>(null);
   const activeRequestIdRef = useRef<number>(0);
@@ -502,41 +501,11 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
   );
 
   const handleStopRecording = useCallback(() => {
-    if (shadowingAutoStopTimerRef.current) {
-      clearTimeout(shadowingAutoStopTimerRef.current);
-      shadowingAutoStopTimerRef.current = null;
-    }
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("shadowlog:stop-model-audio"));
     }
     recorderControlsRef.current?.stop?.();
   }, []);
-
-  // Shadowing auto-stop listener: When model audio ends in shadowing mode, wait 1.5s then auto stop & transcribe
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleModelAudioEnded = () => {
-      if (recordingMode === "shadowing" && floatIsRecording) {
-        if (shadowingAutoStopTimerRef.current) {
-          clearTimeout(shadowingAutoStopTimerRef.current);
-        }
-        // Spec 3.3: 模範音声終了＋1.5秒で自動的に録音停止＆採点へ
-        shadowingAutoStopTimerRef.current = setTimeout(() => {
-          handleStopRecording();
-        }, 1500);
-      }
-    };
-
-    window.addEventListener("shadowlog:model-audio-ended", handleModelAudioEnded);
-    return () => {
-      window.removeEventListener("shadowlog:model-audio-ended", handleModelAudioEnded);
-      if (shadowingAutoStopTimerRef.current) {
-        clearTimeout(shadowingAutoStopTimerRef.current);
-        shadowingAutoStopTimerRef.current = null;
-      }
-    };
-  }, [recordingMode, floatIsRecording, handleStopRecording]);
 
   const handleAudioReady = async (audioBlob: Blob, durationSeconds: number) => {
     if (!sentence) return;
@@ -1155,9 +1124,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
             {floatIsRecording ? (
               <div className="flex items-center justify-between gap-3 pt-0.5">
                 <span className="text-[11px] text-muted-foreground hidden sm:inline">
-                  {recordingMode === "shadowing"
-                    ? "※模範音声終了＋1.5秒で自動停止・採点へ進みます"
-                    : "※発話が終わったら録音を終了してください"}
+                  ※発話が終わったら「録音を終了」をタップしてください
                 </span>
                 <button
                   onClick={handleStopRecording}
@@ -1191,7 +1158,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                   onClick={() => handleStartRecording("shadowing")}
                   disabled={isLoadingSentence || isTranscribing}
                   className="flex flex-col items-center justify-center p-2 rounded-xl text-xs sm:text-sm font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-500/20 ring-1 ring-purple-400/30 disabled:opacity-50 transition active:scale-95 min-h-[48px] cursor-pointer"
-                  title="模範音声と同時に発話し、終了後1.5秒で自動採点します"
+                  title="模範音声と同時に発話して録音します（終わったら録音終了をタップ）"
                 >
                   <span className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <span>🎧</span>

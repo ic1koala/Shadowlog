@@ -345,6 +345,14 @@ export function useAudioRecorder() {
   const requestDeviceAccess = useCallback(async () => {
     if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia)
       return false;
+    // Never open/stop a temporary mic stream if a recording stream is already active
+    if (
+      streamRef.current ||
+      (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive")
+    ) {
+      await refreshDevices();
+      return true;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // Immediately release track so recording indicator turns off
@@ -361,35 +369,24 @@ export function useAudioRecorder() {
   }, [refreshDevices]);
 
   // Initial device enumeration & listen for device changes (Bluetooth connect/disconnect)
+  // Note: Never call getUserMedia()+track.stop() automatically on mount, as <AudioRecorder key={sentence.id}>
+  // remounts per sentence and opening/closing a temporary mic stream can interrupt active audio routes.
   useEffect(() => {
     refreshDevices();
-
-    // Check if permission is already granted; if so, unlock labels immediately
-    if (typeof window !== "undefined" && navigator.permissions?.query) {
-      try {
-        navigator.permissions
-          .query({ name: "microphone" as PermissionName })
-          .then((permissionStatus) => {
-            if (permissionStatus.state === "granted") {
-              requestDeviceAccess();
-            }
-            permissionStatus.onchange = () => {
-              if (permissionStatus.state === "granted") {
-                requestDeviceAccess();
-              }
-            };
-          })
-          .catch(() => {});
-      } catch {
-        // ignore
-      }
-    }
 
     if (
       typeof window !== "undefined" &&
       navigator.mediaDevices?.addEventListener
     ) {
       const handler = () => {
+        // Avoid re-enumerating / mutating device selection while actively recording
+        if (
+          streamRef.current ||
+          (mediaRecorderRef.current &&
+            mediaRecorderRef.current.state !== "inactive")
+        ) {
+          return;
+        }
         refreshDevices();
       };
       navigator.mediaDevices.addEventListener("devicechange", handler);
@@ -397,7 +394,7 @@ export function useAudioRecorder() {
         navigator.mediaDevices.removeEventListener("devicechange", handler);
       };
     }
-  }, [refreshDevices, requestDeviceAccess]);
+  }, [refreshDevices]);
 
   const cleanupAudio = useCallback(() => {
     if (timerIntervalRef.current) {
@@ -522,10 +519,10 @@ export function useAudioRecorder() {
 
         streamRef.current = stream;
 
-        // Re-assert raw track constraints on Android shadowing only (iOS/desktop keep verified behavior)
+        // Re-assert raw track constraints on Android shadowing only (awaited before MediaRecorder starts)
         const activeTrack = stream.getAudioTracks()[0];
         if (mode === "shadowing" && isAndroid && activeTrack?.applyConstraints) {
-          activeTrack
+          await activeTrack
             .applyConstraints({
               echoCancellation: false,
               noiseSuppression: false,

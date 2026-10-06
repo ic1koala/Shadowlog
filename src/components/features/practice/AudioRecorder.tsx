@@ -275,7 +275,7 @@ export function AudioRecorder({
               ① 画面下部から「リピーティング」または「シャドーイング」を選択
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              ※シャドーイング録音はお手本音声とシンクロ再生されます（イヤホン推奨・自動採点）
+              ※シャドーイング録音はお手本音声とシンクロ再生されます（イヤホン推奨）
             </p>
           </div>
         )}
@@ -340,7 +340,7 @@ export function AudioRecorder({
       </div>
 
       <p className="text-[11px] sm:text-xs text-center text-muted-foreground">
-        ※リピーティング録音時は模範音声が停止します。シャドーイング録音時はイヤホン装着推奨でお手本と同時に発話し、終了後1.5秒で自動採点されます。
+        ※リピーティング録音時は模範音声が停止します。シャドーイング録音時はイヤホン装着推奨でお手本と同時に発話し、発話が終わったら「録音を終了」をタップしてください。
       </p>
     </div>
   );
