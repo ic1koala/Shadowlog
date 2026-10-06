@@ -365,9 +365,9 @@ export function SentenceCard({
       const containerRect = container.getBoundingClientRect();
       const wordRect = el.getBoundingClientRect();
 
-      // Pad around the word text to create a clean, comfortable pill
-      const padX = 5;
-      const padY = 2;
+      // Pad around the word text to create a clean, compact pill that fits tight line spacing
+      const padX = 3;
+      const padY = 1;
 
       setIsImmediate(immediate);
       setPillStyle({
@@ -1153,7 +1153,7 @@ export function SentenceCard({
             }}
           />
 
-          <p className="text-xl sm:text-3xl font-semibold leading-relaxed tracking-normal text-foreground flex flex-wrap gap-y-2 items-baseline relative z-10">
+          <p className="text-xl sm:text-3xl font-semibold leading-snug tracking-normal text-foreground flex flex-wrap gap-y-0.5 sm:gap-y-1 items-baseline relative z-10">
             {parsedWords.map((w, idx) => {
               const isCurrent = isPlaying && activeWordIndex === idx;
               const hasSlash = showChunkSlash && chunkSlashIndices.has(idx);
@@ -1168,35 +1168,43 @@ export function SentenceCard({
                     wordRefs.current[idx] = el;
                   }}
                   className={`relative inline-block select-none align-baseline transition-colors duration-150 ${
-                    hasSlash ? "mr-2.5 sm:mr-3" : "mr-1.5"
+                    hasSlash ? "mr-3 sm:mr-3.5" : "mr-1 sm:mr-1.5"
                   }`}
                 >
                   <button
                     type="button"
                     onClick={(e) => toggleWordFlip(idx, w.text, e)}
-                    className="group/word inline-grid word-flip-perspective cursor-pointer focus:outline-hidden align-baseline"
+                    className="group/word inline-flex word-flip-perspective cursor-pointer focus:outline-hidden align-baseline"
                     title={isFlipped ? "タップで英語に戻す（発音再生）" : `タップで「${translation}」にフリップ（発音再生）`}
                     aria-label={isFlipped ? `${w.text} (日本語: ${translation}、発音再生)` : `${w.text} (発音再生)`}
                   >
                     <span
-                      className={`grid grid-cols-1 grid-rows-1 items-center justify-center transition-transform duration-350 ease-out word-flip-preserve-3d ${
+                      className={`relative inline-flex items-center justify-center transition-transform duration-350 ease-out word-flip-preserve-3d ${
                         isFlipped ? "word-flip-rotated-180" : ""
                       }`}
                     >
-                      {/* Front: English word */}
+                      {/* Front: English word (in-flow when unflipped so word width is natural) */}
                       <span
-                        className={`col-start-1 row-start-1 px-1 py-0.5 rounded-lg word-flip-backface-hidden transition-all duration-150 ${
+                        className={`${
+                          isFlipped
+                            ? "absolute inset-0 flex items-center justify-center pointer-events-none"
+                            : "relative inline-block"
+                        } px-0.5 py-0 rounded-md word-flip-backface-hidden transition-all duration-150 whitespace-nowrap ${
                           isCurrent
                             ? "text-white font-semibold"
-                            : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-4 group-hover/word:decoration-primary"
+                            : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-[3px] group-hover/word:decoration-primary"
                         }`}
                       >
                         {w.text}
                       </span>
 
-                      {/* Back: Japanese meaning */}
+                      {/* Back: Japanese meaning (only in-flow when flipped so it never stretches unflipped English words) */}
                       <span
-                        className={`col-start-1 row-start-1 px-1.5 py-0.5 rounded-md text-xs sm:text-sm font-bold word-flip-backface-hidden word-flip-rotated-180 transition-all duration-150 flex items-center justify-center whitespace-nowrap ${
+                        className={`${
+                          isFlipped
+                            ? "relative inline-flex"
+                            : "absolute inset-0 pointer-events-none overflow-hidden"
+                        } px-1.5 py-0 rounded-md text-xs sm:text-sm font-bold word-flip-backface-hidden word-flip-rotated-180 transition-all duration-150 items-center justify-center whitespace-nowrap ${
                           isCurrent
                             ? "bg-amber-400 text-amber-950 shadow-xs"
                             : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-xs"
@@ -1210,7 +1218,7 @@ export function SentenceCard({
                   {hasSlash && (
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none select-none absolute -right-[8px] sm:-right-[9px] top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 font-extrabold text-[0.95em] leading-none opacity-95 drop-shadow-2xs"
+                      className="pointer-events-none select-none absolute -right-[9px] sm:-right-[10px] top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 font-extrabold text-[0.95em] leading-none opacity-95 drop-shadow-2xs"
                     >
                       /
                     </span>

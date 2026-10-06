@@ -59,6 +59,7 @@ flowchart LR
 | FB-036 | 2026/10/06 | テスター・オーナー | 録音・音響制御（Android＋無線イヤホン頭切れ） | Galaxy S26＋Galaxy Buds FEにてシャドーイング時の音量は大きくなったが、出だしの1単語ほどが聞こえず途中から聞こえてくるため、イヤホン接続安定後に頭から聞こえるよう改善 | 最高 | 完了 | ①2段階ハンドシェイク（`shadowlog:prepare-model-audio` ➔ マイク＆MediaRecorder起動完了後の `shadowlog:shadowing-mic-ready`）に分離、②Web Audio不可聴プライマー信号（-74dB 440Hz非ゼロPCM）によるBluetooth DAC/A2DPシンク即時ウェイクアップ＆維持、③AndroidのBluetoothルート安定待機（650ms）後に `currentTime = 0` から再生開始を実装（全167テスト合格） |
 | FB-037 | 2026/10/06 | テスター・オーナー | 録音・強制停止バグ | ボタンにタッチしなくても音声が流れた約2秒後くらいに勝手に録音が中止になるトラブル | 最高 | 完了 | ①シャドーイング時の模範音声終了1.5秒後の強制自動停止タイマー（採点へ進まず録音が強制終了していた挙動）を廃止しユーザー自身の「録音を終了」タップまで録音を継続、②マウント時の自動 `getUserMedia`+`track.stop()`（`requestDeviceAccess`）や録音中の `devicechange`・非同期 `applyConstraints` によるマイクストリーム切断を防止 |
 | FB-038 | 2026/10/06 | オーナー | AI生成・プロンプト改善 | #58のような不自然なバズワード（ワークライフハーモニー等）の排除、Dailyジャンルの口語・日常会話ペルソナ分岐、季節感のオプショナル化・軽微化（無理な紐付け禁止・ポエム調禁止）、日常で本当に使いそうな自然な文章（Plain English）への徹底 | 高 | 完了 | NATURAL_PROMPT_REFINEMENT_SPEC.md 準拠、INDUSTRY_TRENDS.daily・DAILY_SEASONAL_THEMES刷新、Daily/Businessペルソナ分離、季節感オプショナル化・ポエム調＆バズワード禁止ルール・Sanity Check実装（全167テスト合格） |
+| FB-039 | 2026/10/06 | オーナー | 練習画面UI・タイポグラフィ | フレーズカードの行間の高さを半分ほどに調整し、単語間の文字間隔も不自然な空白が出ない適切な幅に修正 | 高 | 完了 | `SentenceCard.tsx` の行高・行間を `leading-snug gap-y-0.5 sm:gap-y-1` へ半減し、未フリップ時に裏面の日本語訳が英単語の横幅を押し広げないよう `absolute inset-0` 制御に変更 |
 
 ---
 
