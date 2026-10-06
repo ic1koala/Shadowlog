@@ -491,7 +491,9 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       setRecordingMode(mode);
       if (mode === "shadowing") {
         if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("shadowlog:play-model-audio"));
+          // Prepare & wake up earphone audio pipeline on user gesture, then start actual
+          // speech playback from 0.00s once shadowlog:shadowing-mic-ready confirms mic + earphone route is stable
+          window.dispatchEvent(new Event("shadowlog:prepare-model-audio"));
         }
       }
       recorderControlsRef.current?.start?.(mode);
@@ -503,6 +505,9 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     if (shadowingAutoStopTimerRef.current) {
       clearTimeout(shadowingAutoStopTimerRef.current);
       shadowingAutoStopTimerRef.current = null;
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("shadowlog:stop-model-audio"));
     }
     recorderControlsRef.current?.stop?.();
   }, []);

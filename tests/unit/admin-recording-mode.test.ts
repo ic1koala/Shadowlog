@@ -6,6 +6,7 @@ import {
   isIOSBrowser,
   isBluetoothMicLabel,
   pickPreferredMicDevice,
+  getShadowingPlaybackSettleDelayMs,
 } from "@/hooks/use-audio-recorder";
 
 describe("Admin & Cross-Device Shadowing Recording Mode Verification", () => {
@@ -138,9 +139,18 @@ describe("Admin & Cross-Device Shadowing Recording Mode Verification", () => {
     expect(iosPicked?.deviceId).toBe("bt-buds-fe");
   });
 
+  it("waits for Bluetooth audio route settling after mic ready before starting shadowing model audio from 0.00s", () => {
+    // Android (Galaxy S26 + Galaxy Buds FE) requires ~650ms after getUserMedia/MediaRecorder open
+    // for AudioFlinger & Bluetooth sink to finish route transition so word 1 is not clipped
+    expect(getShadowingPlaybackSettleDelayMs(true)).toBe(650);
+    // iOS / Desktop uses a crisp 280ms pre-roll after mic ready
+    expect(getShadowingPlaybackSettleDelayMs(false)).toBe(280);
+  });
+
   it("verifies shadowing auto-stop margin delay is 1500ms", () => {
     const SHADOWING_MARGIN_MS = 1500;
     expect(SHADOWING_MARGIN_MS).toBe(1500);
   });
 });
+
 

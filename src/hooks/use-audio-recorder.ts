@@ -218,6 +218,20 @@ export function pickPreferredMicDevice(
   return btDevice;
 }
 
+/**
+ * Returns the settling delay (in ms) after the microphone stream & MediaRecorder have opened
+ * in shadowing mode before starting model audio playback from 0.00s.
+ * - On Android (e.g. Galaxy S26 + Galaxy Buds FE): Android AudioFlinger & Bluetooth audio sink
+ *   re-negotiate the audio route when getUserMedia opens the mic (~500–650ms). Waiting 650ms
+ *   while priming the output with a sub-audible signal ensures the first word is never clipped.
+ * - On iOS / Desktop: 280ms pre-roll after mic ready for natural cognitive lead-in.
+ */
+export function getShadowingPlaybackSettleDelayMs(
+  isAndroid: boolean = isAndroidBrowser()
+): number {
+  return isAndroid ? 650 : 280;
+}
+
 export function useAudioRecorder() {
   const [state, setState] = useState<AudioRecorderState>({
     isRecording: false,
@@ -537,12 +551,6 @@ export function useAudioRecorder() {
           }
         }
 
-        // Notify listeners (e.g. SentenceCard) that the mic stream is active so model audio
-        // can resume/boost volume if Android OS briefly ducked or suspended playback during mic init
-        if (mode === "shadowing" && typeof window !== "undefined") {
-          window.dispatchEvent(new Event("shadowlog:shadowing-mic-ready"));
-        }
-
       // Check MediaRecorder availability
       if (typeof MediaRecorder === "undefined") {
         throw new Error(
@@ -631,8 +639,18 @@ export function useAudioRecorder() {
         isRecording: true,
         isPaused: false,
       }));
+
+      // Notify listeners (e.g. SentenceCard) AFTER getUserMedia, constraints, AudioContext,
+      // and MediaRecorder.start() have all finished so the earphone route is stable
+      // before model audio begins playing from 0.00s.
+      if (mode === "shadowing" && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("shadowlog:shadowing-mic-ready"));
+      }
     } catch (err: unknown) {
       cleanupAudio();
+      if (mode === "shadowing" && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("shadowlog:stop-model-audio"));
+      }
       let errorMsg = "マイクへのアクセスに失敗しました。";
       if (err instanceof DOMException) {
         if (

@@ -56,6 +56,7 @@ flowchart LR
 | FB-033 | 2026/10/04 | オーナー | 習慣化・通知UX | メール通知は溜まって嫌がられるため行わず、「① Webプッシュ通知」のみで習慣化リマインド機能を実装（iPhone用ホーム画面追加ガイド＆当日練習済み自動スキップ＆テスト通知ボタン付き） | 高 | 完了 | WEB_PUSH_REMINDER_SPEC.md 準拠、Service Worker (`public/sw.js`)・設定画面リマインドカード・iPhoneホーム画面3ステップ案内・当日練習済み自動スキップ・テスト通知・DB/Cron APIを実装（全160テスト合格） |
 | FB-034 | 2026/10/05 | オーナー・月曜定期点検 | 文言統一・API保護 | ①旧ジャンル表記（医療・金融）3箇所を現在の4大ジャンル（Tech / ビジネス / マーケティング / 日常会話）へ統一、②`/api/push/subscribe` へのレートリミッター適用（20回/分） | 中 | 完了 | PlanComparisonSection.tsx・settings/page.tsx・blog/why-i-built-shadowlog の3箇所を4大ジャンル表記に統一し、`/api/push/subscribe` (POST/DELETE) に `checkRateLimit` 保護を実装 |
 | FB-035 | 2026/10/05 | オーナー | 独自機能・AI生成 | 学びたい英単語3つを設定画面で登録（候補自動提示あり・随時変更可）し、初級/中級/上級の語数に合わせてオリジナル作成（1文に限定せず自然な構成）。練習画面の「条件を変更する」ボタン付近にカスタム設定ボタンを配置（Base:1日3回 / Pro:1日10回） | 高 | 完了 | CUSTOM_TOPIC_WORDS_SPEC.md 準拠、custom-words-store.ts・CustomWordsSection.tsx・generate-sentence API・practice/page.tsx 実装完了（全166テスト合格） |
+| FB-036 | 2026/10/06 | テスター・オーナー | 録音・音響制御（Android＋無線イヤホン頭切れ） | Galaxy S26＋Galaxy Buds FEにてシャドーイング時の音量は大きくなったが、出だしの1単語ほどが聞こえず途中から聞こえてくるため、イヤホン接続安定後に頭から聞こえるよう改善 | 最高 | 完了 | ①2段階ハンドシェイク（`shadowlog:prepare-model-audio` ➔ マイク＆MediaRecorder起動完了後の `shadowlog:shadowing-mic-ready`）に分離、②Web Audio不可聴プライマー信号（-74dB 440Hz非ゼロPCM）によるBluetooth DAC/A2DPシンク即時ウェイクアップ＆維持、③AndroidのBluetoothルート安定待機（650ms）後に `currentTime = 0` から再生開始を実装（全167テスト合格） |
 
 ---
 

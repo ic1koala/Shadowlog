@@ -10,7 +10,11 @@ import {
   fetchWordTranslationAsync,
   cleanWord,
 } from "@/lib/practice/word-dictionary";
-import { isAndroidBrowser, isIOSBrowser } from "@/hooks/use-audio-recorder";
+import {
+  isAndroidBrowser,
+  isIOSBrowser,
+  getShadowingPlaybackSettleDelayMs,
+} from "@/hooks/use-audio-recorder";
 
 const VOLUME_BOOST_STORAGE_KEY = "shadowlog_volume_boost";
 // Gain multipliers (> 1.0 amplifies HTMLAudioElement via Web Audio API GainNode + Compressor limiter)
@@ -35,9 +39,12 @@ interface ParsedWord {
   endProgress: number;
 }
 
-// Subtle pre-roll delay (250ms) before audio starts playing.
-// This allows the user's eye to lock onto the highlighted first word and completely prevents the visual highlight from lagging behind speech onset.
+// Subtle pre-roll delay (250ms on iOS/Desktop, 380ms on Android) before audio starts playing.
+// Allows the user's eye to lock onto the highlighted first word and wakes up Bluetooth earbuds from standby.
 const AUDIO_PLAYBACK_DELAY_MS = 250;
+const AUDIO_PLAYBACK_DELAY_ANDROID_MS = 380;
+// Safety fallback timeout if `shadowlog:shadowing-mic-ready` does not arrive within 1.8s
+const SHADOWING_PREPARE_FALLBACK_MS = 1800;
 
 /**
  * Finds the best English voice available in the browser's SpeechSynthesis.
@@ -81,6 +88,7 @@ export function SentenceCard({
   recordingType = "repeating",
 }: SentenceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPreparingAudio, setIsPreparingAudio] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1.0);
   const [flippedWordIndices, setFlippedWordIndices] = useState<Set<number>>(new Set());
   const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, string>>({});
@@ -98,6 +106,15 @@ export function SentenceCard({
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const rafIdRef = useRef<number | null>(null);
   const playDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const awaitingShadowingMicRef = useRef<boolean>(false);
+  const activePrimerStopRef = useRef<(() => void) | null>(null);
+
+  const stopBluetoothPrimer = useCallback(() => {
+    if (activePrimerStopRef.current) {
+      activePrimerStopRef.current();
+      activePrimerStopRef.current = null;
+    }
+  }, []);
 
   // Initialize volume boost preference (auto-enabled by default on Android to counteract Bluetooth/OS ducking)
   useEffect(() => {
@@ -131,6 +148,7 @@ export function SentenceCard({
   // Close the playback AudioContext on unmount to avoid leaking audio contexts
   useEffect(() => {
     return () => {
+      stopBluetoothPrimer();
       const ctx = playbackAudioCtxRef.current;
       if (ctx && ctx.state !== "closed") {
         ctx.close().catch(() => {});
@@ -138,7 +156,7 @@ export function SentenceCard({
       playbackAudioCtxRef.current = null;
       gainNodeRef.current = null;
     };
-  }, []);
+  }, [stopBluetoothPrimer]);
 
   // Compute target Web Audio gain value
   const getTargetGain = useCallback(
@@ -213,6 +231,86 @@ export function SentenceCard({
       }
     },
     [getTargetGain, isVolumeBoosted, isRecording, recordingType, isBoostSupported]
+  );
+
+  // Emits a sub-audible (-74 dB, gain 0.0002) continuous sine primer through Web Audio API.
+  // Digital 0.0 is ignored by Bluetooth A2DP codecs and wireless earbud DACs (e.g. Galaxy Buds FE),
+  // causing the first ~0.5s (1 word) to be swallowed while the earbud DAC wakes up or re-locks
+  // after Android AudioFlinger opens the microphone. Non-zero sub-audible PCM keeps the Bluetooth
+  // sink awake and locked so word 1 is 100% audible from 0.00s.
+  const primeBluetoothAudioOutput = useCallback(
+    (durationMs: number) => {
+      if (typeof window === "undefined" || !isBoostSupported) return;
+      stopBluetoothPrimer();
+
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!AudioCtx) return;
+
+      try {
+        let ctx = playbackAudioCtxRef.current;
+        if (!ctx || ctx.state === "closed") {
+          if (audioRef.current) {
+            ensureWebAudioBoost(audioRef.current);
+            ctx = playbackAudioCtxRef.current;
+          } else {
+            ctx = new AudioCtx({ latencyHint: "playback" });
+            playbackAudioCtxRef.current = ctx;
+          }
+        }
+        if (!ctx) return;
+
+        if (ctx.state === "suspended") {
+          ctx.resume().catch(() => {});
+        }
+
+        const osc = ctx.createOscillator();
+        const primerGain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 440;
+        // 0.0002 (-74 dB) is completely inaudible to humans but non-zero in 16-bit PCM (~6 LSBs)
+        primerGain.gain.value = 0.0002;
+
+        osc.connect(primerGain);
+        primerGain.connect(ctx.destination);
+        osc.start();
+
+        let stopped = false;
+        const cleanup = () => {
+          if (stopped) return;
+          stopped = true;
+          try {
+            osc.stop();
+          } catch {
+            // ignore
+          }
+          try {
+            osc.disconnect();
+            primerGain.disconnect();
+          } catch {
+            // ignore
+          }
+        };
+
+        const timer = setTimeout(() => {
+          cleanup();
+          if (activePrimerStopRef.current === stopFn) {
+            activePrimerStopRef.current = null;
+          }
+        }, Math.max(100, durationMs));
+
+        const stopFn = () => {
+          clearTimeout(timer);
+          cleanup();
+        };
+        activePrimerStopRef.current = stopFn;
+      } catch {
+        // Ignore primer errors gracefully
+      }
+    },
+    [isBoostSupported, stopBluetoothPrimer, ensureWebAudioBoost]
   );
 
   // Dynamically update GainNode whenever boost toggle or shadowing state changes
@@ -295,13 +393,17 @@ export function SentenceCard({
       clearTimeout(playDelayTimerRef.current);
       playDelayTimerRef.current = null;
     }
-  }, []);
+    awaitingShadowingMicRef.current = false;
+    setIsPreparingAudio(false);
+    stopBluetoothPrimer();
+  }, [stopBluetoothPrimer]);
 
   const stopModelAudio = useCallback(() => {
     clearPendingPlay();
     stopAnimationLoop();
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.muted = false;
     }
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
@@ -323,45 +425,6 @@ export function SentenceCard({
     window.addEventListener("shadowlog:stop-model-audio", handleForceStop);
     return () => window.removeEventListener("shadowlog:stop-model-audio", handleForceStop);
   }, [stopModelAudio]);
-
-  // When the shadowing mic finishes opening, re-assert AudioContext resume & gain
-  // in case Android OS briefly suspended the media stream during getUserMedia initialization.
-  // Only touches the Web Audio graph if the audio element is ALREADY routed through it
-  // (never re-routes mid-playback), and respects the user's boost ON/OFF setting.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handleShadowingMicReady = () => {
-      if (audioRef.current) {
-        audioRef.current.volume = 1.0;
-      }
-      if (!isBoostSupported) return;
-      const audio = audioRef.current;
-      if (!audio || !connectedElementsRef.current.has(audio)) return;
-
-      if (
-        playbackAudioCtxRef.current &&
-        playbackAudioCtxRef.current.state === "suspended"
-      ) {
-        playbackAudioCtxRef.current.resume().catch(() => {});
-      }
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = getTargetGain(
-          isVolumeBoosted,
-          true,
-          "shadowing"
-        );
-      }
-    };
-    window.addEventListener(
-      "shadowlog:shadowing-mic-ready",
-      handleShadowingMicReady
-    );
-    return () =>
-      window.removeEventListener(
-        "shadowlog:shadowing-mic-ready",
-        handleShadowingMicReady
-      );
-  }, [getTargetGain, isVolumeBoosted, isBoostSupported]);
 
   // Pronounce an individual English word via SpeechSynthesis (User request ②)
   const speakSingleWord = useCallback(
@@ -633,8 +696,12 @@ export function SentenceCard({
   }, [activeWordIndex, isPlaying, updatePillPosition]);
 
   const speakWithSpeechSynthesis = useCallback(
-    (text: string) => {
+    (text: string, customDelayMs?: number) => {
       if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+      const delayMs =
+        customDelayMs ??
+        (isAndroidBrowser() ? AUDIO_PLAYBACK_DELAY_ANDROID_MS : AUDIO_PLAYBACK_DELAY_MS);
 
       clearPendingPlay();
       window.speechSynthesis.cancel();
@@ -665,6 +732,7 @@ export function SentenceCard({
 
       utterance.onend = () => {
         setIsPlaying(false);
+        setIsPreparingAudio(false);
         setActiveWordIndex(null);
         clearPendingPlay();
         if (typeof window !== "undefined") {
@@ -675,6 +743,7 @@ export function SentenceCard({
       utterance.onerror = (e) => {
         console.warn("SpeechSynthesis error:", e);
         setIsPlaying(false);
+        setIsPreparingAudio(false);
         setActiveWordIndex(null);
         clearPendingPlay();
       };
@@ -684,98 +753,242 @@ export function SentenceCard({
         setActiveWordIndex(0);
       }
 
+      primeBluetoothAudioOutput(delayMs + 120);
+
       playDelayTimerRef.current = setTimeout(() => {
+        setIsPreparingAudio(false);
         window.speechSynthesis.speak(utterance);
-      }, AUDIO_PLAYBACK_DELAY_MS);
+      }, delayMs);
     },
-    [playbackSpeed, parsedWords, clearPendingPlay]
+    [playbackSpeed, parsedWords, clearPendingPlay, primeBluetoothAudioOutput]
   );
 
-  const playModelAudio = useCallback(() => {
-    if (!sentence) return;
+  // Ensure the HTMLAudioElement is created and routed through Web Audio boost if enabled
+  const ensureAudioElementReady = useCallback(() => {
+    if (!sentence?.audioBase64) return null;
 
-    // Path A: OpenAI TTS-1 audio (base64 MP3)
-    if (sentence.audioBase64) {
-      if (!audioRef.current) {
-        const audio = new Audio(`data:audio/mp3;base64,${sentence.audioBase64}`);
-        audioRef.current = audio;
+    if (!audioRef.current) {
+      const audio = new Audio(`data:audio/mp3;base64,${sentence.audioBase64}`);
+      audioRef.current = audio;
 
-        audio.onended = () => {
-          setIsPlaying(false);
-          setActiveWordIndex(null);
-          clearPendingPlay();
-          stopAnimationLoop();
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new Event("shadowlog:model-audio-ended"));
-          }
-        };
-
-        audio.onerror = () => {
-          console.warn("TTS audio playback failed, falling back to SpeechSynthesis");
-          audioRef.current = null;
-          clearPendingPlay();
-          stopAnimationLoop();
-          speakWithSpeechSynthesis(sentence.english);
-        };
-      }
-
-      if (audioRef.current.duration && isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
-        setAudioDuration(audioRef.current.duration);
-      }
-
-      audioRef.current.playbackRate = playbackSpeed;
-      audioRef.current.volume = 1.0;
-
-      // Connect Web Audio API gain boost when volume boost is enabled (auto-enabled on Android)
-      // or if this audio element was already routed through the Web Audio graph
-      if (isVolumeBoosted || connectedElementsRef.current.has(audioRef.current)) {
-        ensureWebAudioBoost(audioRef.current);
-      }
-
-      clearPendingPlay();
-      // Immediately highlight the first word to draw focus and prepare learner
-      setIsPlaying(true);
-      if (parsedWords.length > 0) {
-        setActiveWordIndex(0);
-      }
-
-      // Delay audio playback start slightly (~250ms) so user is ready and highlight firmly leads
-      playDelayTimerRef.current = setTimeout(() => {
-        if (!audioRef.current) return;
-        audioRef.current.volume = 1.0;
-        if (
-          playbackAudioCtxRef.current &&
-          playbackAudioCtxRef.current.state === "suspended"
-        ) {
-          playbackAudioCtxRef.current.resume().catch(() => {});
+      audio.onended = () => {
+        setIsPlaying(false);
+        setIsPreparingAudio(false);
+        setActiveWordIndex(null);
+        clearPendingPlay();
+        stopAnimationLoop();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("shadowlog:model-audio-ended"));
         }
-        audioRef.current.currentTime = 0;
-        audioRef.current
-          .play()
-          .then(() => {
-            startAnimationLoop();
-          })
-          .catch(() => {
-            setIsPlaying(false);
-            setActiveWordIndex(null);
-            stopAnimationLoop();
-          });
-      }, AUDIO_PLAYBACK_DELAY_MS);
-      return;
+      };
+
+      audio.onerror = () => {
+        console.warn("TTS audio playback failed, falling back to SpeechSynthesis");
+        audioRef.current = null;
+        clearPendingPlay();
+        stopAnimationLoop();
+        speakWithSpeechSynthesis(sentence.english);
+      };
     }
 
-    // Path B: SpeechSynthesis
-    speakWithSpeechSynthesis(sentence.english);
+    const audio = audioRef.current;
+    if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+      setAudioDuration(audio.duration);
+    }
+
+    audio.playbackRate = playbackSpeed;
+    audio.volume = 1.0;
+
+    if (isVolumeBoosted || connectedElementsRef.current.has(audio)) {
+      ensureWebAudioBoost(audio);
+    }
+
+    return audio;
   }, [
     sentence,
     playbackSpeed,
     isVolumeBoosted,
     ensureWebAudioBoost,
-    parsedWords,
     clearPendingPlay,
-    speakWithSpeechSynthesis,
-    startAnimationLoop,
     stopAnimationLoop,
+    speakWithSpeechSynthesis,
+  ]);
+
+  // Starts model audio playback after `delayMs` while keeping Bluetooth earbuds awake with a sub-audible primer
+  const startActualModelPlayback = useCallback(
+    (delayMs: number, isShadowingMode = false) => {
+      if (!sentence) return;
+
+      if (sentence.audioBase64) {
+        const audio = ensureAudioElementReady();
+        if (!audio) return;
+
+        if (playDelayTimerRef.current) {
+          clearTimeout(playDelayTimerRef.current);
+          playDelayTimerRef.current = null;
+        }
+
+        setIsPlaying(true);
+        if (isShadowingMode) {
+          setIsPreparingAudio(true);
+        }
+        if (parsedWords.length > 0) {
+          setActiveWordIndex(0);
+        }
+
+        if (gainNodeRef.current) {
+          gainNodeRef.current.gain.value = getTargetGain(
+            isVolumeBoosted,
+            isShadowingMode || isRecording,
+            isShadowingMode ? "shadowing" : recordingType
+          );
+        }
+
+        // Stream sub-audible non-zero PCM so wireless earbuds (e.g. Galaxy Buds FE) wake up
+        // and finish locking their Bluetooth audio route before word 1 begins at 0.00s.
+        primeBluetoothAudioOutput(delayMs + 150);
+
+        playDelayTimerRef.current = setTimeout(() => {
+          playDelayTimerRef.current = null;
+          setIsPreparingAudio(false);
+          if (!audioRef.current) return;
+
+          audioRef.current.muted = false;
+          audioRef.current.volume = 1.0;
+          if (
+            playbackAudioCtxRef.current &&
+            playbackAudioCtxRef.current.state === "suspended"
+          ) {
+            playbackAudioCtxRef.current.resume().catch(() => {});
+          }
+          if (gainNodeRef.current) {
+            gainNodeRef.current.gain.value = getTargetGain(
+              isVolumeBoosted,
+              isShadowingMode || isRecording,
+              isShadowingMode ? "shadowing" : recordingType
+            );
+          }
+
+          audioRef.current.currentTime = 0;
+          audioRef.current
+            .play()
+            .then(() => {
+              startAnimationLoop();
+            })
+            .catch(() => {
+              setIsPlaying(false);
+              setIsPreparingAudio(false);
+              setActiveWordIndex(null);
+              stopAnimationLoop();
+            });
+        }, delayMs);
+        return;
+      }
+
+      // Path B: SpeechSynthesis
+      speakWithSpeechSynthesis(sentence.english, delayMs);
+    },
+    [
+      sentence,
+      ensureAudioElementReady,
+      parsedWords.length,
+      isVolumeBoosted,
+      isRecording,
+      recordingType,
+      getTargetGain,
+      primeBluetoothAudioOutput,
+      startAnimationLoop,
+      stopAnimationLoop,
+      speakWithSpeechSynthesis,
+    ]
+  );
+
+  const playModelAudio = useCallback(() => {
+    if (!sentence) return;
+    clearPendingPlay();
+    const isShadow = isRecording && recordingType === "shadowing";
+    const delayMs = isAndroidBrowser()
+      ? AUDIO_PLAYBACK_DELAY_ANDROID_MS
+      : AUDIO_PLAYBACK_DELAY_MS;
+    startActualModelPlayback(delayMs, isShadow);
+  }, [sentence, clearPendingPlay, isRecording, recordingType, startActualModelPlayback]);
+
+  // Stage 1 of Shadowing Audio Handshake (`shadowlog:prepare-model-audio`):
+  // Fired synchronously when the user taps "シャドーイング録音".
+  // Does NOT start playing the sentence yet (which would cause the first word to be swallowed
+  // while getUserMedia opens the mic and Android re-negotiates the Bluetooth audio route).
+  // Instead, unlocks the audio context / element inside the user gesture, starts the Bluetooth
+  // DAC primer, highlights word 0, and waits for `shadowlog:shadowing-mic-ready`.
+  const prepareShadowingModelAudio = useCallback(() => {
+    if (!sentence) return;
+    clearPendingPlay();
+    stopAnimationLoop();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    awaitingShadowingMicRef.current = true;
+    setIsPlaying(true);
+    setIsPreparingAudio(true);
+    if (parsedWords.length > 0) {
+      setActiveWordIndex(0);
+    }
+
+    const audio = ensureAudioElementReady();
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = getTargetGain(
+        isVolumeBoosted,
+        true,
+        "shadowing"
+      );
+    }
+
+    // Wake up playback AudioContext and Bluetooth earbud DAC immediately inside user gesture
+    primeBluetoothAudioOutput(SHADOWING_PREPARE_FALLBACK_MS + 600);
+
+    // On iOS Safari (where Web Audio boost is disabled), unlock HTMLAudioElement inside user tap
+    // so that the subsequent async `.play()` after `shadowing-mic-ready` is permitted.
+    if (audio && isIOSBrowser()) {
+      audio.muted = true;
+      audio
+        .play()
+        .then(() => {
+          if (awaitingShadowingMicRef.current && audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+          }
+          if (audioRef.current) {
+            audioRef.current.muted = false;
+          }
+        })
+        .catch(() => {
+          if (audioRef.current) {
+            audioRef.current.muted = false;
+          }
+        });
+    }
+
+    // Safety fallback: if `shadowlog:shadowing-mic-ready` does not arrive within 1.8s, start playback anyway
+    playDelayTimerRef.current = setTimeout(() => {
+      playDelayTimerRef.current = null;
+      if (!awaitingShadowingMicRef.current) return;
+      awaitingShadowingMicRef.current = false;
+      startActualModelPlayback(0, true);
+    }, SHADOWING_PREPARE_FALLBACK_MS);
+  }, [
+    sentence,
+    clearPendingPlay,
+    stopAnimationLoop,
+    parsedWords.length,
+    ensureAudioElementReady,
+    getTargetGain,
+    isVolumeBoosted,
+    primeBluetoothAudioOutput,
+    startActualModelPlayback,
   ]);
 
   const togglePlayAudio = useCallback(() => {
@@ -786,15 +999,71 @@ export function SentenceCard({
     }
   }, [isPlaying, stopModelAudio, playModelAudio]);
 
-  // Listen for external trigger to start model audio (e.g. shadowing recording start)
+  // Listen for external trigger to start or prepare model audio
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handleForcePlay = () => {
       playModelAudio();
     };
+    const handlePrepareShadowing = () => {
+      prepareShadowingModelAudio();
+    };
     window.addEventListener("shadowlog:play-model-audio", handleForcePlay);
-    return () => window.removeEventListener("shadowlog:play-model-audio", handleForcePlay);
-  }, [playModelAudio]);
+    window.addEventListener("shadowlog:prepare-model-audio", handlePrepareShadowing);
+    return () => {
+      window.removeEventListener("shadowlog:play-model-audio", handleForcePlay);
+      window.removeEventListener("shadowlog:prepare-model-audio", handlePrepareShadowing);
+    };
+  }, [playModelAudio, prepareShadowingModelAudio]);
+
+  // Stage 2 of Shadowing Audio Handshake (`shadowlog:shadowing-mic-ready`):
+  // Fired by `use-audio-recorder.ts` AFTER `getUserMedia`, `applyConstraints`, volume-meter
+  // `AudioContext`, and `mediaRecorder.start(1000)` have all completed.
+  // Waits for the Bluetooth audio sink to finish settling (`650ms` on Android, `280ms` on others)
+  // while priming the earbuds, and then starts playback cleanly from `currentTime = 0` (word 1).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleShadowingMicReady = () => {
+      if (audioRef.current) {
+        audioRef.current.volume = 1.0;
+      }
+      if (isBoostSupported) {
+        if (
+          playbackAudioCtxRef.current &&
+          playbackAudioCtxRef.current.state === "suspended"
+        ) {
+          playbackAudioCtxRef.current.resume().catch(() => {});
+        }
+        if (gainNodeRef.current) {
+          gainNodeRef.current.gain.value = getTargetGain(
+            isVolumeBoosted,
+            true,
+            "shadowing"
+          );
+        }
+      }
+
+      if (awaitingShadowingMicRef.current) {
+        awaitingShadowingMicRef.current = false;
+        const settleDelayMs = getShadowingPlaybackSettleDelayMs();
+        startActualModelPlayback(settleDelayMs, true);
+      }
+    };
+    window.addEventListener(
+      "shadowlog:shadowing-mic-ready",
+      handleShadowingMicReady
+    );
+    return () =>
+      window.removeEventListener(
+        "shadowlog:shadowing-mic-ready",
+        handleShadowingMicReady
+      );
+  }, [
+    isBoostSupported,
+    getTargetGain,
+    isVolumeBoosted,
+    startActualModelPlayback,
+  ]);
 
   const changeSpeed = (speed: PlaybackSpeed) => {
     setPlaybackSpeed(speed);
@@ -977,7 +1246,13 @@ export function SentenceCard({
             title={isRecording && recordingType !== "shadowing" ? "録音中はお手本音声の混入を防ぐため再生できません" : undefined}
           >
             {isPlaying ? <Pause className="w-4 h-4 shrink-0" /> : <Play className="w-4 h-4 shrink-0 fill-current" />}
-            <span>{isPlaying ? "一時停止" : "フレーズ音声を聴く"}</span>
+            <span>
+              {isPreparingAudio
+                ? "イヤホン接続確認中..."
+                : isPlaying
+                  ? "一時停止"
+                  : "フレーズ音声を聴く"}
+            </span>
           </button>
 
           {/* Speed Selector with dynamic WPM capsule indicators */}
