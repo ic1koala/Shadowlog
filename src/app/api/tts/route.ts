@@ -57,3 +57,60 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const rateLimit = checkRateLimit(req, {
+      namespace: "tts-sentence",
+      maxRequests: 40,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many TTS requests. Please try again shortly." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
+    let body: { text?: string; level?: string } = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const rawText = typeof body.text === "string" ? body.text.trim() : "";
+    if (!rawText) {
+      return NextResponse.json(
+        { error: "text parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    const cleanText = rawText.slice(0, 1200);
+    const speed = body.level === "beginner" ? 0.9 : 1.0;
+
+    const openai = getOpenAIClient();
+    const mp3 = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "alloy",
+      input: cleanText,
+      speed,
+    });
+
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+    const audioBase64 = buffer.toString("base64");
+
+    return NextResponse.json({ audioBase64 }, { status: 200 });
+  } catch (error: unknown) {
+    console.warn("TTS POST API error:", error);
+    return NextResponse.json(
+      { error: "TTS generation failed" },
+      { status: 500 }
+    );
+  }
+}
+

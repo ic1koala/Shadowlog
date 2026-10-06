@@ -443,21 +443,47 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         const ind = normalizeIndustry(indParam);
         const lvl = lvlParam || "intermediate";
         const mode = modeParam === "passage" ? "passage" : "sentence";
+        const decodedEn = decodeURIComponent(retryText);
+        const decodedJa = retryJa ? decodeURIComponent(retryJa) : "";
         setIndustry(ind);
         setLevel(lvl);
         setPracticeMode(mode);
-        const reviewSentence: SentenceResponse = {
-          id: `review-${Date.now()}`,
-          english: decodeURIComponent(retryText),
-          japanese: retryJa ? decodeURIComponent(retryJa) : "",
-          wordCount: decodeURIComponent(retryText).trim().split(/\s+/).length,
-          industry: ind,
-          level: lvl,
-          mode: mode,
-        };
-        seenSentenceIdsRef.current.add(reviewSentence.id);
-        setSentence(reviewSentence);
-        void prefetchNextSentence(ind, lvl, mode, reviewSentence.id);
+        setIsLoadingSentence(true);
+
+        const reviewId = `review-${Date.now()}`;
+        seenSentenceIdsRef.current.add(reviewId);
+
+        void (async () => {
+          let audioBase64: string | undefined;
+          try {
+            const ttsRes = await fetch("/api/tts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: decodedEn, level: lvl }),
+            });
+            if (ttsRes.ok) {
+              const ttsData = (await ttsRes.json()) as { audioBase64?: string };
+              if (ttsData.audioBase64) {
+                audioBase64 = ttsData.audioBase64;
+              }
+            }
+          } catch {
+            // Fallback gracefully if offline
+          }
+          const reviewSentence: SentenceResponse = {
+            id: reviewId,
+            english: decodedEn,
+            japanese: decodedJa,
+            audioBase64,
+            wordCount: decodedEn.trim().split(/\s+/).length,
+            industry: ind,
+            level: lvl,
+            mode: mode,
+          };
+          setSentence(reviewSentence);
+          setIsLoadingSentence(false);
+          void prefetchNextSentence(ind, lvl, mode, reviewSentence.id);
+        })();
         return;
       }
     }

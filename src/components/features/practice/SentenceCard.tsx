@@ -339,47 +339,9 @@ export function SentenceCard({
     });
   }, []);
 
-  // Smooth sliding karaoke pill state & refs
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const prevWordIndexRef = useRef<number | null>(null);
-  const [isImmediate, setIsImmediate] = useState(true);
-  const [pillStyle, setPillStyle] = useState({
-    left: 0,
-    top: 0,
-    width: 0,
-    height: 0,
-    opacity: 0,
-  });
-
-  const updatePillPosition = useCallback(
-    (index: number | null, immediate = false) => {
-      if (index === null || !containerRef.current) {
-        setPillStyle((prev) => ({ ...prev, opacity: 0 }));
-        return;
-      }
-      const el = wordRefs.current[index];
-      const container = containerRef.current;
-      if (!el || !container) return;
-
-      const containerRect = container.getBoundingClientRect();
-      const wordRect = el.getBoundingClientRect();
-
-      // Pad around the word text to create a clean, compact pill that fits tight line spacing
-      const padX = 3;
-      const padY = 1;
-
-      setIsImmediate(immediate);
-      setPillStyle({
-        left: wordRect.left - containerRect.left - padX,
-        top: wordRect.top - containerRect.top - padY,
-        width: wordRect.width + padX * 2,
-        height: wordRect.height + padY * 2,
-        opacity: 1,
-      });
-    },
-    []
-  );
+  // Self-healing OpenAI TTS audio state when a sentence is loaded without pre-attached audioBase64
+  const [fetchedAudioBase64, setFetchedAudioBase64] = useState<string | undefined>(undefined);
+  const resolvedAudioBase64 = sentence?.audioBase64 || fetchedAudioBase64;
 
   const stopAnimationLoop = useCallback(() => {
     if (rafIdRef.current !== null) {
@@ -600,11 +562,9 @@ export function SentenceCard({
   useEffect(() => {
     setIsPlaying(false);
     setActiveWordIndex(null);
-    prevWordIndexRef.current = null;
-    setPillStyle({ left: 0, top: 0, width: 0, height: 0, opacity: 0 });
-    wordRefs.current = [];
     setFlippedWordIndices(new Set());
     setDynamicTranslations({});
+    setFetchedAudioBase64(undefined);
     clearPendingPlay();
     stopAnimationLoop();
     setAudioDuration(null);
@@ -616,34 +576,6 @@ export function SentenceCard({
       audioRef.current.pause();
       audioRef.current.removeAttribute("src");
       audioRef.current = null;
-    }
-
-    // Pre-load audio metadata if base64 is available to measure real duration and calculate dynamic WPM
-    if (sentence?.audioBase64) {
-      const audio = new Audio(`data:audio/mp3;base64,${sentence.audioBase64}`);
-      audioRef.current = audio;
-
-      const handleLoadedMetadata = () => {
-        if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
-          setAudioDuration(audio.duration);
-        }
-      };
-
-      if (audio.readyState >= 1 && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
-        setAudioDuration(audio.duration);
-      } else {
-        audio.addEventListener("loadedmetadata", handleLoadedMetadata);
-      }
-
-      audio.onended = () => {
-        setIsPlaying(false);
-        setActiveWordIndex(null);
-        clearPendingPlay();
-        stopAnimationLoop();
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("shadowlog:model-audio-ended"));
-        }
-      };
     }
 
     return () => {
@@ -658,42 +590,78 @@ export function SentenceCard({
         audioRef.current = null;
       }
     };
-  }, [sentence?.id, sentence?.audioBase64, clearPendingPlay, stopAnimationLoop]);
+  }, [sentence?.id, clearPendingPlay, stopAnimationLoop]);
 
-  // Synchronize smooth sliding pill position with activeWordIndex
+  // Self-healing OpenAI TTS fallback: if sentence has English text but lacks audioBase64
+  // (e.g. loaded from review card or local fallback), fetch OpenAI TTS MP3 automatically
+  // so mobile playback never falls back to OS speechSynthesis (which breaks shadowing recording).
   useEffect(() => {
-    if (activeWordIndex === null || !isPlaying) {
-      prevWordIndexRef.current = null;
-      setPillStyle((prev) => ({ ...prev, opacity: 0 }));
-      return;
+    if (!sentence?.english || sentence.audioBase64 || fetchedAudioBase64) return;
+    let cancelled = false;
+
+    fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: sentence.english,
+        level: sentence.level,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { audioBase64?: string } | null) => {
+        if (!cancelled && data?.audioBase64) {
+          setFetchedAudioBase64(data.audioBase64);
+        }
+      })
+      .catch(() => {
+        // Ignore network error; SpeechSynthesis fallback remains as last resort
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sentence?.id, sentence?.english, sentence?.level, sentence?.audioBase64, fetchedAudioBase64]);
+
+  // Pre-load audio metadata when resolvedAudioBase64 is available to measure real duration and calculate dynamic WPM
+  useEffect(() => {
+    if (!resolvedAudioBase64) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.removeAttribute("src");
+      audioRef.current = null;
     }
 
-    const isFirstWord = prevWordIndexRef.current === null;
-    prevWordIndexRef.current = activeWordIndex;
-    updatePillPosition(activeWordIndex, isFirstWord);
-  }, [activeWordIndex, isPlaying, updatePillPosition]);
+    const audio = new Audio(`data:audio/mp3;base64,${resolvedAudioBase64}`);
+    audioRef.current = audio;
 
-  // Recalculate position on window resize so pill stays aligned with wrapped text
-  useEffect(() => {
-    const handleResize = () => {
-      if (activeWordIndex !== null && isPlaying) {
-        updatePillPosition(activeWordIndex, true);
+    const handleLoadedMetadata = () => {
+      if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+        setAudioDuration(audio.duration);
       }
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [activeWordIndex, isPlaying, updatePillPosition]);
 
-  // Re-measure when web fonts finish loading
-  useEffect(() => {
-    if (typeof document !== "undefined" && document.fonts) {
-      document.fonts.ready.then(() => {
-        if (activeWordIndex !== null && isPlaying) {
-          updatePillPosition(activeWordIndex, true);
-        }
-      });
+    if (audio.readyState >= 1 && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+      setAudioDuration(audio.duration);
+    } else {
+      audio.addEventListener("loadedmetadata", handleLoadedMetadata);
     }
-  }, [activeWordIndex, isPlaying, updatePillPosition]);
+
+    audio.onended = () => {
+      setIsPlaying(false);
+      setIsPreparingAudio(false);
+      setActiveWordIndex(null);
+      clearPendingPlay();
+      stopAnimationLoop();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("shadowlog:model-audio-ended"));
+      }
+    };
+
+    return () => {
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+  }, [resolvedAudioBase64, clearPendingPlay, stopAnimationLoop]);
 
   const speakWithSpeechSynthesis = useCallback(
     (text: string, customDelayMs?: number) => {
@@ -765,10 +733,10 @@ export function SentenceCard({
 
   // Ensure the HTMLAudioElement is created and routed through Web Audio boost if enabled
   const ensureAudioElementReady = useCallback(() => {
-    if (!sentence?.audioBase64) return null;
+    if (!resolvedAudioBase64 || !sentence) return null;
 
     if (!audioRef.current) {
-      const audio = new Audio(`data:audio/mp3;base64,${sentence.audioBase64}`);
+      const audio = new Audio(`data:audio/mp3;base64,${resolvedAudioBase64}`);
       audioRef.current = audio;
 
       audio.onended = () => {
@@ -805,6 +773,7 @@ export function SentenceCard({
 
     return audio;
   }, [
+    resolvedAudioBase64,
     sentence,
     playbackSpeed,
     isVolumeBoosted,
@@ -819,7 +788,7 @@ export function SentenceCard({
     (delayMs: number, isShadowingMode = false) => {
       if (!sentence) return;
 
-      if (sentence.audioBase64) {
+      if (resolvedAudioBase64) {
         const audio = ensureAudioElementReady();
         if (!audio) return;
 
@@ -893,6 +862,7 @@ export function SentenceCard({
     },
     [
       sentence,
+      resolvedAudioBase64,
       ensureAudioElementReady,
       parsedWords.length,
       isVolumeBoosted,
@@ -1104,9 +1074,6 @@ export function SentenceCard({
     );
   }
 
-  // Animation duration dynamically adjusted to playback speed for natural gliding
-  const animDuration = Math.round(240 / playbackSpeed);
-
   return (
     <div className="w-full bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
@@ -1133,26 +1100,8 @@ export function SentenceCard({
       </div>
 
       <div className="space-y-2 sm:space-y-3">
-        {/* English sentence with smooth sliding karaoke pill (tap to toggle Japanese translation) */}
-        <div
-          ref={containerRef}
-          className="relative p-1 -m-1 select-none rounded-xl"
-        >
-          {/* Smooth sliding karaoke highlight pill */}
-          <div
-            aria-hidden="true"
-            className="absolute rounded-lg bg-blue-600 shadow-sm pointer-events-none"
-            style={{
-              transform: `translate3d(${pillStyle.left}px, ${pillStyle.top}px, 0)`,
-              width: `${pillStyle.width}px`,
-              height: `${pillStyle.height}px`,
-              opacity: isPlaying && activeWordIndex !== null && pillStyle.width > 0 ? 1 : 0,
-              transition: isImmediate
-                ? "opacity 150ms ease"
-                : `transform ${animDuration}ms cubic-bezier(0.25, 1, 0.5, 1), width ${animDuration}ms cubic-bezier(0.25, 1, 0.5, 1), height ${animDuration}ms cubic-bezier(0.25, 1, 0.5, 1), opacity 150ms ease`,
-            }}
-          />
-
+        {/* English sentence with blue bold karaoke highlight (tap word to toggle Japanese translation) */}
+        <div className="relative p-1 -m-1 select-none rounded-xl">
           <p className="text-xl sm:text-3xl font-semibold leading-snug tracking-normal text-foreground flex flex-wrap gap-y-0.5 sm:gap-y-1 items-baseline relative z-10">
             {parsedWords.map((w, idx) => {
               const isCurrent = isPlaying && activeWordIndex === idx;
@@ -1164,9 +1113,6 @@ export function SentenceCard({
               return (
                 <span
                   key={w.id}
-                  ref={(el) => {
-                    wordRefs.current[idx] = el;
-                  }}
                   className={`relative inline-block select-none align-baseline transition-colors duration-150 ${
                     hasSlash ? "mr-3 sm:mr-3.5" : "mr-1 sm:mr-1.5"
                   }`}
@@ -1189,9 +1135,9 @@ export function SentenceCard({
                           isFlipped
                             ? "absolute inset-0 flex items-center justify-center pointer-events-none"
                             : "relative inline-block"
-                        } px-0.5 py-0 rounded-md word-flip-backface-hidden transition-all duration-150 whitespace-nowrap ${
+                        } px-0.5 py-0 rounded-md word-flip-backface-hidden transition-colors duration-100 whitespace-nowrap ${
                           isCurrent
-                            ? "text-white font-semibold"
+                            ? "text-blue-600 dark:text-blue-400 font-extrabold underline decoration-solid decoration-blue-600 dark:decoration-blue-400 decoration-2 underline-offset-[3px]"
                             : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-[3px] group-hover/word:decoration-primary"
                         }`}
                       >
@@ -1206,7 +1152,7 @@ export function SentenceCard({
                             : "absolute inset-0 pointer-events-none overflow-hidden"
                         } px-1.5 py-0 rounded-md text-xs sm:text-sm font-bold word-flip-backface-hidden word-flip-rotated-180 transition-all duration-150 items-center justify-center whitespace-nowrap ${
                           isCurrent
-                            ? "bg-amber-400 text-amber-950 shadow-xs"
+                            ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/40 font-extrabold shadow-xs"
                             : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-xs"
                         }`}
                       >
