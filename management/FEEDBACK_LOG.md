@@ -58,6 +58,7 @@ flowchart LR
 | FB-035 | 2026/10/05 | オーナー | 独自機能・AI生成 | 学びたい英単語3つを設定画面で登録（候補自動提示あり・随時変更可）し、初級/中級/上級の語数に合わせてオリジナル作成（1文に限定せず自然な構成）。練習画面の「条件を変更する」ボタン付近にカスタム設定ボタンを配置（Base:1日3回 / Pro:1日10回） | 高 | 完了 | CUSTOM_TOPIC_WORDS_SPEC.md 準拠、custom-words-store.ts・CustomWordsSection.tsx・generate-sentence API・practice/page.tsx 実装完了（全166テスト合格） |
 | FB-036 | 2026/10/06 | テスター・オーナー | 録音・音響制御（Android＋無線イヤホン頭切れ） | Galaxy S26＋Galaxy Buds FEにてシャドーイング時の音量は大きくなったが、出だしの1単語ほどが聞こえず途中から聞こえてくるため、イヤホン接続安定後に頭から聞こえるよう改善 | 最高 | 完了 | ①2段階ハンドシェイク（`shadowlog:prepare-model-audio` ➔ マイク＆MediaRecorder起動完了後の `shadowlog:shadowing-mic-ready`）に分離、②Web Audio不可聴プライマー信号（-74dB 440Hz非ゼロPCM）によるBluetooth DAC/A2DPシンク即時ウェイクアップ＆維持、③AndroidのBluetoothルート安定待機（650ms）後に `currentTime = 0` から再生開始を実装（全167テスト合格） |
 | FB-037 | 2026/10/06 | テスター・オーナー | 録音・強制停止バグ | ボタンにタッチしなくても音声が流れた約2秒後くらいに勝手に録音が中止になるトラブル | 最高 | 完了 | ①シャドーイング時の模範音声終了1.5秒後の強制自動停止タイマー（採点へ進まず録音が強制終了していた挙動）を廃止しユーザー自身の「録音を終了」タップまで録音を継続、②マウント時の自動 `getUserMedia`+`track.stop()`（`requestDeviceAccess`）や録音中の `devicechange`・非同期 `applyConstraints` によるマイクストリーム切断を防止 |
+| FB-038 | 2026/10/06 | オーナー | AI生成・プロンプト改善 | #58のような不自然なバズワード（ワークライフハーモニー等）の排除、Dailyジャンルの口語・日常会話ペルソナ分岐、季節感のオプショナル化・軽微化（無理な紐付け禁止・ポエム調禁止）、日常で本当に使いそうな自然な文章（Plain English）への徹底 | 高 | 完了 | NATURAL_PROMPT_REFINEMENT_SPEC.md 準拠、INDUSTRY_TRENDS.daily・DAILY_SEASONAL_THEMES刷新、Daily/Businessペルソナ分離、季節感オプショナル化・ポエム調＆バズワード禁止ルール・Sanity Check実装（全167テスト合格） |
 
 ---
 

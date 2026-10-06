@@ -118,5 +118,44 @@ describe("Seasonal & Trend Awareness Prompt Injection", () => {
     expect(prompt.userPrompt).toContain("Q1");
     expect(prompt.userPrompt).toContain("Modern Trend Angle");
   });
-});
 
+  it("separates daily casual persona from business presentation persona and bans buzzwords/cliches (FB-038)", async () => {
+    const {
+      getPassageGenerationPrompt,
+      getSentenceGenerationPrompt,
+      getSeasonalTrendContext,
+    } = await import("@/lib/ai/prompts");
+
+    // 1. Daily passage prompt uses casual storytelling persona, not executive speechwriter
+    const dailyPassage = getPassageGenerationPrompt("daily", "intermediate");
+    expect(dailyPassage.systemPrompt).toContain(
+      "sharing a natural, engaging, and authentic story or recommendation with a friend or colleague"
+    );
+    expect(dailyPassage.systemPrompt).not.toContain("elite executive speechwriter");
+    expect(dailyPassage.userPrompt).toContain(
+      "Do NOT turn everyday topics into a keynote speech"
+    );
+
+    // 2. Business passage prompt retains professional presentation style
+    const businessPassage = getPassageGenerationPrompt("business", "intermediate");
+    expect(businessPassage.systemPrompt).toContain("professional communicator");
+    expect(businessPassage.userPrompt).toContain("workplace presentation");
+
+    // 3. Both passage and sentence prompts explicitly ban poetic seasonal cliches & buzzwords
+    const dailySentence = getSentenceGenerationPrompt("daily", "intermediate");
+    for (const p of [dailyPassage, businessPassage, dailySentence]) {
+      expect(p.systemPrompt).toContain("As we embrace the vibrant colors of autumn");
+      expect(p.systemPrompt).toContain("work-life harmony");
+      expect(p.systemPrompt).toContain("digital wellness");
+      expect(p.systemPrompt).toContain("OMIT it completely");
+      expect(p.systemPrompt).toContain("Sanity Check");
+    }
+
+    // 4. Daily trend pool never returns abstract LinkedIn buzzwords
+    for (let i = 0; i < 20; i++) {
+      const ctx = getSeasonalTrendContext("daily", new Date("2026-10-15T00:00:00Z"));
+      expect(ctx.trendingTopic.toLowerCase()).not.toContain("work-life harmony");
+      expect(ctx.trendingTopic.toLowerCase()).not.toContain("digital wellness");
+    }
+  });
+});

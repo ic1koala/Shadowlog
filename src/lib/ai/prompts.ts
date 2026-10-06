@@ -117,11 +117,30 @@ const INDUSTRY_TRENDS: Record<Industry, string[]> = {
     "Community-led growth initiatives and high-engagement referral programs",
   ],
   daily: [
-    "Work-life harmony, digital wellness, and flexible daily routines",
-    "Smart home automation, wearable health tech, and lifestyle optimization",
-    "Exploring artisanal cafes, seasonal cuisines, and local sustainable dining",
-    "Weekend outdoor adventures, eco-friendly travel, and cultural exploration",
-    "Lifelong learning routines, podcast discussions, and book clubs",
+    "Finding great local cafes, cozy lunch spots, and seasonal dining",
+    "Casual conversation with colleagues about weekend plans and hobbies",
+    "Smart home convenience, useful lifestyle apps, and simple daily routines",
+    "Outdoor weekend walks, day trips, and exploring neighborhood spots",
+    "Cooking simple meals at home and sharing easy recipe ideas",
+  ],
+};
+
+const DAILY_SEASONAL_THEMES: Record<"spring" | "summer" | "autumn" | "winter", string[]> = {
+  spring: [
+    "Enjoying warmer spring weather, outdoor seating, and fresh seasonal menus",
+    "Spring cleaning, refreshing daily routines, and weekend strolls in the park",
+  ],
+  summer: [
+    "Staying cool on warm summer days, iced drinks, and summer weekend getaways",
+    "Long summer evenings, casual outdoor dining, and neighborhood events",
+  ],
+  autumn: [
+    "Crisp autumn weather, cozy coffee shops, and warm comfort food",
+    "Quiet autumn weekends, reading indoors, and preparing for the cooler months",
+  ],
+  winter: [
+    "Chilly winter mornings, warm drinks, and relaxing at home before the holidays",
+    "New Year routines, winter comfort meals, and catching up with friends indoors",
   ],
 };
 
@@ -154,8 +173,9 @@ export function getSeasonalTrendContext(
 
   const quarter = `Q${Math.floor(month / 3) + 1}` as "Q1" | "Q2" | "Q3" | "Q4";
 
-  const seasonalList = SEASONAL_THEMES[season];
-  const seasonalTheme = seasonalList[Math.floor(Math.random() * seasonalList.length)]!;
+  const seasonalPool =
+    normInd === "daily" ? DAILY_SEASONAL_THEMES[season] : SEASONAL_THEMES[season];
+  const seasonalTheme = seasonalPool[Math.floor(Math.random() * seasonalPool.length)]!;
 
   const trendList = INDUSTRY_TRENDS[normInd] || INDUSTRY_TRENDS.tech;
   const trendingTopic = trendList[Math.floor(Math.random() * trendList.length)]!;
@@ -202,6 +222,7 @@ export function getSentenceGenerationPrompt(
       };
 
   const normInd = normalizeIndustry(industry);
+  const isDaily = normInd === "daily";
   const situations = INDUSTRY_SITUATIONS[normInd] || INDUSTRY_SITUATIONS.tech;
   const randomSituation = situations[Math.floor(Math.random() * situations.length)];
   const randomSeed = Math.random().toString(36).substring(2, 8);
@@ -215,8 +236,25 @@ Your task is to generate ${hasCustomWords ? "a fresh, authentic 1-to-2 sentence 
 IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets (e.g., TOEIC, TOEFL), or copyrighted materials. All generated content must be 100% original and dynamically created.
 NEVER generate generic, repetitive, or cliché template sentences.
 
-Season & Trend Awareness:
-Subtly weave in realistic seasonal timing cues (such as current quarter or annual business cycle themes) and contemporary industry trends (such as modern tech tools, agile business, or digital workflows). The sentence must feel fresh, timely, and relevant to modern professionals, rather than generic textbook English.${
+Tone & Persona Guidance:
+${
+  isDaily
+    ? `- This is for EVERYDAY CONVERSATION ("daily" domain). Write as a native English speaker talking naturally with a friend, neighbor, or colleague in real life.
+- Keep the tone warm, casual, and grounded in daily life. NEVER use dramatic speeches, executive posturing, or corporate jargon.`
+    : `- This is for practical professional communication ("${normInd}" domain). Write in clear, natural spoken English suitable for real workplace meetings or discussions.`
+}
+
+Season & Trend Awareness (Optional & Subtle):
+- Seasonal Context Rules:
+  - ONLY include a seasonal reference if it fits the topic naturally.
+  - When included, keep it subtle, brief, and realistic (e.g., "Now that it's getting chilly outside...", "Before the holidays kick in...", "As we wrap up Q3...").
+  - NEVER use flowery, poetic, or overly dramatic seasonal openings (e.g., BAN phrases like "As we embrace the vibrant colors of autumn..." or "As the crisp autumn breeze whispers...").
+  - If the seasonal theme does not fit the core topic naturally, OMIT it completely and focus 100% on the core scenario.
+
+Authentic Spoken Phrasing & Plain English:
+- NEVER use unnatural corporate buzzwords or philosophical metaphors in everyday topics (e.g., BAN "work-life harmony", "digital wellness", "paradigm shift", "synergistic lifestyle").
+- Prefer plain, idiomatic spoken English over stiff written prose.
+- Sanity Check: Ask yourself, "Would a real native speaker actually say this exact sentence out loud to a friend or colleague?" If it sounds like an AI essay or a pretentious LinkedIn post, rewrite it into plain, natural spoken English.${
     hasCustomWords
       ? `
 
@@ -241,8 +279,8 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
   const userPrompt = `Generate a unique shadowing practice sentence with the following specifications:
 - Industry/Domain: ${normInd}
 - Context/Situation: ${topic ? topic : randomSituation}
-- Seasonal Timing & Cycle: ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
-- Modern Trend Angle: ${seasonal.trendingTopic}
+- Seasonal Timing & Cycle (Optional - omit if unnatural): ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
+- Modern Trend Angle (Optional reference): ${seasonal.trendingTopic}
 - Difficulty Level: ${level} (${levelGuidelines[level]})
 - Variation Seed: ${randomSeed}${
     hasCustomWords
@@ -254,18 +292,20 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
 
 Requirements:
 - Make the vocabulary, syntax, and sentence structure novel and distinct from typical textbook examples.
-- Naturally harmonize the context with current seasonal business cycles and modern trends where appropriate.${
+- Only include a subtle seasonal or trend cue if it fits the core situation naturally; otherwise omit it completely.
+- Strictly avoid poetic seasonal clichés ("As we embrace the vibrant colors of autumn...") and abstract buzzwords ("work-life harmony", "digital wellness", "paradigm shift").${
     hasCustomWords
       ? `\n- Seamlessly weave [${customWordList}] into a natural 1-to-2 sentence flow within the target word count (${level === "beginner" ? "10-14 words" : level === "intermediate" ? "15-20 words" : "21-28 words"}).`
       : ""
   }
-- Ensure natural conversational or business cadence and rhythm suitable for oral shadowing practice.`;
+- Ensure authentic spoken cadence and rhythm that a real native speaker would say out loud.`;
 
   return { systemPrompt, userPrompt };
 }
 
 /**
- * Generates prompt for full-paragraph presentation/speech passage (60-90 words).
+ * Generates prompt for full-paragraph passage (60-90 words).
+ * Adapts persona between casual storytelling (daily) and professional presentation/speech (tech/business/marketing).
  */
 export function getPassageGenerationPrompt(
   industry: Industry,
@@ -274,18 +314,34 @@ export function getPassageGenerationPrompt(
   referenceDate?: Date
 ): PromptTemplate {
   const normInd = normalizeIndustry(industry);
+  const isDaily = normInd === "daily";
   const situations = INDUSTRY_SITUATIONS[normInd] || INDUSTRY_SITUATIONS.tech;
   const randomSituation = situations[Math.floor(Math.random() * situations.length)];
   const randomSeed = Math.random().toString(36).substring(2, 8);
   const seasonal = getSeasonalTrendContext(normInd, referenceDate);
 
-  const systemPrompt = `You are an elite executive speechwriter and English speaking coach.
-Your task is to generate ONE coherent, inspiring, and natural presentation/speech passage (paragraph of 3 to 5 sentences, 60 to 90 words total) along with its natural Japanese translation.
-IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets, or copyrighted materials. All generated content must be 100% original.
-Avoid formulaic openings like "Good morning everyone". Dive right into substantive, engaging speech content.
+  const personaIntro = isDaily
+    ? `You are a native English speaker sharing a natural, engaging, and authentic story or recommendation with a friend or colleague.
+Avoid dramatic speeches, executive posturing, or corporate clichés. Keep the tone warm, conversational, and grounded in real life.`
+    : `You are an experienced professional communicator and English speaking coach.
+Write in the style of a clear, practical, and engaging business presentation, team update, or professional briefing.`;
 
-Season & Trend Awareness:
-Reflect the immediate reality of modern business, subtly incorporating current seasonal momentum (such as current quarter goals, annual planning, or seasonal milestones) and contemporary industry developments so the speech sounds immediate, timely, and inspiring.
+  const systemPrompt = `${personaIntro}
+Your task is to generate ONE coherent, natural spoken passage (paragraph of 3 to 5 sentences, 60 to 90 words total) along with its natural Japanese translation.
+IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets, or copyrighted materials. All generated content must be 100% original.
+Avoid formulaic openings like "Good morning everyone". Dive right into natural, substantive spoken content.
+
+Season & Trend Awareness (Optional & Subtle):
+- Seasonal Context Rules:
+  - ONLY include a seasonal reference if it fits the topic naturally.
+  - When included, keep it subtle, brief, and realistic (e.g., "Now that it's getting chilly outside...", "Before the holidays kick in...", "As we wrap up Q3...").
+  - NEVER use flowery, poetic, or overly dramatic seasonal openings (e.g., BAN phrases like "As we embrace the vibrant colors of autumn..." or "As the crisp autumn breeze whispers...").
+  - If the seasonal theme does not fit the core topic naturally, OMIT it completely and focus 100% on the core scenario.
+
+Authentic Spoken Phrasing & Plain English:
+- NEVER use unnatural corporate buzzwords or philosophical metaphors in everyday topics (e.g., BAN "work-life harmony", "digital wellness", "paradigm shift", "synergistic lifestyle").
+- Prefer plain, idiomatic spoken English over stiff written prose.
+- Sanity Check: Ask yourself, "Would a real native speaker actually say this exact sentence out loud to a friend or colleague?" If it sounds like an AI essay or a pretentious LinkedIn post, rewrite it into plain, natural spoken English.
 
 Strict Output Format:
 Return ONLY a valid JSON object with the following schema:
@@ -295,20 +351,25 @@ Return ONLY a valid JSON object with the following schema:
 }
 Do NOT include markdown fences, extra commentary, or additional fields.`;
 
-  const userPrompt = `Generate an engaging business presentation or conference speech passage with the following specifications:
+  const userPrompt = `Generate an authentic spoken English passage with the following specifications:
 - Industry/Domain: ${normInd}
 - Scenario/Topic: ${topic ? topic : randomSituation}
-- Seasonal Timing & Cycle: ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
-- Modern Trend Angle: ${seasonal.trendingTopic}
+- Seasonal Timing & Cycle (Optional - omit if unnatural): ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
+- Modern Trend Angle (Optional reference): ${seasonal.trendingTopic}
 - Difficulty Level: ${level}
 - Target Word Count: 60 to 90 words (3 to 5 clear, rhythmic sentences)
 - Variation Seed: ${randomSeed}
 
 Style Guidelines:
-- Write in the style of an authentic keynote speech, engineering town hall, or executive briefing.
-- Naturally incorporate modern trend nuances and seasonal momentum into the rhetorical flow.
-- Use natural transitional signposts and engaging rhetoric.
-- Ensure rhythmic pauses and clear chunking for continuous shadowing.`;
+${
+  isDaily
+    ? `- Write as a warm, casual story, personal experience, or everyday recommendation shared with a friend or coworker.
+- Do NOT turn everyday topics into a keynote speech or corporate presentation.`
+    : `- Write in the style of a practical, authentic workplace presentation, team town hall, or professional briefing.`
+}
+- Only incorporate a seasonal or trend cue if it fits naturally into the topic; omit it if it feels forced.
+- Strictly avoid poetic seasonal clichés ("As we embrace the vibrant colors of autumn...") and abstract buzzwords ("work-life harmony", "digital wellness", "paradigm shift").
+- Ensure natural spoken pauses and clear chunking for continuous shadowing.`;
 
   return { systemPrompt, userPrompt };
 }
