@@ -816,9 +816,6 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* ── 5.5 カスタム生成用マイ単語（3単語登録） ── */}
-        <CustomWordsSection industry={industry} />
-
         {/* ── 6. 学習設定を保存するボタン ── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
           <div className="text-xs text-muted-foreground text-center sm:text-left">

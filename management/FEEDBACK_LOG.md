@@ -61,6 +61,7 @@ flowchart LR
 | FB-038 | 2026/10/06 | オーナー | AI生成・プロンプト改善 | #58のような不自然なバズワード（ワークライフハーモニー等）の排除、Dailyジャンルの口語・日常会話ペルソナ分岐、季節感のオプショナル化・軽微化（無理な紐付け禁止・ポエム調禁止）、日常で本当に使いそうな自然な文章（Plain English）への徹底 | 高 | 完了 | NATURAL_PROMPT_REFINEMENT_SPEC.md 準拠、INDUSTRY_TRENDS.daily・DAILY_SEASONAL_THEMES刷新、Daily/Businessペルソナ分離、季節感オプショナル化・ポエム調＆バズワード禁止ルール・Sanity Check実装（全167テスト合格） |
 | FB-039 | 2026/10/06 | オーナー | 練習画面UI・タイポグラフィ | フレーズカードの行間の高さを半分ほどに調整し、単語間の文字間隔も不自然な空白が出ない適切な幅に修正 | 高 | 完了 | `SentenceCard.tsx` の行高・行間を `leading-snug gap-y-0.5 sm:gap-y-1` へ半減し、未フリップ時に裏面の日本語訳が英単語の横幅を押し広げないよう `absolute inset-0` 制御に変更 |
 | FB-040 | 2026/10/06 | オーナー | 復習カルテTTS再読込・カラオケUI | ①復習カルテからの再練習時にスマホのデフォルト音声再生になりシャドーイング録音に失敗する問題へのOpenAI TTS再読み込み実装、②カラオケ表示を青い背景ピルから「青文字＋太文字」へ変更 | 最高 | 完了 | ①`POST /api/tts` エンドポイント新設＆復習カルテ遷移時（`retryText`）および `SentenceCard` でのOpenAI TTS音声（`audioBase64`）自動再生成・読み込み実装、②`SentenceCard.tsx` のカラオケハイライトを青背景ピルから青色太文字（`text-blue-600 dark:text-blue-400 font-extrabold`）に変更（全169テスト合格） |
+| FB-041 | 2026/10/07 | オーナー | 設定画面UI | 設定画面（`/settings`）にて「✨ カスタム生成用マイ単語（3単語登録）」が2箇所重複表示されていた問題の修正 | 高 | 完了 | `src/app/(dashboard)/settings/page.tsx` 内の重複していた `<CustomWordsSection industry={industry} />`（5.5セクション）を削除し、プラン情報・ログイン状態連携付きの `<CustomWordsSection>` 1箇所のみに統一 |
 
 ---
 
