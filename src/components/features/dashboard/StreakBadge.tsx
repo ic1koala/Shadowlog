@@ -1,6 +1,7 @@
 "use client";
 
-import { Flame, Trophy, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Flame, Trophy, Calendar, ChevronDown } from "lucide-react";
 
 interface StreakBadgeProps {
   currentStreak: number;
@@ -15,16 +16,30 @@ export function StreakBadge({
   lastPracticedDate,
   variant = "default",
 }: StreakBadgeProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const isStreakActive = currentStreak > 0;
 
   if (variant === "compact") {
     return (
-      <div className="bg-card rounded-2xl p-3.5 sm:p-4 border border-amber-500/25 bg-gradient-to-r from-amber-500/[0.08] via-orange-500/[0.03] to-card shadow-xs flex items-center justify-between gap-3 transition">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-xs">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        onClick={() => setIsExpanded((prev) => !prev)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsExpanded((prev) => !prev);
+          }
+        }}
+        className="w-full text-left bg-card rounded-2xl p-3.5 sm:p-4 border border-amber-500/25 bg-gradient-to-r from-amber-500/[0.08] via-orange-500/[0.03] to-card shadow-xs flex items-center justify-between gap-3 transition cursor-pointer select-none hover:border-amber-500/40 active:scale-[0.99]"
+        title={isExpanded ? "タップで折りたたむ" : "タップで全文を表示"}
+      >
+        <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-xs mt-0.5 sm:mt-0">
             <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 fill-amber-500/20 animate-pulse" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-1.5 sm:gap-2">
               <span className="text-xl sm:text-2xl font-extrabold font-mono tracking-tight text-foreground">
                 {currentStreak}
@@ -32,16 +47,37 @@ export function StreakBadge({
               <span className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400">
                 日連続学習中！
               </span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-amber-600/70 dark:text-amber-400/70 transition-transform duration-200 ml-0.5 shrink-0 sm:hidden ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
+              />
             </div>
-            <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-1">
+            <p
+              className={`text-[11px] sm:text-xs text-muted-foreground leading-relaxed transition-all ${
+                isExpanded ? "whitespace-normal break-words mt-0.5" : "line-clamp-1"
+              }`}
+            >
               {isStreakActive
                 ? "素晴らしい継続力です！今日も学習して記録を伸ばしましょう。"
                 : "今日1セッション完了して、新しいストリークを開始しましょう！"}
             </p>
+            {isExpanded && lastPracticedDate && (
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 flex items-center gap-1 mt-1 animate-in fade-in duration-150">
+                <Calendar className="w-3 h-3 text-amber-500 shrink-0" />
+                <span>
+                  最終練習日:{" "}
+                  {new Date(lastPracticedDate).toLocaleDateString("ja-JP", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 pl-2 sm:pl-3 border-l border-border/70 text-right">
+        <div className="flex items-center gap-2 shrink-0 pl-2 sm:pl-3 border-l border-border/70 text-right self-center">
           <div>
             <div className="text-[10px] sm:text-[11px] text-muted-foreground flex items-center justify-end gap-1">
               <Trophy className="w-3 h-3 text-amber-500" />

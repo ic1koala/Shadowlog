@@ -62,6 +62,7 @@ flowchart LR
 | FB-039 | 2026/10/06 | オーナー | 練習画面UI・タイポグラフィ | フレーズカードの行間の高さを半分ほどに調整し、単語間の文字間隔も不自然な空白が出ない適切な幅に修正 | 高 | 完了 | `SentenceCard.tsx` の行高・行間を `leading-snug gap-y-0.5 sm:gap-y-1` へ半減し、未フリップ時に裏面の日本語訳が英単語の横幅を押し広げないよう `absolute inset-0` 制御に変更 |
 | FB-040 | 2026/10/06 | オーナー | 復習カルテTTS再読込・カラオケUI | ①復習カルテからの再練習時にスマホのデフォルト音声再生になりシャドーイング録音に失敗する問題へのOpenAI TTS再読み込み実装、②カラオケ表示を青い背景ピルから「青文字＋太文字」へ変更 | 最高 | 完了 | ①`POST /api/tts` エンドポイント新設＆復習カルテ遷移時（`retryText`）および `SentenceCard` でのOpenAI TTS音声（`audioBase64`）自動再生成・読み込み実装、②`SentenceCard.tsx` のカラオケハイライトを青背景ピルから青色太文字（`text-blue-600 dark:text-blue-400 font-extrabold`）に変更（全169テスト合格） |
 | FB-041 | 2026/10/07 | オーナー | 設定画面UI | 設定画面（`/settings`）にて「✨ カスタム生成用マイ単語（3単語登録）」が2箇所重複表示されていた問題の修正 | 高 | 完了 | `src/app/(dashboard)/settings/page.tsx` 内の重複していた `<CustomWordsSection industry={industry} />`（5.5セクション）を削除し、プラン情報・ログイン状態連携付きの `<CustomWordsSection>` 1箇所のみに統一 |
+| FB-042 | 2026/10/07 | オーナー | ダッシュボードUI | 連続学習カード（ストリーク表示）のメッセージが省略（`...`）されて切れていたため、タップで全文展開・折りたたみ可能に修正 | 高 | 完了 | `StreakBadge.tsx`（`variant="compact"`）にタップ展開状態（`isExpanded`）と開閉アイコンを追加し、タップ時に `line-clamp-1` を解除して全文および最終練習日を表示するよう実装 |
 
 ---
 
