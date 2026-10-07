@@ -63,6 +63,7 @@ flowchart LR
 | FB-040 | 2026/10/06 | オーナー | 復習カルテTTS再読込・カラオケUI | ①復習カルテからの再練習時にスマホのデフォルト音声再生になりシャドーイング録音に失敗する問題へのOpenAI TTS再読み込み実装、②カラオケ表示を青い背景ピルから「青文字＋太文字」へ変更 | 最高 | 完了 | ①`POST /api/tts` エンドポイント新設＆復習カルテ遷移時（`retryText`）および `SentenceCard` でのOpenAI TTS音声（`audioBase64`）自動再生成・読み込み実装、②`SentenceCard.tsx` のカラオケハイライトを青背景ピルから青色太文字（`text-blue-600 dark:text-blue-400 font-extrabold`）に変更（全169テスト合格） |
 | FB-041 | 2026/10/07 | オーナー | 設定画面UI | 設定画面（`/settings`）にて「✨ カスタム生成用マイ単語（3単語登録）」が2箇所重複表示されていた問題の修正 | 高 | 完了 | `src/app/(dashboard)/settings/page.tsx` 内の重複していた `<CustomWordsSection industry={industry} />`（5.5セクション）を削除し、プラン情報・ログイン状態連携付きの `<CustomWordsSection>` 1箇所のみに統一 |
 | FB-042 | 2026/10/07 | オーナー | ダッシュボードUI | 連続学習カード（ストリーク表示）のメッセージが省略（`...`）されて切れていたため、タップで全文展開・折りたたみ可能に修正 | 高 | 完了 | `StreakBadge.tsx`（`variant="compact"`）にタップ展開状態（`isExpanded`）と開閉アイコンを追加し、タップ時に `line-clamp-1` を解除して全文および最終練習日を表示するよう実装 |
+| FB-043 | 2026/10/07 | オーナー | 練習画面UI・カラオケ改行ズレ | フレーズ再生中にハイライトされた単語の横幅が変わり、行末の単語（例：`thoughts / on`）が次の行へ押し出されて文字配置がガタつく問題の修正 | 最高 | 完了 | カラオケ再生中に `font-semibold` ➔ `font-extrabold` へ `font-weight` を切り替えていたことで文字幅が数px膨張し改行位置が変わっていた原因を特定。`font-weight` を固定したまま描画フェーズのみの `[-webkit-text-stroke:0.4px_currentColor]` で太字感を出す方式に変更し、再生中のレイアウトシフトを0pxに根絶 |
 
 ---
 

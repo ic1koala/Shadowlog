@@ -1129,7 +1129,7 @@ export function SentenceCard({
                         isFlipped ? "word-flip-rotated-180" : ""
                       }`}
                     >
-                      {/* Front: English word (in-flow when unflipped so word width is natural) */}
+                      {/* Front: English word (in-flow when unflipped; constant font-weight prevents any line-wrap reflow during karaoke) */}
                       <span
                         className={`${
                           isFlipped
@@ -1137,7 +1137,7 @@ export function SentenceCard({
                             : "relative inline-block"
                         } px-0.5 py-0 rounded-md word-flip-backface-hidden transition-colors duration-100 whitespace-nowrap ${
                           isCurrent
-                            ? "text-blue-600 dark:text-blue-400 font-extrabold underline decoration-solid decoration-blue-600 dark:decoration-blue-400 decoration-2 underline-offset-[3px]"
+                            ? "text-blue-600 dark:text-blue-400 [-webkit-text-stroke:0.4px_currentColor] underline decoration-solid decoration-blue-600 dark:decoration-blue-400 decoration-2 underline-offset-[3px]"
                             : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-[3px] group-hover/word:decoration-primary"
                         }`}
                       >
@@ -1150,9 +1150,9 @@ export function SentenceCard({
                           isFlipped
                             ? "relative inline-flex"
                             : "absolute inset-0 pointer-events-none overflow-hidden"
-                        } px-1.5 py-0 rounded-md text-xs sm:text-sm font-bold word-flip-backface-hidden word-flip-rotated-180 transition-all duration-150 items-center justify-center whitespace-nowrap ${
+                        } px-1.5 py-0 rounded-md text-xs sm:text-sm font-bold word-flip-backface-hidden word-flip-rotated-180 transition-colors duration-150 items-center justify-center whitespace-nowrap ${
                           isCurrent
-                            ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/40 font-extrabold shadow-xs"
+                            ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/40 shadow-xs"
                             : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-xs"
                         }`}
                       >
