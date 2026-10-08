@@ -95,9 +95,9 @@
       </div>
 
       <div class="bg-white p-4 rounded-xl border border-indigo-200 shadow-sm bg-indigo-50/20">
-        <div class="text-xs font-medium text-indigo-800 uppercase tracking-wider">AI原価 (バンク定常 / 蓄積期)</div>
-        <div class="mt-1 text-xl font-bold text-indigo-700">約 0.10 円 <span class="text-xs font-normal text-slate-500">/回 (蓄積0.32円)</span></div>
-        <div class="text-xs text-emerald-600 font-semibold mt-1">営業利益 +¥23,933/月 (利益率80%)</div>
+        <div class="text-xs font-medium text-indigo-800 uppercase tracking-wider">AI原価 (定常+Custom / 蓄積期)</div>
+        <div class="mt-1 text-xl font-bold text-indigo-700">約 0.10 円 <span class="text-xs font-normal text-slate-500">/回 (+Custom枠)</span></div>
+        <div class="text-xs text-emerald-600 font-semibold mt-1">営業利益 +¥23,620/月 (利益率79.0%)</div>
       </div>
 
       <div class="bg-white p-4 rounded-xl border border-purple-200 shadow-sm bg-purple-50/30">
@@ -364,11 +364,11 @@
             </span>
             <h2 class="text-xl font-bold text-slate-900">ShadowLog サービス ＆ システム基本仕様設計書</h2>
             <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              最新版（2026/09/30 統括・実装同期済）
+              最新版（2026/10/09 統括・実装・FB-038同期済）
             </span>
           </div>
           <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
-            本プロダクトのビジョン、料金・制限体系（使い放題）、300文問題バンク＆先読みアーキテクチャ、AI原価、DB設計、および運用ルールを定義するマスター仕様書です。
+            本プロダクトのビジョン、料金・制限体系（使い放題＋3単語カスタム生成）、3,600文問題バンク＆先読みアーキテクチャ、2ボタン録音、AI原価、DB設計、および運用ルールを定義するマスター仕様書です。
           </p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
@@ -400,13 +400,14 @@
 
           <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-2">
             <div class="font-bold text-emerald-900 flex items-center gap-1.5 text-sm">
-              <span>⚡</span> コア差別化（独自の強み・2026/09/30最新）
+              <span>⚡</span> コア差別化（独自の強み・2026/10/09最新）
             </div>
             <ul class="text-slate-700 space-y-1.5 list-disc list-inside">
-              <li><strong>即時Diff判定 ＆ チャンク(/)表示</strong>: 脱落・誤読単語の赤字可視化と意味の塊（スラッシュ）表示。</li>
-              <li><strong>バックグラウンド先読み (0.0秒遷移)</strong>: 1問目練習中に次問を先読みし、待ち時間ゼロで連続練習。</li>
-              <li><strong>3,600文問題バンク ＆ 週10%入替</strong>: 4ジャンル×3レベル×300文を蓄積し高速配信と原価70%超削減を両立。</li>
-              <li><strong>圧倒的低価格 ＆ 使い放題</strong>: 月額500円（Base）/ 1,480円（Pro）で1日回数上限なし。</li>
+              <li><strong>2ボタン録音 ＆ 判定前無制限録り直し</strong>: 「リピーティング」と「シャドーイング」を分離し、判定前に何度でも録り直し可能（API無駄打ちゼロ）。</li>
+              <li><strong>✨ 3単語カスタム例文生成 (FB-035)</strong>: 好きな3単語から自分専用の自然な1〜2文を即時生成（Base:1日3回 / Pro:1日10回）。</li>
+              <li><strong>🌿 日常会話ペルソナ ＆ バズワード排除 (FB-038)</strong>: 日常会話でのLinkedIn風バズワード（ワークライフハーモニー等）やポエム調を厳禁し、平易なPlain Englishを徹底。</li>
+              <li><strong>単語タップ3Dフリップ辞書 ＆ 速度別動的WPM</strong>: 単語タップで意味・発音再生（Web Speech API原価0円）＆0.6x/1.0x/1.2x動的WPM表示。</li>
+              <li><strong>3,600文問題バンク ＆ 先読み0.0秒遷移 ＆ 使い放題</strong>: 月額500円（Base）/ 1,480円（Pro）で1日練習回数上限なし。</li>
             </ul>
           </div>
         </div>
@@ -424,7 +425,7 @@
               🎁 10/20迄登録で10/30までVIP(Pro無制限)自動付与
             </span>
             <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-              ★ 有料プラン 1日上限完全撤廃（使い放題）
+              ★ 有料プラン 1日上限完全撤廃（使い放題）＋3単語カスタム生成枠
             </span>
           </div>
         </div>
@@ -437,7 +438,7 @@
                 <th class="p-3">月額料金</th>
                 <th class="p-3">短文シャドーイング</th>
                 <th class="p-3">長文スピーチ (60〜90語)</th>
-                <th class="p-3">カルテ & 弱点単語帳</th>
+                <th class="p-3">✨ 3単語カスタム生成</th>
                 <th class="p-3">1日練習上限</th>
                 <th class="p-3">採算限界 (蓄積期 / バンク定常期)</th>
               </tr>
@@ -448,7 +449,7 @@
                 <td class="p-3 font-mono">¥0</td>
                 <td class="p-3 text-slate-600">累計 5回</td>
                 <td class="p-3 text-slate-400">✕</td>
-                <td class="p-3 text-slate-400">✕ (端末保存のみ)</td>
+                <td class="p-3 text-indigo-600 font-semibold">累計 2回 (お試し)</td>
                 <td class="p-3 text-slate-500">累計5回で終了</td>
                 <td class="p-3 text-slate-400">N/A</td>
               </tr>
@@ -457,7 +458,7 @@
                 <td class="p-3 font-mono">¥0</td>
                 <td class="p-3 text-slate-600">累計 20回 (+15回)</td>
                 <td class="p-3 text-indigo-600 font-semibold">2回 (味見枠)</td>
-                <td class="p-3 text-emerald-600 font-semibold">◯ (クラウド同期)</td>
+                <td class="p-3 text-indigo-600 font-semibold">累計 2回 (共通)</td>
                 <td class="p-3 text-slate-500">累計20回で終了</td>
                 <td class="p-3 text-slate-400">N/A</td>
               </tr>
@@ -469,9 +470,9 @@
                 <td class="p-3 font-mono font-bold text-blue-600">¥500 /月</td>
                 <td class="p-3 text-emerald-700 font-bold">無制限 (使い放題)</td>
                 <td class="p-3 text-slate-400">✕</td>
-                <td class="p-3 text-emerald-600 font-semibold">◯</td>
+                <td class="p-3 text-indigo-700 font-bold">1日 3回 (月90回)</td>
                 <td class="p-3 font-bold text-purple-700">上限なし (使い放題)</td>
-                <td class="p-3 font-mono font-bold text-slate-700">50回/日 ➔ <span class="text-indigo-600">定常 165回/日</span></td>
+                <td class="p-3 font-mono font-bold text-slate-700">50回/日 ➔ <span class="text-indigo-600">定常 160〜165回/日</span></td>
               </tr>
               <tr class="bg-amber-50/30 hover:bg-amber-50/60">
                 <td class="p-3 font-bold text-amber-700 flex items-center gap-1.5">
@@ -481,9 +482,9 @@
                 <td class="p-3 font-mono font-bold text-amber-600">¥1,480 /月</td>
                 <td class="p-3 text-emerald-700 font-bold">無制限 (使い放題)</td>
                 <td class="p-3 text-amber-700 font-bold">無制限 (4大ジャンル対応)</td>
-                <td class="p-3 text-emerald-600 font-semibold">◯</td>
+                <td class="p-3 text-amber-700 font-bold">1日 10回 (月300回)</td>
                 <td class="p-3 font-bold text-purple-700">上限なし (使い放題)</td>
-                <td class="p-3 font-mono font-bold text-slate-700">147回/日 ➔ <span class="text-indigo-600">定常 490回/日</span></td>
+                <td class="p-3 font-mono font-bold text-slate-700">147回/日 ➔ <span class="text-indigo-600">定常 472〜490回/日</span></td>
               </tr>
             </tbody>
           </table>
@@ -492,7 +493,7 @@
         <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2.5">
           <span class="text-indigo-600 font-bold">💡 方針確定メモ:</span>
           <div>
-            有料プランのデイリー上限は完全撤廃（使い放題）。さらに300文問題バンク（<code>sentence_bank</code>）定常稼働により、採算限界はBaseで<strong>1日約165回</strong>、Proで<strong>1日約490回</strong>まで大幅に引き上がっています（<code>/admin/customers</code>では安全マージンを取り保守基準50回/147回で厳格監視）。
+            通常のシャドーイング練習はデイリー上限完全撤廃（使い放題）。都度GPT-4o-mini＋TTS-1を叩く「✨ 3単語カスタム生成（1回約0.174円）」のみJST 0:00リセットの日次上限（Base 3回/日＝最大+15.7円/月、Pro 10回/日＝最大+52.2円/月）を設けることで、原価爆発リスクを完全にゼロ化しています。
           </div>
         </div>
       </div>
@@ -502,21 +503,21 @@
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-            <h3 class="text-base font-bold text-slate-900">3. AI・音響パイプライン ＆ コスト・キャパシティ構造（2フェーズ試算）</h3>
+            <h3 class="text-base font-bold text-slate-900">3. AI・音響パイプライン ＆ コスト・キャパシティ構造（2026/10/09 再計算版）</h3>
           </div>
           <span class="text-xs font-mono text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200">
-            2026/09/30 再計算反映済
+            2026/10/09 最新仕様（FB-038迄）反映済
           </span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs">
           <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-200">
-            <div class="text-indigo-900 font-bold">🏦 定常期 AI変動原価 (300文蓄積後)</div>
+            <div class="text-indigo-900 font-bold">🏦 定常期 AI変動原価 ＋ カスタム生成枠</div>
             <div class="text-2xl font-bold font-mono text-indigo-700 mt-1">約 0.097 円 <span class="text-xs font-normal">/回</span></div>
             <div class="text-[11px] text-slate-600 mt-2 space-y-1">
-              <div>・出題＆TTS音声＆先読み: <strong>0 円 (DB配信)</strong></div>
-              <div>・Whisper + 評価のみ: <strong>約0.097〜0.165円</strong></div>
-              <div>・週10%入替固定費: <strong>月331円 (1,440文/月)</strong></div>
+              <div>・通常出題＆TTS＆先読み: <strong>0 円 (DB配信)</strong></div>
+              <div>・週10%バンク入替固定費: <strong>月331円 (1,440文/月)</strong></div>
+              <div>・✨ 3単語カスタム生成: <strong>約0.174円/回 (Base月+5〜16円)</strong></div>
               <div class="text-slate-400">※蓄積期(300文未満)は 0.322円/回</div>
             </div>
           </div>
@@ -526,39 +527,39 @@
             <div class="text-2xl font-bold font-mono text-purple-700 mt-1">¥1,650 <span class="text-xs font-normal">/月</span></div>
             <div class="text-[11px] text-purple-700 mt-2 space-y-1">
               <div>・GMOオフィスサポート (月1転送/登記可)</div>
-              <div>・Vercel / Supabase / Resend: <strong>¥0 (無料枠)</strong></div>
+              <div>・Vercel / Supabase / Resend / WebPush: <strong>¥0</strong></div>
               <div>・<strong>わずか 5〜6名（Proなら2名）</strong> で固定費完全回収</div>
             </div>
           </div>
 
           <div class="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200">
             <div class="text-emerald-800 font-bold">💰 3ヶ月後目標 (50名) 月間営業利益</div>
-            <div class="text-2xl font-bold font-mono text-emerald-600 mt-1">+¥23,933 <span class="text-xs font-normal">/月 (定常期)</span></div>
+            <div class="text-2xl font-bold font-mono text-emerald-600 mt-1">+¥23,620 <span class="text-xs font-normal">/月 (定常+Custom)</span></div>
             <div class="text-[11px] text-emerald-800 mt-2 space-y-1">
               <div>・MRR売上: <strong>¥29,900</strong> (手取 ¥28,824)</div>
-              <div>・バンク定常期: <strong>利益率 80.0% (AI原価¥3,241)</strong></div>
-              <div>・バンク蓄積期: <strong>+¥16,532〜17,514 (利益率55〜58%)</strong></div>
+              <div>・定常+カスタム実効: <strong>利益率 79.0% (AI原価¥3,554)</strong></div>
+              <div>・全員毎日上限フルでも: <strong>+¥22,967 (利益率 76.8%)</strong></div>
             </div>
           </div>
         </div>
 
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-          <div class="font-bold text-slate-800">📊 API限界・レートリミット（OpenAI Tier 1）検証結果</div>
+          <div class="font-bold text-slate-800">📊 API限界・レートリミット ＆ ゼロコスト最適化（FB-022〜FB-038）検証結果</div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             <div class="p-2.5 rounded-lg bg-white border border-slate-200">
-              <div class="font-semibold text-slate-700">Whisper-1 (STT / 主ボトルネック)</div>
-              <div class="text-indigo-600 font-mono font-bold text-sm mt-0.5">負荷率 3.0% 〜 4.6%</div>
-              <div class="text-[10px] text-slate-500">上限50 RPMに対し日次1.5〜2.3 RPM。安全率約25〜33倍。</div>
+              <div class="font-semibold text-slate-700">Whisper-1 (STT / 判定前録り直し最適化)</div>
+              <div class="text-indigo-600 font-mono font-bold text-sm mt-0.5">負荷率 3.0% / 20 RPM防護済</div>
+              <div class="text-[10px] text-slate-500">判定前の無制限録り直し(FB-029)により言い直し時のAPI無駄打ちゼロ。</div>
             </div>
             <div class="p-2.5 rounded-lg bg-white border border-slate-200">
-              <div class="font-semibold text-slate-700">TTS-1 (模範音声合成)</div>
-              <div class="text-emerald-600 font-mono font-bold text-sm mt-0.5">定常期 負荷率 0.0% (週1回バッチのみ)</div>
-              <div class="text-[10px] text-slate-500">300文バンク到達後はDBから0.1秒配信。API呼び出しゼロ。</div>
+              <div class="font-semibold text-slate-700">TTS-1 ＆ Web Speech API併用</div>
+              <div class="text-emerald-600 font-mono font-bold text-sm mt-0.5">通常出題 0円 / 単語発音 0円</div>
+              <div class="text-[10px] text-slate-500">単語タップ発音(FB-029)はブラウザ標準Web Speech API採用でTTS原価ゼロ。</div>
             </div>
             <div class="p-2.5 rounded-lg bg-white border border-slate-200">
-              <div class="font-semibold text-slate-700">GPT-4o-mini (評価・生成)</div>
-              <div class="text-slate-700 font-mono font-bold text-sm mt-0.5">負荷率 0.2% 以下</div>
-              <div class="text-[10px] text-slate-500">上限500 RPMに対し1.5 RPM。安全率300倍以上。</div>
+              <div class="font-semibold text-slate-700">Web Audio / Web Push (FB-022/032/033/036)</div>
+              <div class="text-slate-700 font-mono font-bold text-sm mt-0.5">追加インフラ原価 0円</div>
+              <div class="text-[10px] text-slate-500">動的WPM・Bluetooth増幅・無音プライマー・習慣化Push通知すべてクライアント完結。</div>
             </div>
           </div>
         </div>
@@ -575,12 +576,12 @@
           <div class="space-y-3">
             <div class="font-bold text-slate-800">💻 技術スタック</div>
             <ul class="space-y-1.5 text-slate-600 list-disc list-inside">
-              <li><strong>Frontend</strong>: Next.js 15 (App Router), React 18, Tailwind CSS, Web Audio API</li>
-              <li><strong>Backend</strong>: Vercel Serverless Edge, Node.js API Routes, Cron / Batch Rotation</li>
+              <li><strong>Frontend</strong>: Next.js 15 (App Router), React 18, Tailwind CSS, Web Audio API (Gain/Compressor/Primer), Web Speech API</li>
+              <li><strong>Backend</strong>: Vercel Serverless Edge, Node.js API Routes, Rate Limiter (30/20 RPM), Batch Rotation</li>
               <li><strong>Database / Auth</strong>: Supabase (PostgreSQL, Google OAuth / Email Auth, Row Level Security)</li>
               <li><strong>Payment</strong>: Stripe Billing / Checkout / Customer Portal</li>
-              <li><strong>Email / CRM</strong>: Resend API (問い合わせ通知・Waitlist 14日無料クーポン自動返信)</li>
-              <li><strong>SNS Tracking</strong>: Meta Graph API (Threads インサイト自動集計)</li>
+              <li><strong>Email / Push / CRM</strong>: Resend API + Service Worker Web Push Notification (<code>public/sw.js</code>)</li>
+              <li><strong>Automated Testing</strong>: Vitest (<strong>全27ファイル・170テスト 100% Pass</strong>)</li>
             </ul>
           </div>
 
@@ -597,10 +598,10 @@
                 <strong>user_tickets</strong>: チケット残数・日次利用カウンター (tickets_used, pro_trials_used)
               </div>
               <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                <strong>practice_sessions</strong>: 練習履歴・スコア・WPM・Diff結果
+                <strong>practice_sessions</strong>: 練習履歴・スコア・動的WPM・Diff結果 (重複保存防止ガード済)
               </div>
               <div class="p-2 rounded bg-slate-50 border border-slate-200">
-                <strong>weak_words</strong>: ユーザー別の苦手単語帳 (fail_count, is_mastered)
+                <strong>weak_words</strong>: ユーザー別の苦手単語帳 (fail_count, is_mastered, スコア80点以下自動抽出)
               </div>
               <div class="p-2 rounded bg-slate-50 border border-slate-200">
                 <strong>feedback_tickets / daily_analytics</strong>: 問い合わせログ・日次PV/UU永続集計
@@ -695,7 +696,7 @@
         title: "Stage 2: クローズドβ & 定着率検証",
         badge: "現在進行中",
         badgeColor: "bg-amber-100 text-amber-800 border-amber-300",
-        description: "アーリーアダプターに利用してもらい、300文バンク・先読み0.0秒遷移・チャンク表示等でDay 7継続率40%超えを狙う。",
+        description: "アーリーアダプターに利用してもらい、300文バンク・先読み0.0秒遷移・3単語カスタム生成・2ボタン録音等でDay 7継続率40%超えを狙う。",
         tasks: [
           { id: "s2-0", text: "広報担当とThreads初期投稿の作成・公開完了", done: true },
           { id: "s2-1", text: "友人・知人への個別招待 ＆ クローズドβテスター第1陣（5名）開始（9/29〜稼働中）", done: true },
@@ -710,7 +711,12 @@
           { id: "s2-13", text: "【FB-018/019】結果画面下部オレンジ「次のフレーズへ」バー ＆ チャンク(/)区切り表示 ＆ 管理者プレビュー機能", done: true },
           { id: "s2-14", text: "【FB-020】バックグラウンド先読み（0.0秒遷移）＆ 4大ジャンル300文バンク（週10%自動入替）実装", done: true },
           { id: "s2-15", text: "【FB-021】録音開始時の模範音声自動停止（マイク回り込み防止）＆ Listen-then-Speak導線改善", done: true },
-          { id: "s2-3", text: "習慣化リマインド通知（ストリーク途切れ防止のメール/Web通知）", done: false },
+          { id: "s2-16", text: "【FB-022〜025】速度別動的WPMリアルタイム表示・季節＆業界トレンド注入・弱点単語の自動登録＆復習導線", done: true },
+          { id: "s2-17", text: "【FB-026〜029】2ボタン録音（リピーティング/シャドーイング）全開放・判定前無制限録り直し・単語タップ3D辞書", done: true },
+          { id: "s2-18", text: "【FB-030〜034】全APIレートリミッター防護・Android Bluetooth音量2.2〜2.6倍増幅・セッション重複保存防止", done: true },
+          { id: "s2-3", text: "【FB-033】習慣化Web Pushリマインド通知（Service Worker通知＋練習済み日のスマートスキップ）", done: true },
+          { id: "s2-19", text: "【FB-035】✨ 3単語カスタム例文生成機能（無料累計2回 / Base 1日3回 / Pro 1日10回制限）", done: true },
+          { id: "s2-20", text: "【FB-036〜038】Bluetooth頭切れ防止無音プライマー・録音強制終了タイマー廃止・バズワード排除＆日常会話プロンプト刷新", done: true },
           { id: "s2-4", text: "SNSシェア用OGP画像自動生成機能（「#今日のシャドーイング」拡散用）", done: false },
           { id: "s2-5", text: "βテスター（30〜50名拡大）への1on1ヒアリング・価格納得感（月500円/1,480円）の検証", done: false }
         ]
@@ -720,7 +726,7 @@
         title: "Stage 3: パブリックローンチ & 収益化始動",
         badge: "拡大フェーズ",
         badgeColor: "bg-purple-100 text-purple-800 border-purple-300",
-        description: "3ヶ月後目標：有料会員50名（Basic 45名 / Pro 5名、MRR ¥29,900、月間営業利益+¥23,933）の達成と本格PR。",
+        description: "3ヶ月後目標：有料会員50名（Basic 45名 / Pro 5名、MRR ¥29,900、月間営業利益+¥23,620）の達成と本格PR。",
         tasks: [
           { id: "s3-1", text: "Zenn/Note開発ストーリー執筆「シャドテンが高すぎてAI版を個人開発した話」", done: false },
           { id: "s3-2", text: "Product Hunt & 各種SaaSディレクトリへの掲載・ローンチ", done: false },
@@ -745,7 +751,7 @@
 
     let stages = [];
     let currentFilter = 'all';
-    const STORAGE_KEY = 'shadowlog_mgmt_stages_v20260930';
+    const STORAGE_KEY = 'shadowlog_mgmt_stages_v20261009';
 
     function init() {
       const saved = localStorage.getItem(STORAGE_KEY);

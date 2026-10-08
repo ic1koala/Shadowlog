@@ -77,8 +77,8 @@ export async function postToThreads(text: string): Promise<{ success: boolean; i
     }
 
     return { success: true, id: publishData.id };
-  } catch (err: any) {
-    return { success: false, error: err?.message || String(err) };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 

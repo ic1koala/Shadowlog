@@ -23,14 +23,16 @@ import {
   ExternalLink,
   Globe,
   BookOpen,
+  LayoutDashboard,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import { AdminCustomerResponse, CustomerSummary } from "@/app/api/admin/customers/route";
 import { IPComplianceSection } from "@/components/features/settings/IPComplianceSection";
 import { CustomerUsageModal } from "@/components/features/admin/CustomerUsageModal";
+import { ManagementDashboardSection } from "@/components/features/admin/ManagementDashboardSection";
 
-type AdminTab = "customers" | "compliance";
+type AdminTab = "customers" | "compliance" | "management";
 type PlanFilter = "all" | "free" | "base" | "pro";
 type SortOption =
   | "newest"
@@ -495,6 +497,27 @@ export default function AdminCustomersPage() {
               }`}
             >
               安全 (PASS)
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("management")}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs ${
+              activeTab === "management"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span>統括ダッシュボード</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
+                activeTab === "management"
+                  ? "bg-white/20 text-white"
+                  : "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"
+              }`}
+            >
+              進捗・仕様
             </span>
           </button>
         </div>
@@ -1310,9 +1333,13 @@ export default function AdminCustomersPage() {
           )}
             </div>
           </>
-        ) : (
+        ) : activeTab === "compliance" ? (
           <div className="space-y-6">
             <IPComplianceSection />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <ManagementDashboardSection />
           </div>
         )}
       </main>
