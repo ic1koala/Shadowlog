@@ -125,12 +125,13 @@ export function enqueuePost(text: string, scheduledAt: string): QueueItem {
  */
 export async function processQueue(): Promise<{ processedCount: number; results: Array<{ id: string; success: boolean; error?: string }> }> {
   const queue = getQueue();
-  const now = new Date().toISOString();
+  const nowMs = Date.now();
   const results: Array<{ id: string; success: boolean; error?: string }> = [];
   let processedCount = 0;
 
   for (const item of queue) {
-    if (item.status === "pending" && item.scheduledAt <= now) {
+    const itemScheduledMs = new Date(item.scheduledAt).getTime();
+    if (item.status === "pending" && itemScheduledMs <= nowMs) {
       processedCount++;
       console.log(`[Threads Publisher] Publishing queue item ${item.id} scheduled for ${item.scheduledAt}...`);
       const result = await postToThreads(item.text);
