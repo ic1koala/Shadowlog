@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/threads/publish",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/push/cron",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

@@ -5,10 +5,16 @@ import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 export const dynamic = "force-dynamic";
 
-async function isAuthorizedAdmin(req: NextRequest): Promise<boolean> {
+async function isAuthorizedCronOrAdmin(req: NextRequest): Promise<boolean> {
+  // Allow Vercel Cron
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+    return true;
+  }
+  // Vercel Cron sends x-vercel-cron header or User-Agent: vercel-cron
+  const vercelCronHeader = req.headers.get("x-vercel-cron") || req.headers.get("user-agent");
+  if (vercelCronHeader && (vercelCronHeader.includes("vercel-cron") || req.headers.has("x-vercel-cron"))) {
     return true;
   }
 
@@ -24,16 +30,38 @@ async function isAuthorizedAdmin(req: NextRequest): Promise<boolean> {
     // ignore
   }
 
+  // Allow localhost / internal environment calls
+  const host = req.headers.get("host");
+  if (host?.includes("localhost") || host?.includes("127.0.0.1")) {
+    return true;
+  }
+
   return false;
 }
 
 /**
- * Handles Threads publishing requests.
- * POST /api/threads/publish
- * Body: { text?: string, scheduledAt?: string, action?: 'immediate' | 'enqueue' | 'process-queue' }
+ * Handles Threads publishing requests for Vercel Cron (GET).
+ * Automatically processes any pending queue items whose scheduledAt <= NOW()
+ */
+export async function GET(req: NextRequest) {
+  const authorized = await isAuthorizedCronOrAdmin(req);
+  if (!authorized) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const res = await processQueue();
+    return NextResponse.json({ ok: true, ...res });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+  }
+}
+
+/**
+ * Handles manual Threads publishing requests (POST).
  */
 export async function POST(req: NextRequest) {
-  const authorized = await isAuthorizedAdmin(req);
+  const authorized = await isAuthorizedCronOrAdmin(req);
   if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
