@@ -110,7 +110,7 @@ export function UpgradeModal({
               シャドーイングで英語脳を覚醒させよう
             </h2>
             <p className="text-xs text-slate-500">
-              シャドテンの1/15の価格で、AIによるリアルタイム即時添削 ＆ WPM話速測定を無制限に。
+              他社サービスの1/15の価格で、AIによるリアルタイム即時添削 ＆ WPM話速測定を無制限に。
             </p>
           </div>
 

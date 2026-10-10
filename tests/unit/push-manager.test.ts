@@ -10,6 +10,7 @@ import {
   saveReminderSettings,
   hasPracticedToday,
   shouldFireDailyReminder,
+  getTriggerableReminderTime,
   DEFAULT_REMINDER_SETTINGS,
   REMINDER_TIME_PRESETS,
 } from "@/lib/notifications/push-manager";
@@ -158,5 +159,57 @@ describe("Web Push Habit Reminder Manager (FB-033)", () => {
     expect(shouldFireDailyReminder(activeSettings, false, nowAt2030Jst)).toBe(
       false
     );
+  });
+
+  it("handles multi-time reminder schedules and tracks individual notified times", () => {
+    const multiSettings = {
+      enabled: true,
+      time: "08:00",
+      times: ["08:00", "12:30", "21:00"],
+      smartSkipIfPracticed: false,
+      lastNotifiedDate: "2026-10-04",
+      lastNotifiedTimes: ["08:00"],
+    };
+
+    // At 12:32 JST, 08:00 was notified, but 12:30 has arrived and was NOT notified
+    const at1232Jst = new Date("2026-10-04T03:32:00.000Z"); // 12:32 JST
+    expect(getTriggerableReminderTime(multiSettings, false, at1232Jst)).toBe("12:30");
+    expect(shouldFireDailyReminder(multiSettings, false, at1232Jst)).toBe(true);
+
+    // After 12:30 is also marked as notified, it should not fire at 12:35 JST
+    const updatedSettings = {
+      ...multiSettings,
+      lastNotifiedTimes: ["08:00", "12:30"],
+    };
+    const at1235Jst = new Date("2026-10-04T03:35:00.000Z");
+    expect(getTriggerableReminderTime(updatedSettings, false, at1235Jst)).toBeNull();
+
+    // But when 21:05 JST arrives, 21:00 should trigger
+    const at2105Jst = new Date("2026-10-04T12:05:00.000Z");
+    expect(getTriggerableReminderTime(updatedSettings, false, at2105Jst)).toBe("21:00");
+  });
+
+  it("prevents retroactive notifications for times that already passed earlier today when enabled", () => {
+    // Current time is 14:00 JST on today's date
+    const currentJstTime = getJstTimeString();
+
+    // Suppose we configure times where some have passed and some are in the future
+    const saved = saveReminderSettings({
+      enabled: true,
+      times: ["00:01", "23:59"],
+    });
+
+    // "00:01" has already passed today since any realistic test runs after 00:01 JST
+    // It should be automatically included in lastNotifiedTimes
+    if ("00:01" <= currentJstTime) {
+      expect(saved.lastNotifiedTimes).toContain("00:01");
+    }
+
+    // Saving with silent: true should not throw and persist correctly
+    const silentSaved = saveReminderSettings(
+      { smartSkipIfPracticed: false },
+      { silent: true }
+    );
+    expect(silentSaved.smartSkipIfPracticed).toBe(false);
   });
 });

@@ -184,11 +184,16 @@ export function getReminderSettings(): ReminderSettings {
   }
 }
 
+export interface SaveReminderSettingsOptions {
+  silent?: boolean;
+}
+
 /**
  * Saves updated reminder settings to localStorage and dispatches an update event.
  */
 export function saveReminderSettings(
-  partial: Partial<ReminderSettings>
+  partial: Partial<ReminderSettings>,
+  options?: SaveReminderSettingsOptions
 ): ReminderSettings {
   const current = getReminderSettings();
   let nextTimes: string[];
@@ -205,17 +210,51 @@ export function saveReminderSettings(
       ? partial.time
       : nextTimes[0] || current.time || "21:00";
 
+  const todayJst = getJstDateString();
+  const currentJstHm = getJstTimeString();
+
+  let nextLastNotifiedDate =
+    partial.lastNotifiedDate !== undefined
+      ? partial.lastNotifiedDate
+      : current.lastNotifiedDate;
+
+  let nextLastNotifiedTimes: string[] =
+    partial.lastNotifiedTimes !== undefined
+      ? partial.lastNotifiedTimes
+      : nextLastNotifiedDate === todayJst
+      ? current.lastNotifiedTimes || []
+      : [];
+
+  // When enabling reminders or updating times, prevent retroactive firing:
+  // Any configured time <= current JST time today has already passed and will not fire today.
+  const isEnabling = partial.enabled === true && !current.enabled;
+  const isTimesChanged =
+    partial.times !== undefined &&
+    JSON.stringify(partial.times) !== JSON.stringify(current.times);
+
+  if ((isEnabling || isTimesChanged) && (partial.enabled ?? current.enabled)) {
+    nextLastNotifiedDate = todayJst;
+    const passedTimesToday = nextTimes.filter((t) => t <= currentJstHm);
+    nextLastNotifiedTimes = Array.from(
+      new Set([...nextLastNotifiedTimes, ...passedTimesToday])
+    );
+  }
+
   const next: ReminderSettings = {
     ...current,
     ...partial,
     time: primaryTime,
     times: nextTimes,
+    lastNotifiedDate: nextLastNotifiedDate,
+    lastNotifiedTimes: nextLastNotifiedTimes,
   };
 
   if (typeof window !== "undefined") {
     try {
       localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("shadowlog:reminder-settings-update"));
+      if (!options?.silent) {
+        window.dispatchEvent(new Event("shadowlog:reminder-settings-update"));
+      }
     } catch {
       // ignore storage errors
     }
@@ -265,20 +304,20 @@ export function hasPracticedToday(
 }
 
 /**
- * Pure helper to determine if the daily reminder should fire right now.
+ * Returns the specific scheduled time that should trigger right now, or null if none.
  * Fires at most once per JST day for each configured time when:
  * - settings.enabled is true
  * - not already notified today for this time
  * - if smartSkipIfPracticed is true, user has NOT practiced today
- * - current JST time is at or after any scheduled time (within a 180-minute window)
+ * - current JST time matches scheduled time within 15 minutes grace window
  */
-export function shouldFireDailyReminder(
+export function getTriggerableReminderTime(
   settings: ReminderSettings,
   practicedToday: boolean,
   now: Date = new Date()
-): boolean {
-  if (!settings.enabled) return false;
-  if (settings.smartSkipIfPracticed && practicedToday) return false;
+): string | null {
+  if (!settings.enabled) return null;
+  if (settings.smartSkipIfPracticed && practicedToday) return null;
 
   const todayJst = getJstDateString(now);
   const activeTimes =
@@ -295,16 +334,32 @@ export function shouldFireDailyReminder(
       ? settings.lastNotifiedTimes || [settings.time]
       : [];
 
-  return activeTimes.some((targetTime) => {
-    if (!isValidReminderTime(targetTime)) return false;
-    if (notifiedTimes.includes(targetTime)) return false;
+  for (const targetTime of activeTimes) {
+    if (!isValidReminderTime(targetTime)) continue;
+    if (notifiedTimes.includes(targetTime)) continue;
 
     const [tarH, tarM] = targetTime.split(":").map(Number);
     const tarMinutes = (tarH ?? 0) * 60 + (tarM ?? 0);
 
     const diff = curMinutes - tarMinutes;
-    return diff >= 0 && diff <= 180;
-  });
+    // Only fire if the scheduled time has arrived and is within 15 minutes
+    if (diff >= 0 && diff <= 15) {
+      return targetTime;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Pure helper to determine if the daily reminder should fire right now.
+ */
+export function shouldFireDailyReminder(
+  settings: ReminderSettings,
+  practicedToday: boolean,
+  now: Date = new Date()
+): boolean {
+  return Boolean(getTriggerableReminderTime(settings, practicedToday, now));
 }
 
 /**
@@ -401,9 +456,11 @@ export async function sendTestNotification(): Promise<boolean> {
 }
 
 /**
- * Fires the daily smart reminder notification and records today's date in lastNotifiedDate.
+ * Fires the daily smart reminder notification and records the notified time in lastNotifiedTimes.
  */
-export async function triggerDailyReminderNotification(): Promise<boolean> {
+export async function triggerDailyReminderNotification(
+  targetTime?: string
+): Promise<boolean> {
   if (
     typeof window === "undefined" ||
     !("Notification" in window) ||
@@ -412,9 +469,36 @@ export async function triggerDailyReminderNotification(): Promise<boolean> {
     return false;
   }
 
+  const todayJst = getJstDateString();
+  const currentSettings = getReminderSettings();
+  const firedTime =
+    targetTime ||
+    getTriggerableReminderTime(currentSettings, hasPracticedToday()) ||
+    currentSettings.time ||
+    "daily";
+
   const title = "🔥 ShadowLog 今日の1文シャドーイング";
   const body =
     "まだ今日のシャドーイングが完了していません。1文だけ声に出してストリークを繋ぎましょう🎧";
+
+  // Record this notification immediately with silent: true to prevent any concurrent triggers or event loops
+  const existingTimes =
+    currentSettings.lastNotifiedDate === todayJst
+      ? currentSettings.lastNotifiedTimes || []
+      : [];
+  const updatedNotifiedTimes = Array.from(
+    new Set([...existingTimes, firedTime])
+  );
+
+  saveReminderSettings(
+    {
+      lastNotifiedDate: todayJst,
+      lastNotifiedTimes: updatedNotifiedTimes,
+    },
+    { silent: true }
+  );
+
+  const tag = `shadowlog-daily-reminder-${todayJst}-${firedTime}`;
 
   try {
     const reg = await registerServiceWorker();
@@ -423,10 +507,9 @@ export async function triggerDailyReminderNotification(): Promise<boolean> {
         body,
         icon: "/icons/icon-192x192.png",
         badge: "/icons/icon-192x192.png",
-        tag: "shadowlog-daily-reminder",
+        tag,
         data: { url: "/practice" },
       });
-      saveReminderSettings({ lastNotifiedDate: getJstDateString() });
       return true;
     }
   } catch {
@@ -437,9 +520,8 @@ export async function triggerDailyReminderNotification(): Promise<boolean> {
     new Notification(title, {
       body,
       icon: "/icons/icon-192x192.png",
-      tag: "shadowlog-daily-reminder",
+      tag,
     });
-    saveReminderSettings({ lastNotifiedDate: getJstDateString() });
     return true;
   } catch {
     return false;

@@ -108,7 +108,7 @@ export default function PublicDiagnosisPage() {
             </Link>
             <span>•</span>
             <Link href="/compare/shadoten" className="hover:text-foreground">
-              シャドテン比較
+              他社比較
             </Link>
             <span>•</span>
             <Link href="/blog" className="hover:text-foreground">

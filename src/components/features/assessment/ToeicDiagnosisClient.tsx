@@ -559,7 +559,7 @@ export function ToeicDiagnosisClient({
                 href="/compare/shadoten"
                 className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition flex items-center justify-center gap-1.5"
               >
-                <span>他社（シャドテン）との比較を見る</span>
+                <span>他社サービスとの比較を見る</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

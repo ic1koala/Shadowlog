@@ -421,10 +421,10 @@ export default function SettingsPage() {
     {
       id: "community",
       label: "公式ブログ & Threads",
-      sublabel: "最新ノウハウ・シャドテン比較",
+      sublabel: "最新ノウハウ・他社サービス比較",
       icon: BookOpen,
       group: "info",
-      keywords: ["ブログ", "Threads", "SNS", "ノウハウ", "シャドテン", "記事"],
+      keywords: ["ブログ", "Threads", "SNS", "ノウハウ", "他社比較", "記事"],
     },
     {
       id: "legal",
@@ -1227,7 +1227,7 @@ export default function SettingsPage() {
                 >
                   <div>
                     <span className="text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-400 block">
-                      ⚡ シャドテン vs ShadowLog 徹底比較
+                      ⚡ 他社サービスとの徹底比較
                     </span>
                     <span className="text-[11px] text-muted-foreground">料金・AIリアルタイム判定の違い ↗</span>
                   </div>
