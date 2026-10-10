@@ -21,6 +21,21 @@ export const metadata: Metadata = {
     description:
       "3問声に出すだけで、あなたの有効WPMと推定TOEICスコア・弱点リンキングをAIが即時カルテ化！",
     type: "website",
+    url: "https://shadowlog.vercel.app/diagnosis",
+    images: [
+      {
+        url: "https://shadowlog.vercel.app/diagnosis/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "【無料30秒】AI英語発話スピード（WPM）＆推定TOEICスコア診断 | ShadowLog",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "【無料30秒】AI英語発声スピード（WPM）＆推定TOEICスコア診断",
+    description: "3問声を吹き込むだけで、WPMや連結音の弱点、推定TOEICスコアをAIが即時判定！",
+    images: ["https://shadowlog.vercel.app/diagnosis/opengraph-image"],
   },
 };
 
