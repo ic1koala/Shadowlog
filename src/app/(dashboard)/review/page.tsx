@@ -35,6 +35,7 @@ import {
   Check,
 } from "lucide-react";
 import { playWordAudio, initSpeechVoices } from "@/lib/audio/word-speaker";
+import { WeeklyWeaknessReport } from "@/components/features/review/WeeklyWeaknessReport";
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function ReviewPage() {
   const [isSessionsLimited, setIsSessionsLimited] = useState(false);
 
   // Filter states
-  const [wordFilter, setWordFilter] = useState<"all" | "active" | "mastered">("all");
+  const [wordFilter, setWordFilter] = useState<"all" | "active" | "lookedUp" | "mastered">("all");
   const [historyFilter, setHistoryFilter] = useState<"all" | "cleared" | "needsReview">("all");
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [expandedSentenceIds, setExpandedSentenceIds] = useState<Record<string, boolean>>({});
@@ -213,7 +214,8 @@ export default function ReviewPage() {
 
   // Filtered weak words
   const filteredWords = weakWords.filter((w) => {
-    if (wordFilter === "active") return !w.mastered;
+    if (wordFilter === "active") return !w.mastered && w.type !== "looked_up";
+    if (wordFilter === "lookedUp") return w.type === "looked_up";
     if (wordFilter === "mastered") return w.mastered;
     return true;
   });
@@ -351,7 +353,10 @@ export default function ReviewPage() {
           }`}
         >
           <TrendingUp className="w-4 h-4" />
-          弱点分析＆Pro機能
+          総合弱点分析
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+            週次更新
+          </span>
         </button>
       </div>
 
@@ -360,10 +365,10 @@ export default function ReviewPage() {
         <div className="space-y-4">
           {/* Word Filters */}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl text-xs font-medium">
+            <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl text-xs font-medium flex-wrap">
               <button
                 onClick={() => setWordFilter("all")}
-                className={`px-3 py-1.5 rounded-lg transition ${
+                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                   wordFilter === "all" ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground"
                 }`}
               >
@@ -371,15 +376,23 @@ export default function ReviewPage() {
               </button>
               <button
                 onClick={() => setWordFilter("active")}
-                className={`px-3 py-1.5 rounded-lg transition ${
+                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                   wordFilter === "active" ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground"
                 }`}
               >
-                要復習 ({weakWords.filter((w) => !w.mastered).length})
+                要復習 ({weakWords.filter((w) => !w.mastered && w.type !== "looked_up").length})
+              </button>
+              <button
+                onClick={() => setWordFilter("lookedUp")}
+                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                  wordFilter === "lookedUp" ? "bg-card text-blue-600 dark:text-blue-400 shadow-xs font-bold" : "text-muted-foreground"
+                }`}
+              >
+                調べた単語 ({weakWords.filter((w) => w.type === "looked_up").length})
               </button>
               <button
                 onClick={() => setWordFilter("mastered")}
-                className={`px-3 py-1.5 rounded-lg transition ${
+                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                   wordFilter === "mastered" ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground"
                 }`}
               >
@@ -482,10 +495,16 @@ export default function ReviewPage() {
                           className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                             word.type === "missing"
                               ? "bg-rose-500/10 text-rose-600"
+                              : word.type === "looked_up"
+                              ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25"
                               : "bg-amber-500/10 text-amber-600"
                           }`}
                         >
-                          {word.type === "missing" ? "脱落" : "ズレ"}
+                          {word.type === "missing"
+                            ? "脱落"
+                            : word.type === "looked_up"
+                            ? "調べた単語"
+                            : "ズレ"}
                         </span>
                         <button
                           onClick={() => handleDeleteWord(word.id)}
@@ -496,6 +515,15 @@ export default function ReviewPage() {
                         </button>
                       </div>
                     </div>
+
+                    {word.wordMeaning && (
+                      <p className="text-xs text-foreground/90 font-medium flex items-center gap-1.5 bg-muted/40 px-2.5 py-1.5 rounded-lg border border-border/50">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-bold shrink-0">
+                          日本語訳
+                        </span>
+                        <span className="font-semibold">{word.wordMeaning}</span>
+                      </p>
+                    )}
 
                     {word.type === "mismatch" && word.spokenWord && (
                       <p className="text-[11px] text-amber-600 dark:text-amber-400 font-mono">
@@ -773,84 +801,14 @@ export default function ReviewPage() {
         </div>
       )}
 
-      {/* TAB 3: ANALYTICS & PRO PREVIEW */}
+      {/* TAB 3: WEEKLY WEAKNESS REPORT */}
       {activeTab === "analytics" && (
-        <div className="space-y-5">
-          <div className="bg-card rounded-2xl p-6 border border-border shadow-xs space-y-4">
-            <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              学習進捗＆クリア率
-            </h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs font-semibold">
-                <span>総合クリア率 (80%以上達成)</span>
-                <span className="font-mono text-primary">
-                  {totalSessionCount > 0 ? Math.round((clearedCount / totalSessionCount) * 100) : 0}%
-                </span>
-              </div>
-              <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${totalSessionCount > 0 ? (clearedCount / totalSessionCount) * 100 : 0}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Pro Feature Comparison Card */}
-          <div className="bg-card rounded-2xl p-6 sm:p-8 border-2 border-primary/20 shadow-sm space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30">
-                  有料会員プラン
-                </span>
-                <h3 className="text-lg sm:text-xl font-bold text-foreground mt-1">
-                  ShadowLog Pro で英語力を最大化
-                </h3>
-              </div>
-              <Crown className="w-8 h-8 text-amber-500 shrink-0" />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
-              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-start gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong>つまずき単語帳の無制限蓄積:</strong> 何語でも記録し、克服まで追跡</span>
-              </div>
-              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-start gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong>全練習履歴＆コーチ指導の無制限保存:</strong> 過去の全アドバイスを復習</span>
-              </div>
-              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-start gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong>PC・スマホ間の自動同期:</strong> クラウド連携でどこでも学習カルテを共有</span>
-              </div>
-              <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-start gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong>苦手な音・リンキングの弱点分析:</strong> 音声変化の傾向を可視化</span>
-              </div>
-            </div>
-
-            {/* Test Plan Toggle (development only) */}
-            {process.env.NODE_ENV === "development" && (
-              <div className="p-4 rounded-xl bg-muted/60 border border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold text-foreground">プラン切り替え（動作確認用）</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    現在のステータス: <span className="font-bold text-primary">{plan === "pro" ? "Pro会員 (無制限)" : "体験版 (制限あり)"}</span>
-                  </p>
-                </div>
-                <button
-                  onClick={handleTogglePlan}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-xs"
-                >
-                  {plan === "pro" ? "体験版に戻す" : "Pro会員に切り替える（制限解除）"}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <WeeklyWeaknessReport
+          sessions={sessions}
+          weakWords={weakWords}
+          totalSessionCount={totalSessionCount}
+          clearedCount={clearedCount}
+        />
       )}
 
       {/* Pro Modal */}

@@ -15,6 +15,7 @@ import {
   isIOSBrowser,
   getShadowingPlaybackSettleDelayMs,
 } from "@/hooks/use-audio-recorder";
+import { addLookedUpWord } from "@/lib/storage/user-learning-store";
 
 const VOLUME_BOOST_STORAGE_KEY = "shadowlog_volume_boost";
 // Gain multipliers (> 1.0 amplifies HTMLAudioElement via Web Audio API GainNode + Compressor limiter)
@@ -425,6 +426,8 @@ export function SentenceCard({
   const toggleWordFlip = useCallback(
     (idx: number, rawWord: string, e: React.MouseEvent) => {
       e.stopPropagation();
+      const willBeFlipped = !flippedWordIndices.has(idx);
+
       setFlippedWordIndices((prev) => {
         const next = new Set(prev);
         if (next.has(idx)) {
@@ -441,15 +444,38 @@ export function SentenceCard({
       // Background contextual refinement for any word not covered by static dictionary
       const cleaned = cleanWord(rawWord);
       const currentTrans = dynamicTranslations[cleaned] || getWordTranslation(rawWord);
+
+      // When word is flipped/looked up, record it into the weak words notebook as "調べた単語"
+      if (willBeFlipped && sentence) {
+        addLookedUpWord({
+          word: rawWord,
+          sentence: sentence.english,
+          japanese: sentence.japanese,
+          wordMeaning: currentTrans,
+          industry: sentence.industry,
+          level: sentence.level,
+        });
+      }
+
       if (currentTrans.startsWith("訳: ") && sentence?.english) {
         fetchWordTranslationAsync(rawWord, sentence.english).then((refined) => {
           if (refined && refined !== currentTrans) {
             setDynamicTranslations((prev) => ({ ...prev, [cleaned]: refined }));
+            if (sentence) {
+              addLookedUpWord({
+                word: rawWord,
+                sentence: sentence.english,
+                japanese: sentence.japanese,
+                wordMeaning: refined,
+                industry: sentence.industry,
+                level: sentence.level,
+              });
+            }
           }
         });
       }
     },
-    [dynamicTranslations, sentence?.english, speakSingleWord]
+    [flippedWordIndices, dynamicTranslations, sentence, speakSingleWord]
   );
 
   // Parse English sentence into words with weighted timing distribution for natural speech pacing
@@ -1099,6 +1125,12 @@ export function SentenceCard({
         </button>
       </div>
 
+      {/* Tap hint moved to top above sentence card per user request */}
+      <p className="text-[11px] text-muted-foreground/90 flex items-center gap-1.5 -mt-1 pb-0.5">
+        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+        <span>英単語をタップすると日本語の意味にフリップします（単語帳へ自動記録）</span>
+      </p>
+
       <div className="space-y-2 sm:space-y-3">
         {/* English sentence with blue bold karaoke highlight (tap word to toggle Japanese translation) */}
         <div className="relative p-1 -m-1 select-none rounded-xl">
@@ -1121,7 +1153,7 @@ export function SentenceCard({
                     type="button"
                     onClick={(e) => toggleWordFlip(idx, w.text, e)}
                     className="group/word inline-flex word-flip-perspective cursor-pointer focus:outline-hidden align-baseline"
-                    title={isFlipped ? "タップで英語に戻す（発音再生）" : `タップで「${translation}」にフリップ（発音再生）`}
+                    title={isFlipped ? "タップで英語に戻す（発音再生）" : `タップで「${translation}」にフリップ（発音再生・単語帳へ記録）`}
                     aria-label={isFlipped ? `${w.text} (日本語: ${translation}、発音再生)` : `${w.text} (発音再生)`}
                   >
                     <span
@@ -1177,13 +1209,9 @@ export function SentenceCard({
 
         {/* Japanese translation displayed by default */}
         {sentence.japanese && (
-          <div className="pt-2 sm:pt-3 border-t border-border/60 space-y-1">
+          <div className="pt-2 sm:pt-3 border-t border-border/60">
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-normal">
               {sentence.japanese}
-            </p>
-            <p className="text-[11px] text-muted-foreground/80 flex items-center gap-1.5 pt-0.5">
-              <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
-              <span>英単語をタップすると日本語の意味にフリップします</span>
             </p>
           </div>
         )}

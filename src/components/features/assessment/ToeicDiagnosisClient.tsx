@@ -627,7 +627,7 @@ export function ToeicDiagnosisClient({
         </div>
 
         <p className="text-[11px] text-muted-foreground">
-          💡 お手本音声を聞いてから真似る「リピーティング」か、同時に声を出す「シャドーイング」で1文発声してください。
+          💡 お手本音声を聞いてから真似る「音読録音」か、同時に声を出す「シャドーイング録音」で1文発声してください。
         </p>
       </div>
 
@@ -737,7 +737,7 @@ export function ToeicDiagnosisClient({
                   <span>
                     {recordingModeUsed === "shadowing"
                       ? "🎧 シャドーイング録音中..."
-                      : "🗣️ リピーティング録音中..."}
+                      : "🗣️ 音読録音中..."}
                   </span>
                 </span>
               ) : (
@@ -774,7 +774,7 @@ export function ToeicDiagnosisClient({
                 >
                   <span className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <span>🗣️</span>
-                    <span>リピーティング録音</span>
+                    <span>音読録音</span>
                   </span>
                   <span className="text-[10px] text-blue-100/90 font-normal">
                     (お手本停止・自分のペース)

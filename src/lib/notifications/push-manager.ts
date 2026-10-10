@@ -3,9 +3,11 @@
 
 export interface ReminderSettings {
   enabled: boolean;
-  time: string; // "HH:MM" (24-hour format in JST, e.g., "21:00")
+  time: string; // "HH:MM" (primary/first time for backward compatibility)
+  times?: string[]; // multi-time array, e.g. ["08:00", "21:00"]
   smartSkipIfPracticed: boolean;
   lastNotifiedDate?: string; // "YYYY-MM-DD" in JST
+  lastNotifiedTimes?: string[]; // times notified today
 }
 
 export type PushEnvironmentStatus =
@@ -18,6 +20,7 @@ export const REMINDER_STORAGE_KEY = "shadowlog_reminder_settings";
 export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
   enabled: false,
   time: "21:00",
+  times: ["21:00"],
   smartSkipIfPracticed: true,
 };
 
@@ -152,12 +155,18 @@ export function getReminderSettings(): ReminderSettings {
     const raw = localStorage.getItem(REMINDER_STORAGE_KEY);
     if (!raw) return { ...DEFAULT_REMINDER_SETTINGS };
     const parsed = JSON.parse(raw) as Partial<ReminderSettings>;
+
+    const parsedTimes = Array.isArray(parsed.times)
+      ? parsed.times.filter(isValidReminderTime)
+      : typeof parsed.time === "string" && isValidReminderTime(parsed.time)
+      ? [parsed.time]
+      : ["21:00"];
+    const effectiveTimes = parsedTimes.length > 0 ? parsedTimes : ["21:00"];
+
     return {
       enabled: Boolean(parsed.enabled),
-      time:
-        typeof parsed.time === "string" && isValidReminderTime(parsed.time)
-          ? parsed.time
-          : DEFAULT_REMINDER_SETTINGS.time,
+      time: effectiveTimes[0] || DEFAULT_REMINDER_SETTINGS.time,
+      times: effectiveTimes,
       smartSkipIfPracticed:
         parsed.smartSkipIfPracticed !== undefined
           ? Boolean(parsed.smartSkipIfPracticed)
@@ -166,6 +175,9 @@ export function getReminderSettings(): ReminderSettings {
         typeof parsed.lastNotifiedDate === "string"
           ? parsed.lastNotifiedDate
           : undefined,
+      lastNotifiedTimes: Array.isArray(parsed.lastNotifiedTimes)
+        ? parsed.lastNotifiedTimes
+        : undefined,
     };
   } catch {
     return { ...DEFAULT_REMINDER_SETTINGS };
@@ -179,13 +191,25 @@ export function saveReminderSettings(
   partial: Partial<ReminderSettings>
 ): ReminderSettings {
   const current = getReminderSettings();
+  let nextTimes: string[];
+  if (partial.times) {
+    nextTimes = partial.times.filter(isValidReminderTime);
+  } else if (partial.time && isValidReminderTime(partial.time)) {
+    nextTimes = [partial.time];
+  } else {
+    nextTimes = current.times || [current.time];
+  }
+
+  const primaryTime =
+    partial.time && isValidReminderTime(partial.time)
+      ? partial.time
+      : nextTimes[0] || current.time || "21:00";
+
   const next: ReminderSettings = {
     ...current,
     ...partial,
-    time:
-      partial.time && isValidReminderTime(partial.time)
-        ? partial.time
-        : current.time,
+    time: primaryTime,
+    times: nextTimes,
   };
 
   if (typeof window !== "undefined") {
@@ -242,11 +266,11 @@ export function hasPracticedToday(
 
 /**
  * Pure helper to determine if the daily reminder should fire right now.
- * Fires at most once per JST day when:
+ * Fires at most once per JST day for each configured time when:
  * - settings.enabled is true
- * - not already notified today (lastNotifiedDate !== todayJst)
+ * - not already notified today for this time
  * - if smartSkipIfPracticed is true, user has NOT practiced today
- * - current JST time is at or after settings.time (within a 180-minute window)
+ * - current JST time is at or after any scheduled time (within a 180-minute window)
  */
 export function shouldFireDailyReminder(
   settings: ReminderSettings,
@@ -254,21 +278,33 @@ export function shouldFireDailyReminder(
   now: Date = new Date()
 ): boolean {
   if (!settings.enabled) return false;
-  if (!isValidReminderTime(settings.time)) return false;
   if (settings.smartSkipIfPracticed && practicedToday) return false;
 
   const todayJst = getJstDateString(now);
-  if (settings.lastNotifiedDate === todayJst) return false;
+  const activeTimes =
+    settings.times && settings.times.length > 0
+      ? settings.times
+      : [settings.time];
 
   const currentJstHm = getJstTimeString(now);
   const [curH, curM] = currentJstHm.split(":").map(Number);
-  const [tarH, tarM] = settings.time.split(":").map(Number);
-
   const curMinutes = (curH ?? 0) * 60 + (curM ?? 0);
-  const tarMinutes = (tarH ?? 0) * 60 + (tarM ?? 0);
 
-  const diff = curMinutes - tarMinutes;
-  return diff >= 0 && diff <= 180;
+  const notifiedTimes =
+    settings.lastNotifiedDate === todayJst
+      ? settings.lastNotifiedTimes || [settings.time]
+      : [];
+
+  return activeTimes.some((targetTime) => {
+    if (!isValidReminderTime(targetTime)) return false;
+    if (notifiedTimes.includes(targetTime)) return false;
+
+    const [tarH, tarM] = targetTime.split(":").map(Number);
+    const tarMinutes = (tarH ?? 0) * 60 + (tarM ?? 0);
+
+    const diff = curMinutes - tarMinutes;
+    return diff >= 0 && diff <= 180;
+  });
 }
 
 /**

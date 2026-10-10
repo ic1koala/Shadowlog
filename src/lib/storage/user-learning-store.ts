@@ -355,3 +355,64 @@ export function clearAllLearningData(): void {
     // ignore
   }
 }
+
+export interface AddLookedUpWordParams {
+  word: string;
+  sentence: string;
+  japanese?: string;
+  wordMeaning?: string;
+  industry: Industry;
+  level: DifficultyLevel;
+}
+
+/**
+ * Records a word that the user looked up/flipped in a phrase into the weak words notebook as "調べた単語".
+ */
+export function addLookedUpWord(params: AddLookedUpWordParams): WeakWord | null {
+  const cleanWord = normalizeWord(params.word);
+  if (!cleanWord || cleanWord.length <= 1) return null;
+
+  const cleanDisplayWord = params.word.replace(/^[^\w]+|[^\w]+$/g, "").trim() || params.word;
+  const allWeakWords = loadAllWeakWords();
+  const now = new Date().toISOString();
+
+  const existingIndex = allWeakWords.findIndex(
+    (w) => normalizeWord(w.word) === cleanWord
+  );
+
+  if (existingIndex !== -1) {
+    const existing = allWeakWords[existingIndex]!;
+    existing.lastPracticedAt = now;
+    existing.sentence = params.sentence;
+    if (params.japanese) existing.japanese = params.japanese;
+    if (params.wordMeaning) existing.wordMeaning = params.wordMeaning;
+    existing.industry = params.industry;
+    existing.level = params.level;
+    saveAllWeakWords(allWeakWords);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("shadowlog:weak-words-update"));
+    }
+    return existing;
+  } else {
+    const newWord: WeakWord = {
+      id: `lookup-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      word: cleanDisplayWord,
+      type: "looked_up",
+      sentence: params.sentence,
+      japanese: params.japanese,
+      wordMeaning: params.wordMeaning,
+      industry: params.industry,
+      level: params.level,
+      errorCount: 0,
+      mastered: false,
+      lastPracticedAt: now,
+    };
+    allWeakWords.unshift(newWord);
+    saveAllWeakWords(allWeakWords);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("shadowlog:weak-words-update"));
+    }
+    return newWord;
+  }
+}
+

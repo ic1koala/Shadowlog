@@ -64,6 +64,7 @@ flowchart LR
 | FB-041 | 2026/10/07 | オーナー | 設定画面UI | 設定画面（`/settings`）にて「✨ カスタム生成用マイ単語（3単語登録）」が2箇所重複表示されていた問題の修正 | 高 | 完了 | `src/app/(dashboard)/settings/page.tsx` 内の重複していた `<CustomWordsSection industry={industry} />`（5.5セクション）を削除し、プラン情報・ログイン状態連携付きの `<CustomWordsSection>` 1箇所のみに統一 |
 | FB-042 | 2026/10/07 | オーナー | ダッシュボードUI | 連続学習カード（ストリーク表示）のメッセージが省略（`...`）されて切れていたため、タップで全文展開・折りたたみ可能に修正 | 高 | 完了 | `StreakBadge.tsx`（`variant="compact"`）にタップ展開状態（`isExpanded`）と開閉アイコンを追加し、タップ時に `line-clamp-1` を解除して全文および最終練習日を表示するよう実装 |
 | FB-043 | 2026/10/07 | オーナー | 練習画面UI・カラオケ改行ズレ | フレーズ再生中にハイライトされた単語の横幅が変わり、行末の単語（例：`thoughts / on`）が次の行へ押し出されて文字配置がガタつく問題の修正 | 最高 | 完了 | カラオケ再生中に `font-semibold` ➔ `font-extrabold` へ `font-weight` を切り替えていたことで文字幅が数px膨張し改行位置が変わっていた原因を特定。`font-weight` を固定したまま描画フェーズのみの `[-webkit-text-stroke:0.4px_currentColor]` で太字感を出す方式に変更し、再生中のレイアウトシフトを0pxに根絶 |
+| FB-044 | 2026/10/10 | オーナー | UI/UX・機能強化・設定刷新 | ①単語フリップ案内文のフレーズ上部移動、②調べた単語の復習カルテ自動記録、③「リピーティング録音」➔「音読録音」への改名、④復習カルテ弱点分析の週次総合レポート化＆Pro説明削除、⑤リマインド通知の複数時刻選択＆最大5件カスタム設定、⑥設定画面のFacebook風リストUI刷新＆Threads追加、⑦アプリの使い方（全8機能一覧）の新規追加 | 最高 | 完了 | `SentenceCard.tsx`（フリップ案内文上部移動＆`addLookedUpWord`自動蓄積）、全箇所の「音読録音」文言統一、`WeeklyWeaknessReport.tsx`（週次更新の総合分析・脱落音/リンキング指導・Pro説明削除）、`ReminderSettingsSection.tsx`（複数時刻トグル選択＆最大5件追加）、`AppFeatureGuide.tsx`（全8機能の使い方ガイド）、`settings/page.tsx`（Facebook風グループ化リストUI・Threads導線追加）を実装（全170テスト合格、本番ビルド成功） |
 
 ---
 

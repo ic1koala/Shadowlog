@@ -112,10 +112,11 @@ export type UserPlanType = "guest" | "free" | "base" | "pro";
 export interface WeakWord {
   id: string;
   word: string;
-  type: "missing" | "mismatch";
+  type: "missing" | "mismatch" | "looked_up";
   spokenWord?: string; // 誤読時に認識された音
   sentence: string; // 出現した例文
   japanese?: string; // 日本語訳
+  wordMeaning?: string; // 単語固有の日本語訳（調べた単語帳用）
   industry: Industry;
   level: DifficultyLevel;
   errorCount: number; // つまずいた回数

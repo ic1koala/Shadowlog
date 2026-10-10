@@ -45,6 +45,7 @@ import { PlanComparisonSection } from "@/components/features/settings/PlanCompar
 import { AnnouncementHistorySection } from "@/components/features/announcements/AnnouncementHistorySection";
 import { ReminderSettingsSection } from "@/components/features/settings/ReminderSettingsSection";
 import { CustomWordsSection } from "@/components/features/settings/CustomWordsSection";
+import { AppFeatureGuide } from "@/components/features/settings/AppFeatureGuide";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 
@@ -110,13 +111,14 @@ export default function SettingsPage() {
 
   const quickNavItems = [
     { id: "section-account", label: "アカウント", icon: User },
-    { id: "section-announcements", label: "お知らせ", icon: Megaphone },
-    { id: "section-reminder", label: "リマインド", icon: Bell },
-    { id: "section-assessment", label: "レベル判定", icon: Target },
     { id: "section-learning", label: "学習設定", icon: Briefcase },
+    { id: "section-assessment", label: "レベル判定", icon: Target },
+    { id: "section-reminder", label: "リマインド", icon: Bell },
     { id: "section-mic", label: "マイク設定", icon: Mic },
-    { id: "section-feedback", label: "不具合報告", icon: MessageSquare },
+    { id: "section-guide", label: "使い方ガイド", icon: BookOpen },
+    { id: "section-links", label: "ブログ・Threads", icon: Megaphone },
     { id: "section-plans", label: "料金プラン", icon: Sparkles },
+    { id: "section-feedback", label: "不具合報告", icon: MessageSquare },
     { id: "section-reset", label: "初期化", icon: RotateCcw },
   ];
 
@@ -385,13 +387,12 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ── 1. アカウント情報セクション ── */}
-      <div id="section-account" className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-foreground font-bold text-base sm:text-lg">
-            <User className="w-5 h-5 text-primary" />
-            <span>アカウント情報</span>
-          </div>
+      {/* ── グループ 1: アカウント ── */}
+      <div id="section-account" className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            アカウント・プロフィール
+          </h2>
           {isLoggedIn ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -404,22 +405,26 @@ export default function SettingsPage() {
           )}
         </div>
 
-        <div className="space-y-4 pt-1">
+        <div className="bg-card rounded-2xl border border-border shadow-xs divide-y divide-border/60 overflow-hidden">
           {/* Email Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-xl bg-muted/40 border border-border/60">
-            <div className="space-y-0.5">
-              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                登録メールアドレス
-              </span>
-              <p className="text-xs text-muted-foreground">
-                {userEmail || "アカウント未作成（ゲスト利用中）"}
-              </p>
+          <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-foreground block">
+                  登録メールアドレス
+                </span>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {userEmail || "アカウント未作成（ゲスト利用中）"}
+                </p>
+              </div>
             </div>
             {!isLoggedIn && (
               <Link
                 href="/login?mode=signup"
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition shadow-xs shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition shadow-xs shrink-0 self-start sm:self-auto"
               >
                 <span>無料アカウント作成</span>
                 <ArrowRight className="w-3 h-3" />
@@ -428,28 +433,35 @@ export default function SettingsPage() {
           </div>
 
           {/* Nickname Row */}
-          <div className="space-y-1.5">
-            <label htmlFor="settings-nickname" className="text-xs font-bold text-foreground block">
-              ニックネーム（表示名）
-            </label>
-            <p className="text-[11px] text-muted-foreground">
-              ダッシュボードの挨拶や学習レポートで使用されるあなたのお名前です。
-            </p>
-            <div className="flex items-center gap-2 pt-0.5">
+          <div className="p-4 sm:p-5 space-y-2.5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <User className="w-4 h-4" />
+              </div>
+              <div>
+                <label htmlFor="settings-nickname" className="text-xs font-bold text-foreground block">
+                  ニックネーム（表示名）
+                </label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  挨拶や学習レポートで使用されるあなたのお名前です。
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pl-0 sm:pl-12">
               <input
                 id="settings-nickname"
                 type="text"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="例: リョウ、Alex、英語がんばるマン"
-                className="flex-1 p-2.5 sm:p-3 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                className="flex-1 p-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
                 maxLength={30}
               />
               <button
                 type="button"
                 onClick={handleSaveNickname}
                 disabled={isSavingNickname}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 sm:py-3 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 active:scale-95 transition shadow-xs disabled:opacity-50 min-h-[42px] shrink-0"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 active:scale-95 transition shadow-xs disabled:opacity-50 min-h-[40px] shrink-0"
               >
                 {isSavingNickname ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -467,32 +479,36 @@ export default function SettingsPage() {
 
           {/* Password Row */}
           {isLoggedIn && (
-            <div className="pt-2 border-t border-border/60">
+            <div className="p-4 sm:p-5">
               {isGoogleUser ? (
-                <div className="p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/15 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🌐</span>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">
-                        Googleアカウント連携中
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Googleアカウントで安全にログイン中のため、パスワードの変更は不要です。
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">
+                      Googleアカウント連携中
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Googleアカウントで安全にログイン中のため、パスワード変更は不要です。
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                        <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                        パスワード
-                      </span>
-                      <p className="text-xs text-muted-foreground tracking-widest mt-0.5">
-                        ••••••••••••
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                        <Lock className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-foreground block">
+                          パスワード
+                        </span>
+                        <p className="text-xs text-muted-foreground tracking-widest mt-0.5">
+                          ••••••••••••
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -500,11 +516,10 @@ export default function SettingsPage() {
                       className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                     >
                       <KeyRound className="w-3.5 h-3.5" />
-                      {isPasswordSectionOpen ? "閉じる" : "パスワードを変更する"}
+                      {isPasswordSectionOpen ? "閉じる" : "変更する"}
                     </button>
                   </div>
 
-                  {/* Password Change Form */}
                   {isPasswordSectionOpen && (
                     <form
                       onSubmit={handleChangePassword}
@@ -578,380 +593,460 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── 2. お知らせ・キャンペーン履歴 ── */}
-      <div id="section-announcements">
-        <AnnouncementHistorySection />
-      </div>
+      {/* ── グループ 2: 学習・トレーニング設定 ── */}
+      <div id="section-learning" className="space-y-2">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+          学習・トレーニング設定
+        </h2>
 
-      {/* ── 2.5 毎日の学習リマインド通知（Webプッシュ） ── */}
-      <div id="section-reminder">
-        <ReminderSettingsSection />
-      </div>
-
-      {/* ── 3. レベル判定テスト ── */}
-      <div id="section-assessment" className="bg-card rounded-2xl p-5 sm:p-8 border-2 border-primary/20 shadow-sm space-y-4 sm:space-y-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-5">
-          <Target className="w-24 h-24 text-primary" />
-        </div>
-
-        <div className="flex items-center gap-2 text-foreground font-semibold">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <span className="text-base sm:text-lg font-bold">レベル判定テスト</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
-            アダプティブ (3〜5問)
-          </span>
-        </div>
-
-        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-          アダプティブ方式で最大5問のシャドーイングテストを実施。
-          正確性と話速追従度の総合スコアからA1〜C1の5段階であなたの実力を判定します。
-          所要時間は約2〜3分です。
-        </p>
-
-        {/* Previous result */}
-        {assessmentResult && assessmentDate && (
-          <div className="p-3 sm:p-4 rounded-xl bg-muted/50 border border-border space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5" />
-                前回の判定結果
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                {new Date(assessmentDate).toLocaleDateString("ja-JP", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {assessmentResult.levelInfo ? (
-                <span
-                  className={`px-3 py-1 rounded-lg border text-sm font-bold ${assessmentResult.levelInfo.bg} ${assessmentResult.levelInfo.color}`}
-                >
-                  {assessmentResult.levelInfo.label}
-                </span>
-              ) : (
-                <span
-                  className={`px-3 py-1 rounded-lg border text-sm font-bold ${
-                    (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner"
-                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600"
-                      : (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate"
-                      ? "bg-blue-500/15 border-blue-500/30 text-blue-600"
-                      : "bg-purple-500/15 border-purple-500/30 text-purple-600"
-                  }`}
-                >
-                  {(assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner"
-                    ? "初級"
-                    : (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate"
-                    ? "中級"
-                    : "上級"}
-                </span>
-              )}
-              <div className="flex items-center gap-2 text-[11px] sm:text-xs text-muted-foreground">
-                {assessmentResult.overallComposite !== undefined ? (
-                  <>
-                    <span>総合 {assessmentResult.overallComposite}%</span>
-                    <span className="text-border">|</span>
-                    <span>正確性 {assessmentResult.overallAccuracy}%</span>
-                    <span className="text-border">|</span>
-                    <span>話速 {assessmentResult.overallWPMFollowRate}%</span>
-                  </>
-                ) : (
-                  <>
-                    <span>初級 {(assessmentResult as unknown as Record<string, unknown>).beginnerAvg as number}%</span>
-                    <span className="text-border">|</span>
-                    <span>中級 {(assessmentResult as unknown as Record<string, unknown>).intermediateAvg as number}%</span>
-                    <span className="text-border">|</span>
-                    <span>上級 {(assessmentResult as unknown as Record<string, unknown>).advancedAvg as number}%</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={handleStartAssessment}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-sm active:scale-95 min-h-[48px] text-base sm:text-sm"
-        >
-          <Target className="w-5 h-5" />
-          {assessmentResult ? "再テストを受ける" : "判定テストを開始する"}
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* ── 4. 学習する業種・ドメイン（アコーディオン） ── */}
-      <div id="section-learning" className="space-y-3">
-        <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden transition-all duration-200">
-          <button
-            type="button"
-            onClick={() => setIsIndustryOpen((prev) => !prev)}
-            className="w-full p-4 sm:p-6 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors"
-            aria-expanded={isIndustryOpen}
-          >
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <Briefcase className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-foreground font-bold text-sm sm:text-base">
-                    学習する業種・ドメイン
-                  </span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
-                    現在: {industries.find((item) => item.key === industry)?.label || industry}
-                  </span>
+        <div className="bg-card rounded-2xl border border-border shadow-xs divide-y divide-border/60 overflow-hidden">
+          {/* Industry Selection Row */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setIsIndustryOpen((prev) => !prev)}
+              className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors"
+              aria-expanded={isIndustryOpen}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <Briefcase className="w-4 h-4" />
                 </div>
-                <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-                  IT・テック、ビジネス、マーケティング、日常会話から学習ジャンルを選択
-                </p>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-foreground font-bold text-sm">
+                      学習する業種・ドメイン
+                    </span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                      {industries.find((item) => item.key === industry)?.label || industry}
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                    IT・テック、ビジネス、マーケティング、日常会話
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0">
-              <span className="hidden sm:inline">{isIndustryOpen ? "閉じる" : "変更する"}</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform duration-200 ${
-                  isIndustryOpen ? "rotate-180 text-primary" : "text-muted-foreground"
-                }`}
-              />
-            </div>
-          </button>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0">
+                <span className="hidden sm:inline">{isIndustryOpen ? "閉じる" : "変更"}</span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    isIndustryOpen ? "rotate-180 text-primary" : "text-muted-foreground"
+                  }`}
+                />
+              </div>
+            </button>
 
-          {isIndustryOpen && (
-            <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/60 space-y-3 animate-in fade-in-50 duration-200">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                {industries.map((item) => (
+            {isIndustryOpen && (
+              <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/60 space-y-3 bg-muted/20 animate-in fade-in-50 duration-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                  {industries.map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setIndustry(item.key)}
+                      className={`p-3.5 rounded-xl border text-left transition min-h-[56px] ${
+                        industry === item.key
+                          ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                          : "border-border hover:border-primary/40 bg-card"
+                      }`}
+                    >
+                      <p className="font-bold text-sm text-foreground">{item.label}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Level Selection Row */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setIsLevelOpen((prev) => !prev)}
+              className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors"
+              aria-expanded={isLevelOpen}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                  <BarChart className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-foreground font-bold text-sm">
+                      難易度レベルの手動選択
+                    </span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                      {levels.find((item) => item.key === level)?.label || level}
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                    センテンスの語数や難易度を手動変更
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0">
+                <span className="hidden sm:inline">{isLevelOpen ? "閉じる" : "変更"}</span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    isLevelOpen ? "rotate-180 text-primary" : "text-muted-foreground"
+                  }`}
+                />
+              </div>
+            </button>
+
+            {isLevelOpen && (
+              <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/60 space-y-2.5 bg-muted/20 animate-in fade-in-50 duration-200">
+                {levels.map((item) => (
                   <button
                     key={item.key}
                     type="button"
-                    onClick={() => setIndustry(item.key)}
-                    className={`p-3.5 sm:p-4 rounded-xl border text-left transition min-h-[56px] ${
-                      industry === item.key
+                    onClick={() => setLevel(item.key)}
+                    className={`w-full p-3.5 rounded-xl border text-left transition min-h-[64px] flex items-center justify-between ${
+                      level === item.key
                         ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                         : "border-border hover:border-primary/40 bg-card"
                     }`}
                   >
-                    <p className="font-bold text-sm text-foreground">{item.label}</p>
-                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                      {item.desc}
-                    </p>
+                    <div className="space-y-1 pr-2">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-sm text-foreground">{item.label}</p>
+                        <span className="text-[11px] text-muted-foreground font-medium">
+                          ({item.words})
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                        level === item.key
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground"
+                      }`}
+                    >
+                      {level === item.key && <div className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
                   </button>
                 ))}
               </div>
+            )}
+          </div>
+
+          {/* Learning Settings Save Row */}
+          <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 bg-muted/30">
+            <div className="text-xs text-muted-foreground text-center sm:text-left">
+              <p className="font-semibold text-foreground">学習ドメイン・難易度設定の保存</p>
+              <p className="text-[11px] mt-0.5">変更した業種や難易度を次回の練習から適用します。</p>
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              {isSaved && (
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  保存しました
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleSave}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-xs active:scale-95 text-xs min-h-[40px]"
+              >
+                <Save className="w-4 h-4" />
+                学習設定を保存する
+              </button>
+            </div>
+          </div>
+
+          {/* Custom Words Section */}
+          <div className="p-4 sm:p-6">
+            <CustomWordsSection
+              industry={industry}
+              plan={ticketStatus?.plan || "free"}
+              isLoggedIn={isLoggedIn}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── グループ 3: レベル判定テスト ── */}
+      <div id="section-assessment" className="space-y-2">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+          スキル診断
+        </h2>
+
+        <div className="bg-card rounded-2xl border-2 border-primary/20 shadow-xs p-5 sm:p-7 space-y-4 relative overflow-hidden">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Target className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-base sm:text-lg font-bold text-foreground">
+                  レベル判定テスト
+                </span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                  アダプティブ (3〜5問)
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                正確性と話速追従度からA1〜C1の5段階で判定（所要時間約2〜3分）
+              </p>
+            </div>
+          </div>
+
+          {/* Previous result if present */}
+          {assessmentResult && assessmentDate && (
+            <div className="p-3.5 sm:p-4 rounded-xl bg-muted/50 border border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  前回の判定結果
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {new Date(assessmentDate).toLocaleDateString("ja-JP", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                {assessmentResult.levelInfo ? (
+                  <span
+                    className={`px-3 py-1 rounded-lg border text-sm font-bold ${assessmentResult.levelInfo.bg} ${assessmentResult.levelInfo.color}`}
+                  >
+                    {assessmentResult.levelInfo.label}
+                  </span>
+                ) : (
+                  <span
+                    className={`px-3 py-1 rounded-lg border text-sm font-bold ${
+                      (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner"
+                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600"
+                        : (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate"
+                        ? "bg-blue-500/15 border-blue-500/30 text-blue-600"
+                        : "bg-purple-500/15 border-purple-500/30 text-purple-600"
+                    }`}
+                  >
+                    {(assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "beginner"
+                      ? "初級"
+                      : (assessmentResult as unknown as Record<string, unknown>).recommendedLevel === "intermediate"
+                      ? "中級"
+                      : "上級"}
+                  </span>
+                )}
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs text-muted-foreground">
+                  {assessmentResult.overallComposite !== undefined ? (
+                    <>
+                      <span>総合 {assessmentResult.overallComposite}%</span>
+                      <span className="text-border">|</span>
+                      <span>正確性 {assessmentResult.overallAccuracy}%</span>
+                      <span className="text-border">|</span>
+                      <span>話速 {assessmentResult.overallWPMFollowRate}%</span>
+                    </>
+                  ) : null}
+                </div>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* ── 5. 難易度レベルの手動選択（アコーディオン） ── */}
-        <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden transition-all duration-200">
           <button
             type="button"
-            onClick={() => setIsLevelOpen((prev) => !prev)}
-            className="w-full p-4 sm:p-6 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors"
-            aria-expanded={isLevelOpen}
+            onClick={handleStartAssessment}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-sm active:scale-95 text-xs sm:text-sm min-h-[44px]"
           >
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <BarChart className="w-4 h-4" />
+            <Target className="w-4 h-4" />
+            {assessmentResult ? "再テストを受ける" : "判定テストを開始する"}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── グループ 4: 通知・端末設定 ── */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+          通知・端末設定
+        </h2>
+
+        <div className="space-y-3">
+          {/* Reminder Section */}
+          <div id="section-reminder">
+            <ReminderSettingsSection />
+          </div>
+
+          {/* Microphone Setting Card */}
+          <div id="section-mic" className="bg-card rounded-2xl p-5 sm:p-7 border border-border shadow-xs space-y-3.5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                <Mic className="w-4 h-4" />
               </div>
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-foreground font-bold text-sm sm:text-base">
-                    難易度レベルの手動選択
-                  </span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
-                    現在: {levels.find((item) => item.key === level)?.label || level}
-                  </span>
-                </div>
+                <span className="text-sm sm:text-base font-bold text-foreground block">
+                  録音マイクの設定
+                </span>
                 <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-                  初級・中級・上級のセンテンス長さや難易度を手動変更
+                  AirPodsや外付けマイクを指定可能（通常は「システム既定」で動作）
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0">
-              <span className="hidden sm:inline">{isLevelOpen ? "閉じる" : "変更する"}</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform duration-200 ${
-                  isLevelOpen ? "rotate-180 text-primary" : "text-muted-foreground"
-                }`}
-              />
-            </div>
-          </button>
 
-          {isLevelOpen && (
-            <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/60 space-y-2.5 sm:space-y-3 animate-in fade-in-50 duration-200">
-              {levels.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => setLevel(item.key)}
-                  className={`w-full p-3.5 sm:p-4 rounded-xl border text-left transition min-h-[64px] flex items-center justify-between ${
-                    level === item.key
-                      ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                      : "border-border hover:border-primary/40 bg-card"
-                  }`}
-                >
-                  <div className="space-y-1 pr-2">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-sm text-foreground">{item.label}</p>
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        ({item.words})
-                      </span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-                  <div
-                    className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                      level === item.key ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"
-                    }`}
-                  >
-                    {level === item.key && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                </button>
-              ))}
+            <div className="space-y-1.5 pl-0 sm:pl-12">
+              <select
+                value={selectedMicId}
+                onChange={(e) => handleMicChange(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-border bg-background text-foreground text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition min-h-[42px]"
+              >
+                <option value="">システム既定（自動選択）</option>
+                {audioDevices.map((device, idx) => (
+                  <option key={device.deviceId || idx} value={device.deviceId}>
+                    {device.label || `マイク ${idx + 1}`}
+                  </option>
+                ))}
+              </select>
+              {selectedMicId && (
+                <p className="text-[11px] text-primary font-medium pl-1">
+                  ✓ 選択したマイクは次回以降も自動で優先接続されます
+                </p>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* ── 6. 学習設定を保存するボタン ── */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
-          <div className="text-xs text-muted-foreground text-center sm:text-left">
-            <p className="font-semibold text-foreground">学習ドメイン・難易度設定の保存</p>
-            <p className="text-[11px] mt-0.5">変更した業種や難易度を次回の練習から適用します。</p>
-          </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-            {isSaved && (
-              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 animate-in fade-in">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                学習設定を保存しました
-              </span>
-            )}
-            <button
-              onClick={handleSave}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition shadow-sm active:scale-95 min-h-[44px] text-sm"
-            >
-              <Save className="w-4 h-4" />
-              学習設定を保存する
-            </button>
           </div>
         </div>
-
-        {/* ── 6.5 カスタム生成用マイ単語（3単語登録） ── */}
-        <CustomWordsSection
-          industry={industry}
-          plan={ticketStatus?.plan || "free"}
-          isLoggedIn={isLoggedIn}
-        />
       </div>
 
-      {/* ── 7. 録音マイクの設定 ── */}
-      <div id="section-mic" className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
-        <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
-          <Mic className="w-5 h-5 text-primary" />
-          <span>録音マイクの設定</span>
-        </div>
+      {/* ── グループ 5: アプリガイド・公式コミュニティ ── */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+          アプリについて・公式ガイド
+        </h2>
 
-        <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-          AirPodsなどのBluetoothイヤホンや外付けマイクを明示的に指定できます。ブラウザの標準マイクで問題ない場合は「システム既定」のままで動作します。
-        </p>
+        <div className="space-y-3">
+          {/* App Usage Guide (Feature Directory) */}
+          <div id="section-guide">
+            <AppFeatureGuide />
+          </div>
 
-        <div className="space-y-2">
-          <select
-            value={selectedMicId}
-            onChange={(e) => handleMicChange(e.target.value)}
-            className="w-full p-3 rounded-xl border border-border bg-background text-foreground text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary transition min-h-[44px]"
-          >
-            <option value="">システム既定（自動選択）</option>
-            {audioDevices.map((device, idx) => (
-              <option key={device.deviceId || idx} value={device.deviceId}>
-                {device.label || `マイク ${idx + 1}`}
-              </option>
-            ))}
-          </select>
-          {selectedMicId && (
-            <p className="text-[10px] sm:text-xs text-primary font-medium pl-1">
-              ✓ 選択したマイクは次回以降も自動で優先接続されます
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* ── 8. 不具合報告・お問い合わせ ── */}
-      <div id="section-feedback">
-        <FeedbackForm />
-      </div>
-
-      {/* ── 9. 料金プラン・コース案内セクション ── */}
-      <div id="section-plans">
-        <PlanComparisonSection
-          currentPlan={ticketStatus?.plan || "free"}
-          isRegistered={isLoggedIn}
-          userEmail={userEmail}
-        />
-      </div>
-
-      {/* ── 10. 公式ノウハウ & サービス比較 ── */}
-      <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4">
-        <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
-          <BookOpen className="w-5 h-5 text-primary" />
-          <span>公式ブログ & ノウハウガイド</span>
-        </div>
-        <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-          WPMを高める「チャンク（意味の塊）」意識トレーニングや、他社サービスとの料金・機能比較記事を公開しています。
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          <Link
-            href="/blog"
-            className="p-3.5 rounded-xl border border-border bg-muted/40 hover:bg-muted transition flex items-center justify-between group"
-          >
-            <div>
-              <span className="text-xs font-bold text-foreground group-hover:text-primary transition block">
-                公式ブログ（WPM・シャドーイング解説）
-              </span>
-              <span className="text-[10px] text-muted-foreground">記事一覧をチェック</span>
+          {/* Official Blog, Guide & Threads Card */}
+          <div id="section-links" className="bg-card rounded-2xl p-5 sm:p-7 border border-border shadow-xs space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-sm sm:text-base font-bold text-foreground block">
+                  公式ブログ & ノウハウ & Threads
+                </span>
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                  WPM向上法、他社サービス比較、最新の英語学習Tipsを発信中
+                </p>
+              </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition" />
-          </Link>
 
-          <Link
-            href="/compare/shadoten"
-            className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition flex items-center justify-between group"
-          >
-            <div>
-              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 block">
-                シャドテン vs ShadowLog 徹底比較
-              </span>
-              <span className="text-[10px] text-muted-foreground">料金・AIリアルタイム判定の違い</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <Link
+                href="/blog"
+                className="p-3.5 rounded-xl border border-border bg-muted/40 hover:bg-muted transition flex items-center justify-between group"
+              >
+                <div>
+                  <span className="text-xs font-bold text-foreground group-hover:text-primary transition block">
+                    公式ブログ
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">WPM・シャドーイング解説 ↗</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition shrink-0" />
+              </Link>
+
+              <Link
+                href="/compare/shadoten"
+                className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition flex items-center justify-between group"
+              >
+                <div>
+                  <span className="text-xs font-bold text-amber-700 dark:text-amber-400 block">
+                    シャドテン徹底比較
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">料金・AI判定の違い ↗</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-0.5 transition shrink-0" />
+              </Link>
+
+              <a
+                href="https://www.threads.net"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3.5 rounded-xl border border-border bg-muted/40 hover:bg-muted transition flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="w-6 h-6 rounded-lg bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-black text-xs shrink-0">
+                    @
+                  </span>
+                  <div>
+                    <span className="text-xs font-bold text-foreground group-hover:text-primary transition block">
+                      公式Threads
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">学習Tips配信中 ↗</span>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition shrink-0" />
+              </a>
             </div>
-            <ArrowRight className="w-4 h-4 text-amber-500 group-hover:translate-x-0.5 transition" />
-          </Link>
+          </div>
+
+          {/* Announcement & Campaign History */}
+          <div id="section-announcements">
+            <AnnouncementHistorySection />
+          </div>
         </div>
       </div>
 
-      {/* ── 11. 学習データ・記録の初期化 ── */}
-      <div id="section-reset" className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-5">
-        <div className="flex items-center gap-2 text-foreground font-semibold text-sm sm:text-base">
-          <RotateCcw className="w-5 h-5 text-muted-foreground" />
-          <span>学習データ・記録の初期化</span>
-        </div>
+      {/* ── グループ 6: 料金プラン・サポート・データ初期化 ── */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+          料金プラン・サポート・データ管理
+        </h2>
 
-        <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-          累計発話単語数、学習履歴、苦手単語帳の記録をリセットして0から再スタートできます。練習前の初期状態に戻したい場合にご利用ください。
-        </p>
+        <div className="space-y-3">
+          {/* Plan Comparison Section */}
+          <div id="section-plans">
+            <PlanComparisonSection
+              currentPlan={ticketStatus?.plan || "free"}
+              isRegistered={isLoggedIn}
+              userEmail={userEmail}
+            />
+          </div>
 
-        <div>
-          <button
-            type="button"
-            onClick={handleResetData}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 active:scale-95 transition"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            学習記録と発話単語数をリセットする
-          </button>
+          {/* Feedback & Bug Report */}
+          <div id="section-feedback">
+            <FeedbackForm />
+          </div>
+
+          {/* Data Reset Section */}
+          <div id="section-reset" className="bg-card rounded-2xl p-5 sm:p-7 border border-border shadow-xs space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
+                <RotateCcw className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-sm sm:text-base font-bold text-foreground block">
+                  学習データ・記録の初期化
+                </span>
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                  発話単語数、学習履歴、苦手単語帳の記録をリセットして初期状態に戻します。
+                </p>
+              </div>
+            </div>
+
+            <div className="pl-0 sm:pl-12 pt-1">
+              <button
+                type="button"
+                onClick={handleResetData}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 active:scale-95 transition"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                学習記録と発話単語数をリセットする
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

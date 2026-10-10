@@ -1172,7 +1172,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                 >
                   <span className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <span>🗣️</span>
-                    <span>リピーティング録音</span>
+                    <span>音読録音</span>
                   </span>
                   <span className="text-[10px] text-blue-100/90 font-normal">
                     (お手本停止・自習)

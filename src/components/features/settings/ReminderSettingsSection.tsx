@@ -12,6 +12,9 @@ import {
   ChevronDown,
   Share,
   PlusSquare,
+  Plus,
+  Trash2,
+  Check,
 } from "lucide-react";
 import {
   ReminderSettings,
@@ -72,6 +75,16 @@ export function ReminderSettingsSection() {
     setTimeout(() => setSavedToast(false), 2500);
   };
 
+  const activeTimes =
+    settings.times && settings.times.length > 0
+      ? settings.times
+      : settings.time
+      ? [settings.time]
+      : ["21:00"];
+
+  const presetSet = new Set(REMINDER_TIME_PRESETS.map((p) => p.time));
+  const customTimes = activeTimes.filter((t) => !presetSet.has(t));
+
   const handleToggleEnabled = async () => {
     const nextEnabled = !settings.enabled;
 
@@ -93,8 +106,66 @@ export function ReminderSettingsSection() {
     void subscribeToPushServer(updated);
   };
 
-  const handleTimeChange = (newTime: string) => {
-    const updated = saveReminderSettings({ time: newTime });
+  // Toggle preset time ON/OFF on tap
+  const handleTogglePreset = (presetTime: string) => {
+    let nextTimes: string[];
+    if (activeTimes.includes(presetTime)) {
+      nextTimes = activeTimes.filter((t) => t !== presetTime);
+    } else {
+      nextTimes = [...activeTimes, presetTime].sort();
+    }
+    const updated = saveReminderSettings({
+      times: nextTimes,
+      time: nextTimes[0] || "21:00",
+    });
+    setSettings(updated);
+    triggerSavedToast();
+    if (updated.enabled) {
+      void subscribeToPushServer(updated);
+    }
+  };
+
+  // Add custom time (up to 5)
+  const handleAddCustomTime = () => {
+    if (customTimes.length >= 5) return;
+    const candidates = ["19:00", "07:00", "18:00", "23:00", "15:00", "09:00", "11:00"];
+    const newTime = candidates.find((c) => !activeTimes.includes(c)) || "19:00";
+    const nextTimes = [...activeTimes, newTime].sort();
+    const updated = saveReminderSettings({
+      times: nextTimes,
+      time: nextTimes[0] || newTime,
+    });
+    setSettings(updated);
+    triggerSavedToast();
+    if (updated.enabled) {
+      void subscribeToPushServer(updated);
+    }
+  };
+
+  // Update a custom time
+  const handleUpdateCustomTime = (index: number, newTimeValue: string) => {
+    if (!newTimeValue) return;
+    const oldCustomTime = customTimes[index];
+    const nextTimes = activeTimes.map((t) => (t === oldCustomTime ? newTimeValue : t));
+    const uniqueTimes = Array.from(new Set(nextTimes)).sort();
+    const updated = saveReminderSettings({
+      times: uniqueTimes,
+      time: uniqueTimes[0] || "21:00",
+    });
+    setSettings(updated);
+    triggerSavedToast();
+    if (updated.enabled) {
+      void subscribeToPushServer(updated);
+    }
+  };
+
+  // Delete a custom time
+  const handleDeleteCustomTime = (timeToDelete: string) => {
+    const nextTimes = activeTimes.filter((t) => t !== timeToDelete);
+    const updated = saveReminderSettings({
+      times: nextTimes,
+      time: nextTimes[0] || "21:00",
+    });
     setSettings(updated);
     triggerSavedToast();
     if (updated.enabled) {
@@ -131,12 +202,16 @@ export function ReminderSettingsSection() {
             </h2>
             {settings.enabled && (
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                毎日 {settings.time} に設定中
+                {activeTimes.length === 0
+                  ? "時刻未選択"
+                  : activeTimes.length === 1
+                  ? `毎日 ${activeTimes[0]} に設定中`
+                  : `毎日 ${activeTimes.length}件の時刻に設定中 (${activeTimes.join(", ")})`}
               </span>
             )}
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            決まった時間にスマホへ通知し、1日1文のシャドーイング習慣化をサポートします（メールは届きません）。
+            決まった時間にスマホへ通知し、1日1文のシャドーイング習慣化をサポートします（複数選択可・メールは届きません）。
           </p>
         </div>
 
@@ -250,16 +325,18 @@ export function ReminderSettingsSection() {
         </div>
       )}
 
-      {/* Time Selection Presets & Custom Time Input */}
+      {/* Multi-Time Selection: Presets (Tap to toggle) */}
       <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <label
-            htmlFor="reminder-time-input"
-            className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5"
-          >
-            <Clock className="w-4 h-4 text-primary" />
-            <span>通知を受け取る時刻（ワンタップ選択）</span>
-          </label>
+          <div className="space-y-0.5">
+            <label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-primary" />
+              <span>通知を受け取る時刻（ワンタップでオン/オフ切替）</span>
+            </label>
+            <p className="text-[11px] text-muted-foreground">
+              タップするたびに選択/解除できます（複数選択可能）。
+            </p>
+          </div>
           {savedToast && (
             <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-in fade-in duration-200">
               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -271,18 +348,23 @@ export function ReminderSettingsSection() {
         {/* Preset Pills */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {REMINDER_TIME_PRESETS.map((preset) => {
-            const isSelected = settings.time === preset.time;
+            const isSelected = activeTimes.includes(preset.time);
             return (
               <button
                 key={preset.time}
                 type="button"
-                onClick={() => handleTimeChange(preset.time)}
-                className={`p-2.5 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-0.5 min-h-[54px] ${
+                onClick={() => handleTogglePreset(preset.time)}
+                className={`p-2.5 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-0.5 min-h-[58px] relative ${
                   isSelected
-                    ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/20 font-bold"
+                    ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/25 font-bold shadow-xs"
                     : "border-border bg-background hover:border-primary/40 text-foreground"
                 }`}
               >
+                {isSelected && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center text-[10px]">
+                    <Check className="w-2.5 h-2.5" />
+                  </span>
+                )}
                 <span className="text-[11px] text-muted-foreground font-medium">
                   {preset.badge}
                 </span>
@@ -292,40 +374,103 @@ export function ReminderSettingsSection() {
           })}
         </div>
 
-        {/* Custom Time Picker + Test Notification Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs text-muted-foreground font-medium">
-              自由な時刻を指定:
-            </span>
-            <input
-              id="reminder-time-input"
-              type="time"
-              value={settings.time}
-              onChange={(e) => {
-                if (e.target.value) {
-                  handleTimeChange(e.target.value);
-                }
-              }}
-              className="px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs sm:text-sm font-bold focus:outline-hidden focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
+        {/* Custom Times Section (up to 5) */}
+        <div className="pt-3 border-t border-border/60 space-y-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                <span>自由な時間設定</span>
+                <span className="text-[11px] text-muted-foreground font-normal">
+                  （最大5件まで追加可能 / 現在 {customTimes.length}件）
+                </span>
+              </h3>
+              <p className="text-[11px] text-muted-foreground">
+                生活リズムに合わせてお好みの時刻を個別に追加できます。
+              </p>
+            </div>
 
-          {envStatus === "supported" && (
             <button
               type="button"
-              onClick={handleTestNotification}
-              disabled={testStatus === "sending"}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold text-xs transition border border-border/80 cursor-pointer min-h-[42px]"
+              onClick={handleAddCustomTime}
+              disabled={customTimes.length >= 5}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border min-h-[36px] ${
+                customTimes.length >= 5
+                  ? "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-60"
+                  : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30 cursor-pointer shadow-2xs"
+              }`}
             >
-              <BellRing className="w-3.5 h-3.5 text-primary" />
-              <span>
-                {testStatus === "sending"
-                  ? "テスト通知を送信中..."
-                  : "🔔 今すぐテスト通知を送ってみる"}
-              </span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>時刻を追加 {customTimes.length >= 5 ? "(上限5件)" : ""}</span>
             </button>
+          </div>
+
+          {/* List of Custom Times */}
+          {customTimes.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+              {customTimes.map((ct, idx) => (
+                <div
+                  key={`custom-time-${idx}-${ct}`}
+                  className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-primary/30 bg-primary/5 shadow-2xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <input
+                      type="time"
+                      value={ct}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleUpdateCustomTime(idx, e.target.value);
+                        }
+                      }}
+                      className="px-2.5 py-1 rounded-lg border border-border bg-background text-foreground text-xs sm:text-sm font-bold focus:outline-hidden focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCustomTime(ct)}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition cursor-pointer"
+                    aria-label={`カスタム時刻 ${ct} を削除`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
+
+          {/* Test Notification Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <div className="text-[11px] text-muted-foreground">
+              {activeTimes.length === 0 ? (
+                <span className="text-amber-600 font-bold">
+                  ⚠️ 現在通知時刻が1つも選ばれていません。上のボタンから時刻を選択してください。
+                </span>
+              ) : (
+                <span>
+                  設定中の時刻:{" "}
+                  <strong className="text-foreground">{activeTimes.join("、 ")}</strong>
+                </span>
+              )}
+            </div>
+
+            {envStatus === "supported" && (
+              <button
+                type="button"
+                onClick={handleTestNotification}
+                disabled={testStatus === "sending"}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold text-xs transition border border-border/80 cursor-pointer min-h-[42px]"
+              >
+                <BellRing className="w-3.5 h-3.5 text-primary" />
+                <span>
+                  {testStatus === "sending"
+                    ? "テスト通知を送信中..."
+                    : "🔔 今すぐテスト通知を送ってみる"}
+                </span>
+              </button>
+            )}
+          </div>
         </div>
 
         {testStatus === "sent" && (

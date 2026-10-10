@@ -272,7 +272,7 @@ export function AudioRecorder({
         {!isRecording && !audioBlob && (
           <div className="text-center space-y-1">
             <p className="text-xs sm:text-sm font-medium text-foreground">
-              ① 画面下部から「リピーティング」または「シャドーイング」を選択
+              ① 画面下部から「音読録音」または「シャドーイング録音」を選択
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground">
               ※シャドーイング録音はお手本音声とシンクロ再生されます（イヤホン推奨）
@@ -340,7 +340,7 @@ export function AudioRecorder({
       </div>
 
       <p className="text-[11px] sm:text-xs text-center text-muted-foreground">
-        ※リピーティング録音時は模範音声が停止します。シャドーイング録音時はイヤホン装着推奨でお手本と同時に発話し、発話が終わったら「録音を終了」をタップしてください。
+        ※音読録音時は模範音声が停止します。シャドーイング録音時はイヤホン装着推奨でお手本と同時に発話し、発話が終わったら「録音を終了」をタップしてください。
       </p>
     </div>
   );
