@@ -24,14 +24,16 @@ async function main() {
   if (textIndex !== -1 && args[textIndex + 1]) {
     const text = args[textIndex + 1];
     const scheduleIndex = args.indexOf("--schedule");
+    const imageIndex = args.indexOf("--image-url");
+    const imageUrl = imageIndex !== -1 ? args[imageIndex + 1] : undefined;
 
     if (scheduleIndex !== -1 && args[scheduleIndex + 1]) {
       const scheduledAt = args[scheduleIndex + 1];
-      const item = enqueuePost(text, scheduledAt);
+      const item = enqueuePost(text, scheduledAt, imageUrl);
       console.log(`Enqueued post for ${scheduledAt}:`, item);
     } else {
-      console.log(`Publishing post immediately to Threads...`);
-      const result = await postToThreads(text);
+      console.log(`Publishing post immediately to Threads... (Image: ${imageUrl || "none"})`);
+      const result = await postToThreads(text, imageUrl);
       if (result.success) {
         console.log(`🎉 Successfully published to Threads! Post ID: ${result.id}`);
       } else {
@@ -44,8 +46,8 @@ async function main() {
 
   console.log(`
 Usage:
-  npx tsx scripts/threads-publisher.ts --text "Your Threads Post Text"
-  npx tsx scripts/threads-publisher.ts --text "Your Post Text" --schedule "2026-10-09T08:00:00+09:00"
+  npx tsx scripts/threads-publisher.ts --text "Your Threads Post Text" [--image-url "https://..."]
+  npx tsx scripts/threads-publisher.ts --text "Your Post Text" --schedule "2026-10-11T08:00:00+09:00" [--image-url "https://..."]
   npx tsx scripts/threads-publisher.ts --process-queue
   npx tsx scripts/threads-publisher.ts --list-queue
 `);

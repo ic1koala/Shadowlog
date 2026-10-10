@@ -1,13 +1,8 @@
-import { enqueuePost, saveQueue, QueueItem } from "../src/lib/threads/publisher";
-import fs from "fs";
+import { saveQueue, QueueItem } from "../src/lib/threads/publisher";
 import path from "path";
 
-const QUEUE_FILE = path.join(process.cwd(), ".threads-queue.json");
-
-// Clear existing queue to start fresh for 14-day campaign
-const queue: QueueItem[] = [];
-
-const startDate = new Date("2026-10-09T00:00:00+09:00");
+const OGP_IMAGE_URL = "https://shadowlog.vercel.app/diagnosis/opengraph-image";
+const startDate = new Date("2026-10-11T00:00:00+09:00");
 
 // Helper to format ISO JST time string
 function getJstIsoString(dayOffset: number, hour: number, minute: number): string {
@@ -20,78 +15,72 @@ function getJstIsoString(dayOffset: number, hour: number, minute: number): strin
   return `${year}-${month}-${day}T${h}:${m}:00+09:00`;
 }
 
-// 14-Day Content Matrix (42 Posts Total: 14 Morning, 14 Lunch, 14 Night)
+// 14-Day Humanized Conversational Posts Matrix (42 Posts Total)
 const postsData = [
-  // --- Day 1 (10/09) ---
+  // --- Day 1 (10/11 - Sun) ---
   {
     day: 0, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-今日から英語学習のコツと、30秒で話せるスピード（WPM）や推定TOEICスコアがAI判定できるツール情報を発信していきます！
+日曜日ですね！みなさん休日の朝はどこで英語勉強してますか？自分はカフェで静かに発声練習するのが習慣になってます☕️
 
-通勤・通学の隙間時間で、自分の「英語スピーキング発声スピード」を無料測定してみませんか？
+そういえば自分の英語の発話スピード（WPM）って測ったことありますか？
+30秒声を出すだけでAIがTOEIC推定スコアと一緒に測定してくれるツールを作ったので、よかったら休日の朝活に遊んでみてください！
 
-▼30秒AI診断はこちら
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #シャドーイング #ShadowLog`
+#英語学習 #TOEIC #朝活 #ShadowLog`
   },
   {
     day: 0, slot: "lunch", hour: 12, minute: 30,
-    text: `【英語発音スピードの目安知ってますか？】
+    text: `みんなお昼何食べてる？🍱
 
-・初級者: 90〜110 WPM
-・中級（TOEIC600〜700）: 120〜140 WPM
-・ネイティブ日常会話: 160〜180 WPM
+英語学習してて一番しんどいのって何ですか？
+自分は昔、知ってるはずの単語なのにネイティブの早口で全く聞き取れなかった時でした…泣
 
-あなたの現在の発声スピードは何WPM？
-AIが30秒で音の連結再現度とTOEIC推定スコアを割り出します💡
+"Check it out" が "チェケラウ" に聞こえるみたいな「音の連結（リンキング）」再現度、AIが30秒でチェックしてくれる無料ツール作ったので試してみてね！
 
-▼無料診断を試す👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #英会話 #ShadowLog`
   },
   {
     day: 0, slot: "night", hour: 20, minute: 0,
-    text: `シャドテンの月額2万円が高くて継続を諦めそうになったので、自分で無料から使えるAIシャドーイングアプリ「ShadowLog」を開発しました！
+    text: `今日もお疲れ様です！夜の勉強タイムの方も多いかな？🌙
 
-まずは30秒であなたのリスニング・発声弱点と推定TOEICスコアが分析できる無料AI診断を試していただけると嬉しいです！
+実はシャドテンを使いたかったんですが月2万円が高すぎて継続を断念し…悔しくて自分で作ったのがこの「ShadowLog」です（笑）
 
-先着20名様限定で初期VIPモニター（全Pro機能使い放題）も受付中🔥
+30秒声を吹き込むだけで発声WPMと推定TOEICスコアが無料判定できるので、今日の締めくくりにぜひ試してみてください！
 
-▼30秒AI無料診断
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #個人開発 #TOEIC #ShadowLog`
   },
 
-  // --- Day 2 (10/10) ---
+  // --- Day 2 (10/12 - Mon) ---
   {
     day: 1, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-英語のリスニングで「知っている単語なのに聞き取れない」最大の原因は【音の連結（リンキング）】です。
+月曜日スタート！みなさん通勤・通学中ですか？
+電車の中で単語帳見てる人見かけると「仲間だ…！」って嬉しくなります。
 
-"Check it out" が "チェケラウ" に聴こえる現象ですね。
-あなたのリンキング再現率は何％？30秒でAIが判定します！
+朝の隙間時間30秒で、自分の「英語を話すスピード」と推定TOEICスコアがAI判定できる無料ツール置いておきますね👇
 
-▼30秒AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #リスニング #ShadowLog`
+#英語学習 #TOEIC #朝活 #ShadowLog`
   },
   {
     day: 1, slot: "lunch", hour: 12, minute: 30,
-    text: `昼休みの隙間時間30秒で英語力チェック！
+    text: `お昼休みにちょっと英語小ネタ💡
 
-短い英文を音読・発声するだけで：
-1. 発話スピード（WPM）
-2. 音の連結（リンキング）再現率
-3. 推定TOEICスコア
-をAIがリアルタイム算出します！
+英語の発音スピードの目安ってご存知ですか？
+・初級者: 90〜110 WPM
+・中級（TOEIC600〜700）: 120〜140 WPM
+・ネイティブ日常会話: 160〜180 WPM
 
-スマホのマイクからログイン不要で今すぐ試せます👇
+あなたの今のスピードは何WPM？30秒でAIが測ってくれます！
 
 https://shadowlog.vercel.app/diagnosis
 
@@ -99,43 +88,42 @@ https://shadowlog.vercel.app/diagnosis
   },
   {
     day: 1, slot: "night", hour: 20, minute: 0,
-    text: `【英語が聞き取れない3つの段階】
+    text: `月曜日の夜、いかがお過ごしですか？
 
-1級: 単語の意味がわからない（語彙不足）
-2级: 変化した音が聞き取れない（リンキング未定着）
-3級: スピードについていけない（WPM不足）
+「英語を話す時、頭の中で英作文しちゃって言葉が詰まる…」って悩みありませんか？
+これ、単語力じゃなくて脳内の単語検索スピード（WPM）の問題だったりします。
 
-あなたはどこで詰まっていますか？AIが30秒で弱点を特定します。
+30秒で自分のWPMと弱点が可視化できるAI診断、夜の学習のついでにやってみてね！
 
-▼30秒AI無料診断
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #シャドーイング #TOEIC #ShadowLog`
+#英語学習 #英会話 #ShadowLog`
   },
 
-  // --- Day 3 (10/11) ---
+  // --- Day 3 (10/13 - Tue) ---
   {
     day: 2, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-週末の土曜日！朝の30秒で英語のスピーキング力＆発音速度をチェックしてみませんか？
+火曜日の朝！みなさん英語学習のモチベーション維持どうしてますか？
+自分は「自分の成長を数値で見ること」が一番効くタイプです。
 
-スマホに向かって短いフレーズを音声吹き込むだけで、AIがリアルタイム診断します。
+30秒声を出すだけで有効WPMと推定TOEICスコアが数値化される無料AI診断、よかったら朝の運動がてら試してみてね！
 
-▼今すぐ試せる30秒無料診断👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #英会話 #ShadowLog`
+#英語学習 #TOEIC #ShadowLog`
   },
   {
     day: 2, slot: "lunch", hour: 12, minute: 30,
-    text: `【クイズ】
+    text: `ランチタイム英語クイズ！
+
 "What do you want to do?" 
-ネイティブが発声すると "Whaddya wanna do?" に変化します。
+ネイティブが言うと "Whaddya wanna do?" って聴こえますよね。
 
-耳で追うだけでなく、口を動かして自分で発声できるようになるとリスニング力が跳ね上がります！
+耳で追うだけじゃなくて口を動かして真似するとリスニング力が一気に上がります！
+あなたの発声再現度をAIが30秒判定👇
 
-あなたの発声再現度をAIが30秒でチェック👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #発音 #ShadowLog`
@@ -144,432 +132,424 @@ https://shadowlog.vercel.app/diagnosis
     day: 2, slot: "night", hour: 20, minute: 0,
     text: `【先着20名限定】初期VIPモニター募集中！
 
-30秒AI診断を受けると、正式リリース後も全Pro機能（無制限シャドーイング＆AI詳細フィードバック）が使い放題になるVIPモニターに応募できます！
+実は30秒AI診断を受けてくれた方限定で、正式版もPro機能（無制限練習・詳細AIフィードバック）が使い放題になるVIPモニター枠を開放しています！
 
-残り枠数をリアルタイム表示中。
+残り枠数をリアルタイム表示中。気になる方はお早めにどうぞ👇
 
-▼30秒AI診断＆VIP応募はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #無料診断 #ShadowLog`
+#英語学習 #TOEIC #VIPモニター #ShadowLog`
   },
 
-  // --- Day 4 (10/12) ---
+  // --- Day 4 (10/14 - Wed) ---
   {
     day: 3, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-日曜日も英語学習頑張っていきましょう！
-「自分の英語の発音、本当に通じるかな？」と気になったら、まずは30秒でAIチェックしてみませんか？
+水曜日、折り返し地点ですね！
+「洋画を字幕なしで見たい！」と思って英語始めた時のワクワク、忘れないようにしたいです。
 
-単語の聞き取り＆発音再現度をその場で数値化します。
+朝の30秒で自分の英語発声スピードをチェックして、今日も一日頑張っていきましょう！
 
-▼無料30秒AI診断
+https://shadowlog.vercel.app/diagnosis
+
+#英語学習 #TOEIC #朝活 #ShadowLog`
+  },
+  {
+    day: 3, slot: "lunch", hour: 12, minute: 30,
+    text: `お昼休み30秒チャレンジ！
+
+「シャドーイングって難しそう…」という声をもらったので、お手本を聞いてから落ち着いて発声できる「リピーティングモード」も作りました！
+
+まずは無料の30秒診断で試してみてね👇
+
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #英会話 #ShadowLog`
   },
   {
-    day: 3, slot: "lunch", hour: 12, minute: 30,
-    text: `「TOEIC L&Rのスコアはあるのに、スピーキングテストや英会話だと言葉が出てこない…」
-
-それは脳内の単語検索スピード（WPM）のトレーニング不足が原因かもしれません。
-
-AIがあなたのWPMと推定TOEICスコアを30秒で無料診断します💡
-
-▼診断はこちら👇
-https://shadowlog.vercel.app/diagnosis
-
-#英語学習 #TOEIC #スピーキング #ShadowLog`
-  },
-  {
     day: 3, slot: "night", hour: 20, minute: 0,
-    text: `【なぜShadowLogを作ったのか？】
+    text: `英語が聞き取れない原因って、実は3段階あるんです。
 
-英語アプリって「毎日30分スクールに通う」タイプの重いものが多くて続きづらいですよね。
+1. 単語の意味がわからない（語彙不足）
+2. 変化した音が聞き取れない（リンキング未定着）
+3. スピードについていけない（WPM不足）
 
-「1日3分、声を出して速攻フィードバックが貰える環境」を作りたくて作りました。
-まずは30秒診断で体験してみてください！
+自分がどこで詰まってるか知るだけで学習効率変わりますよ！30秒AI診断はこちら👇
 
-▼30秒無料AI診断
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #個人開発 #ShadowLog`
+#英語学習 #シャドーイング #ShadowLog`
   },
 
-  // --- Day 5 (10/13) ---
+  // --- Day 5 (10/15 - Thu) ---
   {
     day: 4, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-今週もスタート！月曜朝の通学・通勤時に30秒だけ英語力を測ってみませんか？
+木曜日の朝！あと少しで週末ですね。
+みなさん朝の英語学習ルーティンって何か決めてますか？
 
-ログイン登録不要で、スマホマイクからすぐ発音スピードと推定TOEICスコアが分かります。
+自分は毎朝30秒だけAI診断で声を出してウォームアップしてます！今朝のスコアチェックにどうぞ👇
 
-▼今すぐ無料診断👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #朝活 #ShadowLog`
   },
   {
     day: 4, slot: "lunch", hour: 12, minute: 30,
-    text: `音の連結（リンキング）解説💡
+    text: `英語の音変化あるある💡
 
-"Get out of here" ➔ "ゲラウロブヒア"
-"Pick it up" ➔ "ピッカップ"
+・Water ➔ ワラ
+・An apple ➔ アナップル
+・Going to ➔ ゴナ
 
-英語は子音と母音がくっついて別の音に変化します。
-あなたのリンキング発声再現率をAIが30秒判定！
+自分の口で再現できているかAIが30秒でチェック！
+昼休みのスキマ時間に遊んでみてね👇
 
-▼無料AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #発音 #ShadowLog`
   },
   {
     day: 4, slot: "night", hour: 20, minute: 0,
-    text: `リスニング上達の近道は「自分が発声できるスピードまで口を鳴らすこと」。
+    text: `アプリ開発しててユーザーさんから「自分の得意・苦手が数値で分かって面白い！」って言ってもらえたのが一番嬉しかったな…✨
 
-お手本音声のWPM（1分間の単語数）に合わせて声を出すことで、自然と耳が英語のスピードに追いつくようになります。
+AIが0秒であなたの発音速度（WPM）と推定TOEIC点数を割り出します！
 
-まずは自分の発声WPMを30秒でチェック！
-
-▼30秒AI診断
+無料30秒AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #シャドーイング #ShadowLog`
+#英語学習 #個人開発 #ShadowLog`
   },
 
-  // --- Day 6 (10/14) ---
+  // --- Day 6 (10/16 - Fri) ---
   {
     day: 5, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-英語学習で大切なのは「現在の自分の正確な位置（数値）」を知ること。
+金曜日！今週ラストスパートですね！
+今日を乗り切れば週末。朝の30秒でサクッと英語力チェックして気持ちよくスタートしませんか？
 
-WPM（発話速度）や弱点音の再現率をAIで客観的に測定してみませんか？
+ログイン不要でスマホマイクからすぐ試せます👇
 
-▼30秒で測れる無料AI診断👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #英会話 #ShadowLog`
+#英語学習 #TOEIC #朝活 #ShadowLog`
   },
   {
     day: 5, slot: "lunch", hour: 12, minute: 30,
-    text: `【昼休みの30秒チャレンジ】
-短い英文を3つ発声して、AIコーチから判定をもらおう！
+    text: `ハッピーフライデー！昼休み何してますか？🍱
 
-・語彙キャッチ度
-・発話スピード（WPM）
-・推定TOEICスコア
+「高額なスクールに通わなくても、AIを使えば独学で英語スピーキングもリスニングも伸ばせる」
+そんなアプリを目指して日々改善中です！
 
-完全無料でその場で結果が出ます👇
+まずは30秒無料診断でスピード感を体験してみてね👇
+
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #ShadowLog`
   },
   {
     day: 5, slot: "night", hour: 20, minute: 0,
-    text: `【VIPモニター残り枠わずか！】
+    text: `1週間お仕事・お勉強お疲れ様でした！🍻
 
-ShadowLogの初期VIPモニター募集（先着20名限定）ですが、少しずつ枠が埋まってきています！
+金曜夜の解放感最高ですね。
+「今週英語頑張ったな〜」という方も、「来週から頑張る！」という方も、今の実力を30秒で記録しておきませんか？
 
-VIP特典：全Pro機能（無制限練習・詳細フィードバック）永久無料使い放題。
+推定TOEICスコアもその場で出ます👇
 
-診断結果画面からワンタップで応募できます👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #モニター募集 #ShadowLog`
+#英語学習 #TOEIC #ShadowLog`
   },
 
-  // --- Day 7 (10/15) ---
+  // --- Day 7 (10/17 - Sat) ---
   {
     day: 6, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-水曜日！折り返し地点ですね。
-朝の30秒で自分の英語発声スピードをチェックして、今日も英語脳を呼び覚ましましょう！
+土曜日の朝！休日ってついついダラダラしがちですが、朝イチで30秒だけ声を出しておくと脳がシャキッと目覚めますよ！
 
-▼30秒AI無料診断はこちら👇
-https://shadowlog.vercel.app/diagnosis
+自分の発音WPMと推定TOEICスコアをAIで測ってみよう👇
 
-#英語学習 #TOEIC #朝活 #ShadowLog`
-  },
-  {
-    day: 6, slot: "lunch", hour: 12, minute: 30,
-    text: `英語力診断ツール「ShadowLog Diagnosis」は、Whisper AI音声認識アルゴリズムを活用してリアルタイムに発音スピード（WPM）と推定TOEICスコアを分析します。
-
-0秒の待ち時間でストレスなく結果が出るので試してみてください！
-
-▼30秒AI診断
-https://shadowlog.vercel.app/diagnosis
-
-#英語学習 #TOEIC #個人開発 #ShadowLog`
-  },
-  {
-    day: 6, slot: "night", hour: 20, minute: 0,
-    text: `英語を話す時に「えーっと…」と詰まってしまう方へ。
-
-それは単語力ではなく「英文をカタマリ（チャンク）で発声するリズム」が身についていないからかも。
-
-AI診断であなたのWPMとチャンク発声度をチェックしてみませんか？
-
-▼無料30秒AI診断
-https://shadowlog.vercel.app/diagnosis
-
-#英語学習 #英会話 #TOEIC #ShadowLog`
-  },
-
-  // --- Day 8 (10/16) ---
-  {
-    day: 7, slot: "morning", hour: 8, minute: 0,
-    text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
-
-「英語学習を始めたいけど何からやればいいか分からない…」
-まずは今の自分の「発声スピード」と「推定TOEICスコア」を30秒で可視化してみましょう！
-
-▼無料30秒AI診断👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #英会話 #ShadowLog`
   },
   {
+    day: 6, slot: "lunch", hour: 12, minute: 30,
+    text: `休日の昼下がり、いかがお過ごしですか？☕️
+
+「TOEICのリスニングパート、後半になると集中力切れて追いつけなくなる…」という悩み。
+実は発話スピード（WPM）に耳を慣らすと一気に聞き取れるようになります！
+
+30秒無料AI診断はこちら👇
+https://shadowlog.vercel.app/diagnosis
+
+#英語学習 #TOEIC #ShadowLog`
+  },
+  {
+    day: 6, slot: "night", hour: 20, minute: 0,
+    text: `【先着20名初期VIPモニター枠 カウントダウン】
+
+全Pro機能が無制限使い放題になる初期VIPモニター枠、少しずつ枠が埋まってきています！
+
+30秒AI診断を受けると診断結果画面からエントリーできます。残枠表示をチェックしてみてね👇
+
+https://shadowlog.vercel.app/diagnosis
+
+#英語学習 #TOEIC #VIPモニター #ShadowLog`
+  },
+
+  // --- Day 8 (10/18 - Sun) ---
+  {
+    day: 7, slot: "morning", hour: 8, minute: 0,
+    text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
+
+日曜日！みなさん英語学習で一番達成感感じるのってどんな瞬間ですか？
+自分は「字幕なしでフレーズが聞き取れた瞬間」が最高にアドレナリン出ます！
+
+朝の30秒AI診断でモチベーション上げていきましょう👇
+
+https://shadowlog.vercel.app/diagnosis
+
+#英語学習 #TOEIC #朝活 #ShadowLog`
+  },
+  {
     day: 7, slot: "lunch", hour: 12, minute: 30,
-    text: `【TOEICスコア別・発声WPMの目安】
-・500点レベル: 〜110 WPM
-・700点レベル: 120〜140 WPM
-・850点以上: 150+ WPM
+    text: `日曜のランチタイム！
 
-あなたの今の発音スピードは何WPM？30秒でAIが計測します！
+「英語の勉強、独学だとモチベが続かない…」って方いませんか？
+自分の成長がWPM（数字）で可視化されるとゲーム感覚で続けやすくなりますよ！
 
-▼無料AI診断
+まずは今のWPMを30秒でAIチェックしてみよう👇
+
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #ShadowLog`
   },
   {
     day: 7, slot: "night", hour: 20, minute: 0,
-    text: `シャドーイングは「お手本音声を聞きながら、0.5秒遅れで声を追う」トレーニング。
+    text: `明日からまた新しい1週間が始まりますね！
 
-リスニング力とスピーキング力を同時に鍛える最強の方法です。
+「今週こそ英語学習習慣化するぞ！」という意気込み、応援してます🔥
+まずは今夜の30秒で現在の発声速度と推定TOEICスコアをスタート地点として記録しておきませんか？
 
-まずは30秒で自分の適性スコアをAI診断してみよう！
-
-▼30秒無料AI診断👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #シャドーイング #TOEIC #ShadowLog`
+#英語学習 #TOEIC #ShadowLog`
   },
 
-  // --- Day 9 (10/17) ---
+  // --- Day 9 (10/19 - Mon) ---
   {
     day: 8, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-金曜日！今週ラストスパートですね。
-出勤・通学前の30秒で英語力チェックしてみませんか？
+月曜日の朝！また1週間頑張っていきましょう！
+通勤・通学電車の中で30秒だけ声を出さずに（または小声で）試せる英語力チェックツール置いておきますね。
 
-スマホに声を吹き込むだけで、AIがリンキング再現度と推定TOEICスコアを即出します。
+AIが発話WPMと推定TOEICスコアを分析👇
 
-▼30秒AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #朝活 #ShadowLog`
   },
   {
     day: 8, slot: "lunch", hour: 12, minute: 30,
-    text: `昼休み30秒英語チャレンジ！
+    text: `お昼休み30秒チャレンジ！
 
-「シャドーイングって難しそう…」という方向けに、お手本を聞いてから話す「リピーティングモード」も用意しています！
+【TOEICスコア別・発声WPM目安】
+・500点レベル: 〜110 WPM
+・700点レベル: 120〜140 WPM
+・850点以上: 150+ WPM
 
-まずは診断ツールで体験してみてください👇
+あなたの今のスピードは何WPM？30秒でAIが判定します！
+
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #英会話 #ShadowLog`
+#英語学習 #TOEIC #ShadowLog`
   },
   {
     day: 8, slot: "night", hour: 20, minute: 0,
-    text: `【残りわずか】先着20名様限定VIPモニター！
+    text: `月曜夜のお疲れ様です！
 
-全Pro機能が無制限使い放題になる特別VIP枠を募集中です。
-診断完了ページから1タップでエントリーできます！
+「リスニング力伸ばしたいけどシャドーイングって正しくできてるか不安…」という方へ。
+Whisper AIがあなたの発音を可視化してくれるので、ひとりでも安心して練習できます！
 
-リアルタイムの残枠表示をチェック👇
+まずは30秒無料診断からどうぞ👇
+
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #VIPモニター #ShadowLog`
+#英語学習 #シャドーイング #ShadowLog`
   },
 
-  // --- Day 10 (10/18) ---
+  // --- Day 10 (10/20 - Tue) ---
   {
     day: 9, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-週末の土曜日！ゆっくり時間が取れる日に、自分の英語スピーキングの実力を客観的に測ってみませんか？
+火曜日！朝の30秒で英語脳を呼び覚ましましょう！
 
-30秒でAIが判定する無料診断ツールはこちら！
+短い英文を3問読むだけで、AIが有効WPM・音の連結再現率・推定TOEICスコアを判定します。
 
-▼今すぐ試す👇
+今朝のウォームアップはこちら👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #英会話 #ShadowLog`
   },
   {
     day: 9, slot: "lunch", hour: 12, minute: 30,
-    text: `英語の音変化パターン解説💡
+    text: `みんな昼休みリフレッシュできてますか？☕️
 
-・Flap T: "Water" ➔ "ワラ"
-・Linking: "An apple" ➔ "アナップル"
-・Reduction: "Going to" ➔ "ゴナ"
+英語の聞き取りで「音が消える（Reduction）」現象：
+・Going to ➔ ゴナ
+・Want to ➔ ワナ
 
-自分の口で再現できているかAIが30秒判定します！
+自分が言えるようになると自然と聞き取れるようになります！
+AIがあなたの再現度を30秒チェック👇
 
-▼無料AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #発音 #TOEIC #ShadowLog`
+#英語学習 #TOEIC #ShadowLog`
   },
   {
     day: 9, slot: "night", hour: 20, minute: 0,
-    text: `「継続できる英語アプリ」を目指して改善を重ねています。
+    text: `【残りわずか】先着20名初期VIPモニター！
 
-ユーザー様からのフィードバックをもとに、毎日使える30秒診断や直感的な2モード録音を実装しました。
+全Pro機能無制限使い放題のVIPモニター枠、まもなく終了となります。
+気になる方は30秒AI診断後のエントリー画面からお早めに応募してくださいね！
 
-ぜひ試してご感想を教えてください！
-
-▼30秒無料AI診断
+無料30秒AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #個人開発 #ShadowLog`
+#英語学習 #TOEIC #VIPモニター #ShadowLog`
   },
 
-  // --- Day 11 (10/19) ---
+  // --- Day 11 (10/21 - Wed) ---
   {
     day: 10, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-日曜日の朝！リフレッシュしながら30秒で英語力診断してみませんか？
+水曜日！週の折り返し地点ですね！
+「最近英語の勉強サボりがちかも…」という方も、30秒なら今すぐできますよ！
 
-単語再現率・WPM・推定TOEICスコアがその場で分かります。
+今の実力をAIでサクッと測ってモチベ再点火しましょう🔥
 
-▼無料30秒AI診断👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #朝活 #ShadowLog`
   },
   {
     day: 10, slot: "lunch", hour: 12, minute: 30,
-    text: `【TOEIC L&Rテスト対策にも！】
+    text: `昼休み英語小ネタ💡
 
-Part 3 & 4 の長文リスニングで「途中で置き去りにされる…」という方は、WPM（発話スピード）への慣れが必要です。
+英語のスピーキングで大切なのは「完璧な文法」よりも「相手に届くテンポ（WPM）」。
 
-まずは自分の発音スピードを測ってみよう！
+あなたの発話スピードは今何WPM？30秒でAIが計測します！
 
-▼30秒AI診断
+▼無料AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #ShadowLog`
+#英語学習 #英会話 #TOEIC #ShadowLog`
   },
   {
     day: 10, slot: "night", hour: 20, minute: 0,
-    text: `【先着20名初期VIPモニター枠 最終カウントダウン】
+    text: `個人開発でShadowLogを作ってから、色んな英語学習者さんと繋がれて本当に嬉しいです…！
 
-Pro機能永久使い放題のVIPモニター枠、残りわずかとなっています！
-診断ツール実行後に表示されるバナーからすぐ応募できます。
+これからもみんなが楽しく声を出せるアプリを目指して改善していきます！
 
-▼30秒AI診断＆VIP応募👇
+まずは30秒診断で遊んでみてね👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #ShadowLog`
+#英語学習 #個人開発 #ShadowLog`
   },
 
-  // --- Day 12 (10/20) ---
+  // --- Day 12 (10/22 - Thu) ---
   {
     day: 11, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-新しい1週間のスタート！今週も英語学習を楽しんでいきましょう！
+木曜日！週末まであと少し！
+朝の通学・通勤の30秒で英語力をチェックしてみませんか？
 
-毎日の上達を実感するために、まずは今のスコアを30秒で記録してみませんか？
+単語の再現率や推定TOEICスコアがリアルタイムで分かります。
 
-▼無料30秒AI診断👇
+今朝の診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #英会話 #ShadowLog`
+#英語学習 #TOEIC #朝活 #ShadowLog`
   },
   {
     day: 11, slot: "lunch", hour: 12, minute: 30,
-    text: `昼休みの30秒で自分の発音力＆推定TOEICスコアチェック！
+    text: `ランチタイム30秒チャレンジ！
 
-面倒な会員登録・ログイン一切なし。
-サイトを開いて声を出すだけですぐ判定されます💡
+「TOEICスコア伸ばしたいけど時間がない…」という方にこそ、1日3分のAIシャドーイングがおすすめです！
 
-▼今すぐ無料診断👇
+まずは30秒であなたの現在地をAI判定してみよう👇
+
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #ShadowLog`
   },
   {
     day: 11, slot: "night", hour: 20, minute: 0,
-    text: `「高額な英語スクールに通わなくても、AIを活用すれば独学でスピーキングもリスニングも伸ばせる」
+    text: `【いよいよラスト枠！】初期VIPモニター募集
 
-そんな世界を作りたいと思ってShadowLogを作っています。
-30秒診断でそのスピード感を体験してみてください！
+Pro機能無制限使い放題のVIPモニター枠、残りわずかです！
+30秒AI診断を受けると結果画面からワンタップで応募できます。お見逃しなく！
 
-▼30秒AI無料診断
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #個人開発 #ShadowLog`
+#英語学習 #TOEIC #ShadowLog`
   },
 
-  // --- Day 13 (10/21) ---
+  // --- Day 13 (10/23 - Fri) ---
   {
     day: 12, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-朝の通学・通勤時間にサクッと30秒英語診断！
+華金ですね！今日を乗り切れば週末！
+朝の30秒で自分の英語発声スピードをチェックして、今日も一日元気にいきましょう！
 
-音の連結（リンキング）再現度やWPMを判定して、今日の英語学習の目標をセットしましょう！
-
-▼30秒AI診断はこちら👇
+無料30秒AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #朝活 #ShadowLog`
   },
   {
     day: 12, slot: "lunch", hour: 12, minute: 30,
-    text: `【リスニング力が跳ね上がるポイント】
+    text: `金曜日の昼休み！
 
 文字で英語を読むのではなく、「聞こえた音そのまま」を真似して発声すること。
+これがリスニング力爆伸びの秘訣です！
 
-AIがあなたの発音再現度をリアルタイムでスコア化します！
+AIがあなたの発声再現度を30秒で採点👇
 
-▼無料30秒AI診断👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #シャドーイング #TOEIC #ShadowLog`
   },
   {
     day: 12, slot: "night", hour: 20, minute: 0,
-    text: `【いよいよラスト枠！】初期VIPモニター募集
+    text: `1週間本当にお疲れ様でした！🍻
 
-全Pro機能無制限使い放題の初期VIPモニター枠、まもなく上限20名に達します！
-気になっている方はお早めに診断＆エントリーをお願いします！
+週末の楽しみに向けて、今の自分の英語力（WPM＆推定TOEICスコア）を30秒で記録しておきませんか？
 
-▼30秒AI診断＆VIP応募👇
+無料AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
-#英語学習 #TOEIC #VIPモニター #ShadowLog`
+#英語学習 #TOEIC #ShadowLog`
   },
 
-  // --- Day 14 (10/22) ---
+  // --- Day 14 (10/24 - Sat) ---
   {
     day: 13, slot: "morning", hour: 8, minute: 0,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-2週間の自動チャレンジ最終日！たくさんの診断ご利用ありがとうございます！
+2週間のThreadsチャレンジ最終日！いつも見てくださりありがとうございます！
 
-今日も朝の30秒で自分の発音WPMと推定TOEICスコアをチェックして一日をスタートしましょう！
+今日も朝の30秒で自分の発音WPMと推定TOEICスコアをチェックして、最高の休日をスタートしましょう！
 
 ▼30秒無料AI診断👇
 https://shadowlog.vercel.app/diagnosis
@@ -578,14 +558,15 @@ https://shadowlog.vercel.app/diagnosis
   },
   {
     day: 13, slot: "lunch", hour: 12, minute: 30,
-    text: `昼休みのスキマ時間に30秒で英語実力テスト！
+    text: `休日の昼下がり30秒実力テスト！
 
 ・語彙再現率
 ・WPM（話すスピード）
 ・推定TOEICスコア
-をAIが判定します💡
 
+面倒な登録一切なしでAIが判定します💡
 今すぐ試せる無料診断はこちら👇
+
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #ShadowLog`
@@ -594,11 +575,10 @@ https://shadowlog.vercel.app/diagnosis
     day: 13, slot: "night", hour: 20, minute: 0,
     text: `声を出して英語力を伸ばすAIシャドーイングアプリ「ShadowLog」。
 
-これからも皆さまが楽しく、効果的に英語力を伸ばせる機能をどんどんアップデートしていきます！
+これからもみんなが楽しく、効果的に英語を学べる機能をどんどん作っていきます！
 
-まずは30秒無料AI診断であなたの実力を試してみてください🔥
+まずは30秒無料AI診断であなたの実力を試してみてね🔥
 
-▼30秒AI無料診断
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #シャドーイング #ShadowLog`
@@ -611,8 +591,9 @@ function generateQueue() {
   for (const item of postsData) {
     const scheduledAt = getJstIsoString(item.day, item.hour, item.minute);
     const queueItem: QueueItem = {
-      id: `queue_2w_${item.day + 1}_${item.slot}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      id: `queue_humanized_2w_${item.day + 1}_${item.slot}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       text: item.text,
+      imageUrl: OGP_IMAGE_URL,
       scheduledAt,
       status: "pending",
     };
@@ -620,7 +601,7 @@ function generateQueue() {
   }
 
   saveQueue(finalQueue);
-  console.log(`🎉 Successfully generated and saved ${finalQueue.length} scheduled posts for 2-week Threads campaign!`);
+  console.log(`🎉 Successfully generated and saved ${finalQueue.length} humanized posts with OGP image attachments!`);
 }
 
 generateQueue();

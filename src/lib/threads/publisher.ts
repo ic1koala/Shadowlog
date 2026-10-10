@@ -11,6 +11,7 @@ const QUEUE_FILE = path.join(process.cwd(), ".threads-queue.json");
 export interface QueueItem {
   id: string;
   text: string;
+  imageUrl?: string;
   scheduledAt: string; // ISO 8601 string
   status: "pending" | "published" | "failed";
   publishedAt?: string;
@@ -19,9 +20,9 @@ export interface QueueItem {
 }
 
 /**
- * Publishes a text post directly to Threads using Meta Threads API.
+ * Publishes a text/image post directly to Threads using Meta Threads API.
  */
-export async function postToThreads(text: string): Promise<{ success: boolean; id?: string; error?: string }> {
+export async function postToThreads(text: string, imageUrl?: string): Promise<{ success: boolean; id?: string; error?: string }> {
   const userId = process.env.THREADS_USER_ID || "me";
   const accessToken = process.env.THREADS_ACCESS_TOKEN;
 
@@ -30,17 +31,25 @@ export async function postToThreads(text: string): Promise<{ success: boolean; i
   }
 
   try {
+    const params: Record<string, string> = {
+      text: text,
+      access_token: accessToken,
+    };
+
+    if (imageUrl) {
+      params.media_type = "IMAGE";
+      params.image_url = imageUrl;
+    } else {
+      params.media_type = "TEXT";
+    }
+
     // 1. Create Media Container
     const createRes = await fetch(`https://graph.threads.net/v1.0/${userId}/threads`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        media_type: "TEXT",
-        text: text,
-        access_token: accessToken,
-      }),
+      body: new URLSearchParams(params),
     });
 
     const createData = await createRes.json();
@@ -54,7 +63,7 @@ export async function postToThreads(text: string): Promise<{ success: boolean; i
     const containerId = createData.id;
 
     // Small delay to ensure container readiness
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // 2. Publish Container
     const publishRes = await fetch(`https://graph.threads.net/v1.0/${userId}/threads_publish`, {
@@ -107,11 +116,12 @@ export function saveQueue(queue: QueueItem[]): void {
 /**
  * Adds a new post to the scheduled queue.
  */
-export function enqueuePost(text: string, scheduledAt: string): QueueItem {
+export function enqueuePost(text: string, scheduledAt: string, imageUrl?: string): QueueItem {
   const queue = getQueue();
   const newItem: QueueItem = {
     id: `queue_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     text,
+    imageUrl,
     scheduledAt,
     status: "pending",
   };
@@ -134,7 +144,7 @@ export async function processQueue(): Promise<{ processedCount: number; results:
     if (item.status === "pending" && itemScheduledMs <= nowMs) {
       processedCount++;
       console.log(`[Threads Publisher] Publishing queue item ${item.id} scheduled for ${item.scheduledAt}...`);
-      const result = await postToThreads(item.text);
+      const result = await postToThreads(item.text, item.imageUrl);
 
       if (result.success) {
         item.status = "published";
