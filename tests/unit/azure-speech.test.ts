@@ -97,6 +97,8 @@ describe("Azure Speech Pronunciation Assessment", () => {
       expect(result.overallScore).toBeGreaterThan(0);
       expect(result.words.length).toBeGreaterThan(0);
       expect(result.displayText).toBe("Thank you for joining today's meeting.");
+      expect(result.isMock).toBe(true);
+      expect(result.mockReason).toBeDefined();
     });
   });
 });

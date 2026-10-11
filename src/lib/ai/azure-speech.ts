@@ -68,6 +68,7 @@ export function generateMockAzureAssessment(
     snr?: number;
     averageVolume?: number;
     forceLowAccuracy?: boolean;
+    mockReason?: string;
   }
 ): AzureAssessmentResult {
   const words = referenceText
@@ -136,6 +137,8 @@ export function generateMockAzureAssessment(
     snr: options?.snr ?? 32.5,
     recognitionStatus: status,
     displayText: referenceText,
+    isMock: true,
+    mockReason: options?.mockReason,
   };
 }
 
@@ -149,9 +152,18 @@ export async function evaluatePronunciationWithAzure(
   const region = process.env.AZURE_SPEECH_REGION || "japaneast";
 
   // Use mock in test environment or if key is missing
-  if (!key || process.env.NODE_ENV === "test") {
+  if (!key) {
     return generateMockAzureAssessment(options.referenceText, {
       averageVolume: options.averageVolume,
+      mockReason:
+        "サーバー（Vercel）の環境変数に AZURE_SPEECH_KEY が設定されていないため、テスト用の固定モック値（88%）が表示されています。Vercelのプロジェクト設定（Environment Variables）に AZURE_SPEECH_KEY と AZURE_SPEECH_REGION を設定してください。",
+    });
+  }
+
+  if (process.env.NODE_ENV === "test") {
+    return generateMockAzureAssessment(options.referenceText, {
+      averageVolume: options.averageVolume,
+      mockReason: "自動テスト実行中のためモック判定を使用しています。",
     });
   }
 
@@ -161,6 +173,7 @@ export async function evaluatePronunciationWithAzure(
     Granularity: "Phoneme",
     Dimension: "Comprehensive",
     EnableProsodyAssessment: "True",
+    EnableMiscue: "True",
   };
 
   const base64Params = Buffer.from(
@@ -193,6 +206,7 @@ export async function evaluatePronunciationWithAzure(
       return generateMockAzureAssessment(options.referenceText, {
         recognitionStatus: "Success",
         averageVolume: options.averageVolume,
+        mockReason: `Azure AI Speech APIエラー (HTTP ${res.status}): ${errText.slice(0, 150)}`,
       });
     }
 
@@ -284,6 +298,7 @@ export async function evaluatePronunciationWithAzure(
         snr,
         recognitionStatus: status,
         displayText: data.DisplayText || options.referenceText,
+        isMock: false,
       };
     }
 
@@ -299,11 +314,13 @@ export async function evaluatePronunciationWithAzure(
       snr,
       recognitionStatus: status,
       displayText: "",
+      isMock: false,
     };
   } catch (err) {
     console.warn("Azure Speech Pronunciation Assessment error:", err);
     return generateMockAzureAssessment(options.referenceText, {
       averageVolume: options.averageVolume,
+      mockReason: `Azure Speech例外エラー: ${err instanceof Error ? err.message : String(err)}`,
     });
   }
 }

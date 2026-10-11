@@ -59,6 +59,20 @@ export function DiffViewer({
 
   return (
     <div className="w-full bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5 sm:space-y-6 animate-in fade-in-50 duration-300">
+      {/* ── Mock Alert Notice Banner ── */}
+      {azureAssessment?.isMock && (
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200 text-xs sm:text-sm space-y-1 animate-in fade-in duration-300">
+          <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+            <span>⚠️</span>
+            <span>【管理者PoC】Azure AI モック評価稼働中（固定デモ値: {azureAssessment.overallScore}%）</span>
+          </div>
+          <p className="text-muted-foreground text-xs leading-relaxed pl-5">
+            {azureAssessment.mockReason ||
+              "サーバー環境変数に AZURE_SPEECH_KEY が設定されていないため、テスト用の固定デモ値（88%）が表示されています。Vercelの環境変数にキーを設定すると実APIとのリアルタイム照合が有効になります。"}
+          </p>
+        </div>
+      )}
+
       {/* ── Environment Smart Mention Banner (Noise / Mic Distance / Silence Advice) ── */}
       {azureAssessment?.environmentMention && (
         <div
@@ -91,9 +105,15 @@ export function DiffViewer({
               発話判定結果
             </h3>
             {azureAssessment && (
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1">
-                🧪 Azure AI音素判定
-              </span>
+              azureAssessment.isMock ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                  ⚠️ Azure AI モック (キー未設定)
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  ⚡ Azure AI Live音素判定
+                </span>
+              )
             )}
             {mode === "passage" && (
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30 flex items-center gap-1">
@@ -109,7 +129,9 @@ export function DiffViewer({
           </div>
           <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
             {azureAssessment
-              ? "Azure AI Speech 音素（Phoneme）波形直接照合による4軸発音評価"
+              ? azureAssessment.isMock
+                ? "※ Azure Speech APIキー未設定のため、固定モック値が表示されています"
+                : "Azure AI Speech 音素（Phoneme）波形直接照合による4軸発音評価"
               : "Whisper音声認識によるテキスト照合と差分解析"}
           </p>
         </div>

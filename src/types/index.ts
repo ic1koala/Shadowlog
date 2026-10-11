@@ -110,6 +110,8 @@ export interface AzureAssessmentResult {
   snr?: number;
   recognitionStatus?: string;
   displayText?: string;
+  isMock?: boolean; // true when mock fallback is used
+  mockReason?: string; // Reason why mock was returned (e.g. key missing in Vercel)
 }
 
 export interface TranscribeDiffResponse {

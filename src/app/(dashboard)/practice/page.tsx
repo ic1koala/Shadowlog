@@ -40,6 +40,7 @@ import {
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
 import { StudySessionSummaryModal } from "@/components/features/practice/StudySessionSummaryModal";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
+import { convertBlobToWav } from "@/lib/audio/wav-converter";
 import {
   ArrowRight,
   BookOpen,
@@ -550,10 +551,19 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
 
     try {
       const formData = new FormData();
-      // Determine correct file extension from MIME type (iOS Safari uses audio/mp4)
-      const mimeType = audioBlob.type || "audio/webm";
-      const ext = mimeType.includes("mp4") ? "mp4" : mimeType.includes("aac") ? "aac" : "webm";
-      formData.append("audio", audioBlob, `recording.${ext}`);
+      // Convert browser audio (WebM/MP4) to standard 16kHz mono WAV for Azure AI & Whisper
+      let blobToSend = audioBlob;
+      let ext = "webm";
+      try {
+        blobToSend = await convertBlobToWav(audioBlob);
+        ext = "wav";
+      } catch (convErr) {
+        console.warn("WAV conversion fallback:", convErr);
+        const mimeType = audioBlob.type || "audio/webm";
+        ext = mimeType.includes("mp4") ? "mp4" : mimeType.includes("aac") ? "aac" : "webm";
+      }
+
+      formData.append("audio", blobToSend, `recording.${ext}`);
       formData.append("originalText", sentence.english);
       formData.append("durationSeconds", String(durationSeconds));
       formData.append("mode", practiceMode);
