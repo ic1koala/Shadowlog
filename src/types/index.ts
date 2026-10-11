@@ -87,11 +87,37 @@ export interface CoachFeedback {
   pacingAdvice?: string; // 長文時の話速・息継ぎ（チャンキング）に関する指導
 }
 
+export interface AzureAssessmentWord {
+  word: string;
+  accuracyScore: number;
+  errorType: "None" | "Mispronunciation" | "Omission" | "Insertion";
+  phonemes?: Array<{ phoneme: string; accuracyScore: number }>;
+}
+
+export interface AzureEnvironmentMention {
+  type: "warning" | "info";
+  message: string;
+}
+
+export interface AzureAssessmentResult {
+  overallScore: number; // PronScore (0-100)
+  accuracyScore: number; // 正確度 (0-100)
+  fluencyScore: number; // 流暢さ (0-100)
+  completenessScore: number; // 完全性 (0-100)
+  prosodyScore: number; // 抑揚・リズム (0-100)
+  words: AzureAssessmentWord[];
+  environmentMention?: AzureEnvironmentMention;
+  snr?: number;
+  recognitionStatus?: string;
+  displayText?: string;
+}
+
 export interface TranscribeDiffResponse {
   transcription: string;
   diff: DiffResult;
   coachFeedback?: CoachFeedback;
   wpmInfo?: WPMInfo;
+  azureAssessment?: AzureAssessmentResult;
 }
 
 export interface PracticeSession {
@@ -134,6 +160,7 @@ export interface StoredSession extends PracticeSession {
   retryCount: number;
   diff?: DiffResult;
   coachFeedback?: CoachFeedback;
+  azureAssessment?: AzureAssessmentResult;
 }
 
 export interface UserStats {

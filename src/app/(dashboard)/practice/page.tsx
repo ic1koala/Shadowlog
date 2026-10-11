@@ -16,12 +16,15 @@ import {
   WPMInfo,
   UserPlanType,
   normalizeIndustry,
+  AzureAssessmentResult,
 } from "@/types";
 import {
   recordPracticeSession,
   setPlanType,
   getWeakWords,
+  loadAllSessions,
 } from "@/lib/storage/user-learning-store";
+import { calculateUserStats } from "@/lib/stats/stats-calculator";
 import {
   getTicketStatus,
   consumeTicket,
@@ -35,6 +38,7 @@ import {
   CustomGenerationQuota,
 } from "@/lib/storage/custom-words-store";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
+import { StudySessionSummaryModal } from "@/components/features/practice/StudySessionSummaryModal";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import {
   ArrowRight,
@@ -59,6 +63,10 @@ export default function PracticePage() {
   const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
 
   const isAdmin = isAdminEmail(userEmail);
+  const [scoringEngine, setScoringEngine] = useState<"whisper" | "azure">("azure");
+  const [azureAssessment, setAzureAssessment] = useState<AzureAssessmentResult | undefined>();
+  const [showFinishModal, setShowFinishModal] = useState(false);
+  const sessionStartTimeRef = useRef<number>(Date.now());
 
   const [sentence, setSentence] = useState<SentenceResponse | null>(null);
   const [isLoadingSentence, setIsLoadingSentence] = useState(false);
@@ -265,6 +273,7 @@ export default function PracticePage() {
       setActiveRetryTip(null);
       setIsSaved(false);
       setErrorMessage(null);
+      setAzureAssessment(undefined);
       setCustomUpsellNotice(null);
 
       // 0.0s instant swap if background-prefetched sentence is ready for the same conditions (and not a custom word generation)
@@ -548,6 +557,11 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       formData.append("originalText", sentence.english);
       formData.append("durationSeconds", String(durationSeconds));
       formData.append("mode", practiceMode);
+      if (isAdmin) {
+        formData.append("engine", scoringEngine);
+      } else {
+        formData.append("engine", "whisper");
+      }
 
       const res = await fetch("/api/transcribe-diff", {
         method: "POST",
@@ -564,6 +578,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       setDiffResult(data.diff);
       setCoachFeedback(data.coachFeedback);
       setWpmInfo(data.wpmInfo);
+      setAzureAssessment(data.azureAssessment);
 
       // Consume ticket upon successful analysis and notify components
       consumeTicket(practiceMode === "passage" ? "long" : "short");
@@ -588,6 +603,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
           retryCount,
           diff: data.diff,
           coachFeedback: data.coachFeedback,
+          azureAssessment: data.azureAssessment,
           mode: practiceMode,
           wpm: data.wpmInfo?.wpm,
         });
@@ -652,6 +668,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
     setTranscription("");
     setWpmInfo(undefined);
     setIsSaved(false);
+    setAzureAssessment(undefined);
     setRetryCount((prev) => prev + 1);
 
     // Smooth scroll to recording section
@@ -918,6 +935,33 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                 <span className="font-bold text-foreground">
                   {LEVEL_OPTIONS.find((l) => l.key === level)?.label}
                 </span>
+                {isAdmin && (
+                  <div className="ml-1 inline-flex items-center gap-1 p-0.5 rounded-lg bg-purple-500/10 border border-purple-500/25 text-[11px] font-bold">
+                    <span className="text-purple-700 dark:text-purple-300 px-1">🧪 判定:</span>
+                    <button
+                      type="button"
+                      onClick={() => setScoringEngine("azure")}
+                      className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                        scoringEngine === "azure"
+                          ? "bg-purple-600 text-white shadow-2xs font-bold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Azure AI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setScoringEngine("whisper")}
+                      className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                        scoringEngine === "whisper"
+                          ? "bg-purple-600 text-white shadow-2xs font-bold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Whisper
+                    </button>
+                  </div>
+                )}
               </div>
               {sentence && (
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -1073,6 +1117,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
             transcription={transcription}
             coachFeedback={coachFeedback}
             wpmInfo={wpmInfo}
+            azureAssessment={isAdmin && scoringEngine === "azure" ? azureAssessment : undefined}
             mode={practiceMode}
             onSaveSession={handleSaveSession}
             onRetry={handleRetry}
@@ -1083,9 +1128,17 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         </section>
       )}
 
-      {/* Next Sentence Button */}
+      {/* Next Sentence & Finish Session Buttons */}
       {sentence && diffResult && (
-        <div className="flex justify-end pt-2">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowFinishModal(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-3 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl transition shadow-md shadow-emerald-600/20 text-xs sm:text-sm min-h-[44px] cursor-pointer"
+          >
+            <span>🏁</span>
+            <span>今日の学習を終了</span>
+          </button>
           <button
             onClick={() => fetchNewSentence()}
             disabled={isLoadingSentence}
@@ -1237,35 +1290,43 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         </div>
       )}
 
-      {/* ── Floating Next Phrase Bar ── */}
-      {/* Shown after practice result is displayed, guiding user smoothly to the next phrase */}
+      {/* ── Floating Next Phrase & Finish Session Bar ── */}
+      {/* Shown after practice result is displayed, guiding user smoothly to the next phrase or finish */}
       {sentence && diffResult && !isTranscribing && !showProModal && (
         <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
-          <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/90 backdrop-blur-xl border border-orange-500/30 shadow-2xl shadow-orange-500/20 ring-1 ring-white/20 w-full duration-300">
-            {/* Status / Score Badge */}
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
-                <CheckCircle2 className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-                <span>判定完了</span>
-                <span className="font-extrabold ml-0.5">{diffResult.accuracyScore}%</span>
-              </span>
-            </div>
+          <div className="pointer-events-auto flex items-center justify-between gap-2.5 p-2.5 sm:px-4 sm:py-3 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl shadow-black/10 ring-1 ring-white/20 w-full duration-300">
+            {/* Finish Session button */}
+            <button
+              type="button"
+              onClick={() => setShowFinishModal(true)}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl transition shadow-md shadow-emerald-600/20 text-xs sm:text-sm min-h-[44px] cursor-pointer"
+            >
+              <span>🏁</span>
+              <span className="whitespace-nowrap">今日の学習を終了</span>
+            </button>
 
             {/* Next phrase button */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => fetchNewSentence()}
-                disabled={isLoadingSentence}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-orange-500 hover:bg-orange-600 active:scale-95 text-white disabled:opacity-50 transition shadow-lg shadow-orange-500/25 min-h-[44px] cursor-pointer"
-              >
-                <span>{practiceMode === "passage" ? "次の長文スピーチへ" : "次のフレーズへ"}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => fetchNewSentence()}
+              disabled={isLoadingSentence}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-orange-500 hover:bg-orange-600 active:scale-95 text-white disabled:opacity-50 transition shadow-lg shadow-orange-500/25 min-h-[44px] cursor-pointer"
+            >
+              <span className="whitespace-nowrap">{practiceMode === "passage" ? "次の長文へ" : "次のフレーズへ"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
 
+      {/* Study Session Summary Modal */}
+      <StudySessionSummaryModal
+        isOpen={showFinishModal}
+        onClose={() => setShowFinishModal(false)}
+        elapsedSeconds={Math.max(60, Math.round((Date.now() - sessionStartTimeRef.current) / 1000))}
+        streakDays={calculateUserStats(loadAllSessions()).currentStreak}
+        lastDiffResult={diffResult}
+      />
     </div>
   );
 }

@@ -63,6 +63,16 @@
 7. **【実装完了】「リピーティング録音」＆「シャドーイング録音（イヤホン推奨）」2ボタン分割全開放 ＆ Bluetooth完全対策（FB-026〜037）**:
    - 左: `🗣️ リピーティング録音 (お手本停止・自習)` / 右: `🎧 シャドーイング録音 (イヤホンを装着し、しっかりと発声)`。
    - シャドーイング録音時は `echoCancellation: false` 等でダッキングを防止し、`-74dB` 無音プライマー通信によるBluetooth頭切れ解消と、ユーザー手動停止への統一（自動停止タイマー廃止）を実装完了。
+8. **【技術相談合意】管理者テストモード: Azure AI Speech 発音評価エンジン ＆ 音響環境メンション PoC実装（決定・仕様策定済）**:
+   - 従来のWhisper＋Diff方式での「適当な発音でも100点になる」「言い間違えてもOK判定される」問題を抜本解決するため、音素（Phoneme）レベルで直接波形照合するAzure AI Speech発音評価エンジンを導入。
+   - 一般ユーザーへの影響を避けるため管理者限定（`isAdminEmail`）で先行実装。4軸スコア（Accuracy/Fluency/Completeness/Prosody）および単語別Mispronunciation判定を表示。
+   - Azure SNR（S/N比）および入力音量から「マイクが遠い」「周囲ノイズが多い」などのスマート環境メンションを自動表示。
+   - 詳細仕様書: `management/AZURE_PRONUNCIATION_ASSESSMENT_SPEC.md`
+9. **【技術相談合意】「今日の学習を終了する」ボタン ＆ セッション完了振り返りサマリー窓（SNSシェア対応）（決定・仕様策定済）**:
+   - 採点結果画面の下部バーに「🏁 今日の学習を終了」ボタンを新設（「次のフレーズへ」の左横）。
+   - タップ時にシンプルで洗練されたサマリーモーダルを表示（本日の学習時間、連続学習ストリーク、AIコーチからの温かい労いの一言、今回の復習ポイント）。
+   - 成果シェア機能として X（旧Twitter）、Threads、Instagram（スマホ共有シート/PCコピー対応）の3大SNSに対応。
+   - 詳細仕様書: `management/STUDY_SESSION_FINISH_MODAL_SPEC.md`
 
 ---
 
@@ -88,6 +98,8 @@
 - [x] **【完了・FB-035】3単語カスタム例文生成機能の実装（無料累計2回・Base 3回/日・Pro 10回/日：`CUSTOM_TOPIC_WORDS_SPEC.md` 準拠）**
 - [x] **【完了・FB-036〜039】Bluetooth頭切れ防止 `-74dB` 無音プライマー・自動停止廃止・AIプロンプト自然化＆バズワード排除・設定画面アコーディオン改善（全167テスト合格）**
 - [x] **【完了・2026/10/06】最新仕様（FB-039迄）に基づくAI原価再計算 ＆ 収支シミュレーター (`AI cost/`)・統括ダッシュボード (`management/checklist.html`, `public/management.html`) 完全同期**
+- [x] **【完了・FB-046】管理者テストモード: Azure AI Speech 発音評価エンジン ＆ 音響環境メンション PoC実装（`AZURE_PRONUNCIATION_ASSESSMENT_SPEC.md`：全187テスト合格・本番ビルド成功）**
+- [x] **【完了・FB-047】「今日の学習を終了する」ボタン ＆ セッション完了サマリー窓・SNSシェア対応（`STUDY_SESSION_FINISH_MODAL_SPEC.md`：全187テスト合格・本番ビルド成功）**
 - [ ] **【着手準備】Phase 2: 弱点データ蓄積基盤（Supabase `user_weaknesses` ＆ `/api/transcribe-diff`）**
 - [ ] **【着手準備】Phase 3: リベンジ例文自動生成プロンプト注入（`/api/generate-sentence`）**
 - [ ] 【進行中】クローズドβテスター（第1陣5名 ➔ 30〜50名）の利用ログ・フィードバック定点観測

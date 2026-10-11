@@ -118,6 +118,7 @@ export interface RecordPracticeParams {
   coachFeedback?: CoachFeedback;
   mode?: PracticeMode;
   wpm?: number;
+  azureAssessment?: import("@/types").AzureAssessmentResult;
 }
 
 /**
@@ -145,6 +146,7 @@ export function recordPracticeSession(params: RecordPracticeParams): {
     retryCount: params.retryCount,
     diff: params.diff,
     coachFeedback: params.coachFeedback,
+    azureAssessment: params.azureAssessment,
     mode: params.mode || "sentence",
     wpm: params.wpm,
     createdAt: now,

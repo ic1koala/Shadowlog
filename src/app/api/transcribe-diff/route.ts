@@ -9,6 +9,7 @@ import {
 import { calculateWPM } from "@/lib/diff/wpm-calculator";
 import { CoachFeedback, TranscribeDiffResponse, PracticeMode, WPMInfo } from "@/types";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { evaluatePronunciationWithAzure } from "@/lib/ai/azure-speech";
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10MB max audio upload size
 const MAX_TEXT_LENGTH = 2000;
@@ -55,6 +56,8 @@ export async function POST(req: NextRequest) {
     let audioBase64: string | null = null;
     let durationSeconds: number | undefined;
     let mode: PracticeMode = "sentence";
+    let engine: "whisper" | "azure" = "whisper";
+    let averageVolume: number | undefined;
 
     const contentType = req.headers.get("content-type") || "";
 
@@ -64,6 +67,9 @@ export async function POST(req: NextRequest) {
       const durStr = formData.get("durationSeconds") as string;
       if (durStr) durationSeconds = parseFloat(durStr);
       if (formData.get("mode") === "passage") mode = "passage";
+      if (formData.get("engine") === "azure") engine = "azure";
+      const volStr = formData.get("averageVolume") as string;
+      if (volStr) averageVolume = parseFloat(volStr);
 
       const file = formData.get("audio");
       if (file && typeof file === "object" && "arrayBuffer" in file) {
@@ -75,6 +81,8 @@ export async function POST(req: NextRequest) {
       audioBase64 = json.audioBase64 || null;
       if (typeof json.durationSeconds === "number") durationSeconds = json.durationSeconds;
       if (json.mode === "passage") mode = "passage";
+      if (json.engine === "azure") engine = "azure";
+      if (typeof json.averageVolume === "number") averageVolume = json.averageVolume;
     } else {
       return NextResponse.json(
         { error: "Unsupported Content-Type. Use multipart/form-data or application/json" },
@@ -113,39 +121,96 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Extract audio buffer & size check
+    let audioBuffer: Buffer;
+    if (audioFile) {
+      if (audioFile.size > MAX_AUDIO_BYTES) {
+        return NextResponse.json(
+          { error: "音声ファイルのサイズが大きすぎます（上限10MB）。" },
+          { status: 413 }
+        );
+      }
+      if (audioFile.size === 0) {
+        return NextResponse.json(
+          { error: "Audio file is empty. Please speak into the microphone." },
+          { status: 400 }
+        );
+      }
+      audioBuffer = Buffer.from(await audioFile.arrayBuffer());
+    } else if (audioBase64) {
+      audioBuffer = Buffer.from(audioBase64, "base64");
+      if (audioBuffer.byteLength > MAX_AUDIO_BYTES) {
+        return NextResponse.json(
+          { error: "音声ファイルのサイズが大きすぎます（上限10MB）。" },
+          { status: 413 }
+        );
+      }
+      if (audioBuffer.byteLength === 0) {
+        return NextResponse.json(
+          { error: "Audio file is empty. Please speak into the microphone." },
+          { status: 400 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: "No audio payload" },
+        { status: 400 }
+      );
+    }
+
+    // ── Engine Branch: Azure AI Speech Pronunciation Assessment (Admin PoC) ──
+    if (engine === "azure") {
+      try {
+        const azureAssessment = await evaluatePronunciationWithAzure({
+          audioBuffer,
+          mimeType: audioFile?.type,
+          referenceText: originalText,
+          averageVolume,
+        });
+
+        const transcriptionText =
+          azureAssessment.displayText ||
+          azureAssessment.words.map((w) => w.word).join(" ") ||
+          originalText;
+
+        const diff = calculateDiff(originalText, transcriptionText);
+        if (azureAssessment.overallScore > 0) {
+          diff.accuracyScore = azureAssessment.overallScore;
+        }
+
+        let wpmInfo: WPMInfo | undefined;
+        if (typeof durationSeconds === "number" && durationSeconds > 0) {
+          wpmInfo = calculateWPM(diff.spokenWordCount, durationSeconds);
+        }
+
+        const coachFeedback = generateFallbackCoachFeedback(diff, wpmInfo);
+
+        const response: TranscribeDiffResponse = {
+          transcription: transcriptionText,
+          diff,
+          coachFeedback,
+          wpmInfo,
+          azureAssessment,
+        };
+
+        return NextResponse.json(response, { status: 200 });
+      } catch (azureErr) {
+        console.warn("Azure pronunciation assessment failed, falling back to Whisper:", azureErr);
+        // Fall back to standard Whisper pipeline below
+      }
+    }
+
+    // ── Standard Whisper Engine (100% stable for all normal users) ──
     let transcriptionText = "";
 
     try {
       const openai = getOpenAIClient();
 
-      let fileToTranscribe: File;
-      if (audioFile) {
-        if (audioFile.size > MAX_AUDIO_BYTES) {
-          return NextResponse.json(
-            { error: "音声ファイルのサイズが大きすぎます（上限10MB）。" },
-            { status: 413 }
-          );
-        }
-        // Ensure the file has the correct extension for Whisper API
-        const ext = getExtensionFromMime(audioFile.type);
-        const fileName = `recording.${ext}`;
-        fileToTranscribe = new File([audioFile], fileName, {
-          type: audioFile.type || "audio/webm",
-        });
-      } else if (audioBase64) {
-        const buffer = Buffer.from(audioBase64, "base64");
-        if (buffer.byteLength > MAX_AUDIO_BYTES) {
-          return NextResponse.json(
-            { error: "音声ファイルのサイズが大きすぎます（上限10MB）。" },
-            { status: 413 }
-          );
-        }
-        fileToTranscribe = new File([buffer], "recording.webm", {
-          type: "audio/webm",
-        });
-      } else {
-        throw new Error("No audio payload");
-      }
+      const ext = audioFile ? getExtensionFromMime(audioFile.type) : "webm";
+      const fileName = `recording.${ext}`;
+      const fileToTranscribe = new File([new Uint8Array(audioBuffer)], fileName, {
+        type: audioFile?.type || "audio/webm",
+      });
 
       if (fileToTranscribe.size === 0) {
         return NextResponse.json(

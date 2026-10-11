@@ -1,16 +1,23 @@
 "use client";
 
-import { DiffResult, CoachFeedback, WPMInfo, PracticeMode } from "@/types";
 import {
-  CheckCircle2,
+  DiffResult,
+  CoachFeedback,
+  WPMInfo,
+  PracticeMode,
+  AzureAssessmentResult,
+} from "@/types";
+import {
   TrendingUp,
   Sparkles,
-  RotateCcw,
   GraduationCap,
-  Lightbulb,
   MessageSquareQuote,
   Gauge,
   Crown,
+  Volume2,
+  Lightbulb,
+  RotateCcw,
+  CheckCircle2,
 } from "lucide-react";
 
 interface DiffViewerProps {
@@ -18,6 +25,7 @@ interface DiffViewerProps {
   transcription: string;
   coachFeedback?: CoachFeedback;
   wpmInfo?: WPMInfo;
+  azureAssessment?: AzureAssessmentResult;
   mode?: PracticeMode;
   onSaveSession?: () => void;
   onRetry?: () => void;
@@ -31,6 +39,7 @@ export function DiffViewer({
   transcription,
   coachFeedback,
   wpmInfo,
+  azureAssessment,
   mode = "sentence",
   onSaveSession,
   onRetry,
@@ -40,7 +49,7 @@ export function DiffViewer({
 }: DiffViewerProps) {
   if (!diff) return null;
 
-  const score = diff.accuracyScore;
+  const score = azureAssessment ? azureAssessment.overallScore : diff.accuracyScore;
   const scoreColor =
     score >= 80
       ? "text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
@@ -50,14 +59,42 @@ export function DiffViewer({
 
   return (
     <div className="w-full bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5 sm:space-y-6 animate-in fade-in-50 duration-300">
+      {/* ── Environment Smart Mention Banner (Noise / Mic Distance / Silence Advice) ── */}
+      {azureAssessment?.environmentMention && (
+        <div
+          className={`p-3.5 sm:p-4 rounded-2xl border flex items-start gap-3 text-xs sm:text-sm animate-in fade-in duration-300 ${
+            azureAssessment.environmentMention.type === "warning"
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-200"
+              : "bg-blue-500/10 border-blue-500/30 text-blue-800 dark:text-blue-200"
+          }`}
+        >
+          <span className="text-lg shrink-0 mt-0.5">📢</span>
+          <div className="space-y-0.5 flex-1">
+            <span className="font-bold block">
+              {azureAssessment.environmentMention.type === "warning"
+                ? "音響環境アドバイス"
+                : "マイク入力アドバイス"}
+            </span>
+            <p className="leading-relaxed opacity-95">
+              {azureAssessment.environmentMention.message}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header & Score — stacked on mobile */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 pb-4 border-b border-border">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
               発話判定結果
             </h3>
+            {azureAssessment && (
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1">
+                🧪 Azure AI音素判定
+              </span>
+            )}
             {mode === "passage" && (
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30 flex items-center gap-1">
                 <Crown className="w-3 h-3 text-amber-500" />
@@ -71,7 +108,9 @@ export function DiffViewer({
             )}
           </div>
           <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-            Whisper音声認識によるテキスト照合と差分解析
+            {azureAssessment
+              ? "Azure AI Speech 音素（Phoneme）波形直接照合による4軸発音評価"
+              : "Whisper音声認識によるテキスト照合と差分解析"}
           </p>
         </div>
 
@@ -94,93 +133,204 @@ export function DiffViewer({
             {score}%
           </div>
           <div className="text-right">
-            <p className="text-[11px] sm:text-xs text-muted-foreground">正解単語数</p>
+            <p className="text-[11px] sm:text-xs text-muted-foreground">
+              {azureAssessment ? "発音総合点" : "正解単語数"}
+            </p>
             <p className="text-sm font-semibold text-foreground">
-              {diff.matchedWordCount} / {diff.originalWordCount}
+              {azureAssessment
+                ? `${azureAssessment.overallScore} / 100点`
+                : `${diff.matchedWordCount} / ${diff.originalWordCount}`}
             </p>
           </div>
         </div>
       </div>
 
+      {/* ── Azure 4-Axis Scores Grid (Accuracy, Fluency, Completeness, Prosody) ── */}
+      {azureAssessment && (
+        <div className="space-y-2">
+          <label className="text-[11px] sm:text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <Volume2 className="w-3.5 h-3.5 text-primary" />
+            <span>Azure発音4軸スコア分析</span>
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="p-3 rounded-xl bg-card border border-border text-center shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold block">
+                正確度 (Accuracy)
+              </span>
+              <span className="text-base sm:text-lg font-black text-foreground mt-0.5 block">
+                {azureAssessment.accuracyScore}点
+              </span>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border text-center shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold block">
+                流暢さ (Fluency)
+              </span>
+              <span className="text-base sm:text-lg font-black text-foreground mt-0.5 block">
+                {azureAssessment.fluencyScore}点
+              </span>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border text-center shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold block">
+                完全性 (Completeness)
+              </span>
+              <span className="text-base sm:text-lg font-black text-foreground mt-0.5 block">
+                {azureAssessment.completenessScore}点
+              </span>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border text-center shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold block">
+                抑揚・リズム (Prosody)
+              </span>
+              <span className="text-base sm:text-lg font-black text-foreground mt-0.5 block">
+                {azureAssessment.prosodyScore}点
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Diff Tokens View */}
       <div className="space-y-3">
         <label className="text-[11px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-          単語別差分ハイライト
+          {azureAssessment ? "単語別音素判定ハイライト" : "単語別差分ハイライト"}
         </label>
         <div className="p-3 sm:p-6 bg-muted/30 rounded-2xl border border-border/80 flex flex-wrap items-center gap-1.5 sm:gap-2 text-base sm:text-lg font-medium leading-relaxed">
-          {diff.tokens.map((token, idx) => {
-            if (token.status === "match") {
-              return (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-lg shadow-xs text-sm sm:text-lg"
-                  title="一致"
-                >
-                  {token.word}
-                </span>
-              );
-            }
-            if (token.status === "missing") {
-              return (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-lg line-through opacity-80 text-sm sm:text-lg"
-                  title="脱落（発音されなかった単語）"
-                >
-                  {token.word}
-                </span>
-              );
-            }
-            if (token.status === "extra") {
-              return (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-lg text-sm sm:text-lg"
-                  title="余剰（元の文にない単語）"
-                >
-                  +{token.word}
-                </span>
-              );
-            }
-            if (token.status === "mismatch") {
-              return (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30 rounded-lg text-sm sm:text-lg"
-                  title={`誤読・発音のズレ（認識: ${token.spokenWord}）`}
-                >
-                  {token.word}
-                  <span className="text-[10px] sm:text-xs ml-1 opacity-75">({token.spokenWord})</span>
-                </span>
-              );
-            }
-            return <span key={idx}>{token.word}</span>;
-          })}
+          {azureAssessment && azureAssessment.words.length > 0
+            ? azureAssessment.words.map((w, idx) => {
+                if (w.errorType === "None") {
+                  return (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-lg shadow-xs text-sm sm:text-lg"
+                      title={`正確度: ${w.accuracyScore}点`}
+                    >
+                      {w.word}
+                    </span>
+                  );
+                }
+                if (w.errorType === "Mispronunciation") {
+                  return (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30 rounded-lg text-sm sm:text-lg"
+                      title={`発音改善が必要 (スコア: ${w.accuracyScore}点)`}
+                    >
+                      {w.word}
+                      <span className="text-[10px] sm:text-xs ml-1 opacity-75">
+                        ({w.accuracyScore}点)
+                      </span>
+                    </span>
+                  );
+                }
+                if (w.errorType === "Omission") {
+                  return (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-lg line-through opacity-80 text-sm sm:text-lg"
+                      title="脱落（発音されなかった単語）"
+                    >
+                      {w.word}
+                    </span>
+                  );
+                }
+                if (w.errorType === "Insertion") {
+                  return (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 rounded-lg text-sm sm:text-lg"
+                      title="余分な発音"
+                    >
+                      +{w.word}
+                    </span>
+                  );
+                }
+                return <span key={idx}>{w.word}</span>;
+              })
+            : diff.tokens.map((token, idx) => {
+                if (token.status === "match") {
+                  return (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-lg shadow-xs text-sm sm:text-lg"
+                      title="一致"
+                    >
+                      {token.word}
+                    </span>
+                  );
+                }
+                if (token.status === "missing") {
+                  return (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-lg line-through opacity-80 text-sm sm:text-lg"
+                      title="脱落（発音されなかった単語）"
+                    >
+                      {token.word}
+                    </span>
+                  );
+                }
+                if (token.status === "extra") {
+                  return (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-lg text-sm sm:text-lg"
+                      title="余剰（元の文にない単語）"
+                    >
+                      +{token.word}
+                    </span>
+                  );
+                }
+                if (token.status === "mismatch") {
+                  return (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30 rounded-lg text-sm sm:text-lg"
+                      title={`誤読・発音のズレ（認識: ${token.spokenWord}）`}
+                    >
+                      {token.word}
+                      <span className="text-[10px] sm:text-xs ml-1 opacity-75">
+                        ({token.spokenWord})
+                      </span>
+                    </span>
+                  );
+                }
+                return <span key={idx}>{token.word}</span>;
+              })}
         </div>
       </div>
 
       {/* Transcription Raw Text */}
       <div className="space-y-1.5 bg-muted/20 p-3 sm:p-4 rounded-xl border border-border text-sm">
-        <p className="text-[11px] sm:text-xs font-medium text-muted-foreground">音声認識テキスト (Whisper):</p>
+        <p className="text-[11px] sm:text-xs font-medium text-muted-foreground">
+          {azureAssessment ? "Azure認識テキスト:" : "音声認識テキスト (Whisper):"}
+        </p>
         <p className="italic text-foreground font-mono text-xs sm:text-sm break-all">
           &ldquo;{transcription || "（音声が認識されませんでした）"}&rdquo;
         </p>
       </div>
 
-      {/* Token status legend (positioned directly under transcription for clear visual context) */}
+      {/* Token status legend */}
       <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-muted-foreground px-1 py-0.5">
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> 一致
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />{" "}
+          {azureAssessment ? "発音良好" : "一致"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />{" "}
+          {azureAssessment ? "発音改善要" : "ズレ"}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> 脱落
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 余剰
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> ズレ
-        </span>
+        {azureAssessment ? (
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> 余剰
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 余剰
+          </span>
+        )}
       </div>
 
       {/* AI English Coach Review Section */}
