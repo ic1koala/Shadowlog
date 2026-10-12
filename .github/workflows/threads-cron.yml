@@ -1,0 +1,48 @@
+name: Threads Automated Scheduled Publisher
+
+on:
+  schedule:
+    # Runs every 30 minutes in UTC (covers 08:00, 12:30, 20:00 JST reliably)
+    - cron: "0,30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-threads:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: Process pending Threads queue
+        env:
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID || '28950072177912104' }}
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN || 'THAAgPZCFFM37RBYllpUWVET3lKeW00aTFsZADRGQXgwWU1HUFVFWEZALZA2J6NlQ4RFNkdjB5MlAyc0JnRXZA4R0JBSnNRSFRlZAm5fdUl1V3Q5T2JISzBuZAXlfMnRLSW03Q2doWmozeU9STGZAGQldKTXBjdWxESEpCTGdKQUxuYnRDeU1Kakw5RWlNNDFVdVYtSkUZD' }}
+          THREADS_APP_ID: ${{ secrets.THREADS_APP_ID || '2269376183852980' }}
+        run: |
+          npx tsx scripts/threads-publisher.ts --process-queue
+
+      - name: Commit and push updated queue if posts were published
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Actions [Threads Cron]"
+          if [ -n "$(git status --porcelain .threads-queue.json)" ]; then
+            git add .threads-queue.json
+            git commit -m "chore(threads): update queue after automated cloud publishing [skip ci]"
+            git push
+          else
+            echo "No queue changes to commit."
+          fi
