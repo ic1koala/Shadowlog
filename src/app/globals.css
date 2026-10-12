@@ -99,25 +99,23 @@ button, a, [role="button"] {
   isolation: isolate;
 }
 
-/* 3D Word Flip Card Utilities */
-.word-flip-perspective {
-  perspective: 800px;
-  -webkit-perspective: 800px;
+/* Smooth Mobile-Safe Word Flip Animation (Zero mirrored text, 100% Android/iOS GPU compatible) */
+@keyframes wordCardFlipIn {
+  from {
+    transform: rotateY(-90deg) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
 }
 
-.word-flip-preserve-3d {
-  transform-style: preserve-3d;
-  -webkit-transform-style: preserve-3d;
-}
-
-.word-flip-backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.word-flip-rotated-180 {
-  transform: rotateY(180deg);
-  -webkit-transform: rotateY(180deg);
+.animate-word-flip {
+  animation: wordCardFlipIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: center center;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
 }
 
 

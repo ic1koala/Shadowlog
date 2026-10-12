@@ -1152,22 +1152,27 @@ export function SentenceCard({
                   <button
                     type="button"
                     onClick={(e) => toggleWordFlip(idx, w.text, e)}
-                    className="group/word inline-flex word-flip-perspective cursor-pointer focus:outline-hidden align-baseline"
+                    className="group/word inline-flex cursor-pointer focus:outline-hidden align-baseline"
                     title={isFlipped ? "タップで英語に戻す（発音再生）" : `タップで「${translation}」にフリップ（発音再生・単語帳へ記録）`}
                     aria-label={isFlipped ? `${w.text} (日本語: ${translation}、発音再生)` : `${w.text} (発音再生)`}
                   >
-                    <span
-                      className={`relative inline-flex items-center justify-center transition-transform duration-350 ease-out word-flip-preserve-3d ${
-                        isFlipped ? "word-flip-rotated-180" : ""
-                      }`}
-                    >
-                      {/* Front: English word (in-flow when unflipped; constant font-weight prevents any line-wrap reflow during karaoke) */}
+                    {isFlipped ? (
+                      /* Flipped: Japanese Meaning Badge (Flips in smoothly, 100% front-facing, never mirrored) */
                       <span
-                        className={`${
-                          isFlipped
-                            ? "absolute inset-0 flex items-center justify-center pointer-events-none"
-                            : "relative inline-block"
-                        } px-0.5 py-0 rounded-md word-flip-backface-hidden transition-colors duration-100 whitespace-nowrap ${
+                        key="japanese"
+                        className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-lg text-xs sm:text-sm font-bold animate-word-flip transition-colors duration-150 whitespace-nowrap shadow-xs ${
+                          isCurrent
+                            ? "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/40"
+                            : "bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/35"
+                        }`}
+                      >
+                        {translation}
+                      </span>
+                    ) : (
+                      /* Unflipped: English word (constant font-weight prevents any line-wrap reflow during karaoke) */
+                      <span
+                        key="english"
+                        className={`relative inline-block px-0.5 py-0 rounded-md transition-colors duration-100 whitespace-nowrap ${
                           isCurrent
                             ? "text-blue-600 dark:text-blue-400 [-webkit-text-stroke:0.4px_currentColor] underline decoration-solid decoration-blue-600 dark:decoration-blue-400 decoration-2 underline-offset-[3px]"
                             : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-[3px] group-hover/word:decoration-primary"
@@ -1175,22 +1180,7 @@ export function SentenceCard({
                       >
                         {w.text}
                       </span>
-
-                      {/* Back: Japanese meaning (only in-flow when flipped so it never stretches unflipped English words) */}
-                      <span
-                        className={`${
-                          isFlipped
-                            ? "relative inline-flex"
-                            : "absolute inset-0 pointer-events-none overflow-hidden"
-                        } px-1.5 py-0 rounded-md text-xs sm:text-sm font-bold word-flip-backface-hidden word-flip-rotated-180 transition-colors duration-150 items-center justify-center whitespace-nowrap ${
-                          isCurrent
-                            ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/40 shadow-xs"
-                            : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-xs"
-                        }`}
-                      >
-                        {translation}
-                      </span>
-                    </span>
+                    )}
                   </button>
 
                   {hasSlash && (

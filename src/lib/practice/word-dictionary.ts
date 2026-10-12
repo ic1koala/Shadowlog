@@ -626,6 +626,16 @@ export const DICTIONARY: Record<string, string> = {
   launching: "立ち上げ中",
 
   // === DAILY CONVERSATION & GENERAL ===
+  favorite: "お気に入り",
+  favorites: "お気に入り",
+  favourite: "お気に入り",
+  favourites: "お気に入り",
+  lease: "賃貸・リース契約",
+  leased: "賃貸した",
+  leasing: "リース契約中",
+  rent: "賃料・家賃",
+  rented: "借りた",
+  renting: "賃貸中",
   weather: "天気",
   commute: "通勤・通学",
   commuted: "通勤した",

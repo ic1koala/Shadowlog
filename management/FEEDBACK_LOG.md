@@ -68,6 +68,7 @@ flowchart LR
 | FB-045 | 2026/10/10 | オーナー | 通知バグ・表記統一 | ①アプリ下部フッターからシャドテン比較リンクを削除＆アプリ内リンク表記を「他社比較 / 他社サービス比較」へ統一、②通知ON時の99件以上無限通知ストーム解消（`reminder-settings-update`多重発火ループ切断、設定当日過去時刻の遡及発火防止、個別タグによる通知スタック防止） | 最高 | 完了 | `layout.tsx`（フッターリンク削除・イベントリスナーループ切断）、`push-manager.ts`（`getTriggerableReminderTime`新設・`saveReminderSettings`の過去時刻自動除外・`silent: true`導入・通知個別タグ化）、全アプリ内リンク文言を「他社比較」へ改定（全172テスト合格、本番ビルド成功） |
 | FB-046 | 2026/10/11 | 技術相談・オーナー | 採点エンジン・音響環境 | 管理者テストモード: Azure AI Speech 発音評価エンジン ＆ 音響環境メンション PoC実装（一般ユーザー影響ゼロのWhisper完全共存） | 最高 | 完了 | `AZURE_PRONUNCIATION_ASSESSMENT_SPEC.md` 準拠、`src/lib/ai/azure-speech.ts` 新設（REST API v1直接連携・マジックバイト検出・モック/フォールバック）、`/api/transcribe-diff` 管理者エンジン切替、`DiffViewer.tsx` 4軸スコア（Accuracy/Fluency/Completeness/Prosody）＆音素Mispronunciation表示＆ノイズ/音量/無音スマート環境メンション実装（全187テスト合格、本番ビルド成功） |
 | FB-047 | 2026/10/11 | 技術相談・オーナー | 達成感・習慣化・SNSシェア | 「今日の学習を終了する」ボタン ＆ セッション完了振り返りサマリー窓・SNSシェア対応（X / Threads / Instagram） | 最高 | 完了 | `STUDY_SESSION_FINISH_MODAL_SPEC.md` 準拠、`StudySessionSummaryModal.tsx` 新設（本日の学習時間・連続ストリーク・AIコーチ労い・復習ポイント・3大SNSシェア）、採点完了後のフローティングバーに「🏁 今日の学習を終了」ボタン配置（全187テスト合格、本番ビルド成功） |
+| FB-048 | 2026/10/12 | オーナー | 練習画面UI・単語フリップバグ | モバイル（Android Chrome等）で単語をタップした際、英語が裏返しの鏡文字（反転・半透明）になり日本語の意味が正常表示されない問題の修正 | 最高 | 完了 | Android GPUコンポジタで `preserve-3d` および `backface-visibility: hidden` がフラット化され英語が反転重畳・日本語が不可視化されていた問題を根絶。フリップ時に英語要素を完全に非表示化し、日本語バッジのみを正面向きで `animate-word-flip`（-90deg➔0deg）回転インする安全構造に刷新。日常語（favorite/lease/rent等）の辞書登録も拡充（全188テスト合格、本番ビルド成功） |
 
 ---
 
