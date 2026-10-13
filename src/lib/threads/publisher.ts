@@ -6,6 +6,8 @@
 import fs from "fs";
 import path from "path";
 
+import { getThreadsUserId, getThreadsAccessToken } from "./constants";
+
 const QUEUE_FILE = path.join(process.cwd(), ".threads-queue.json");
 
 export interface QueueItem {
@@ -13,7 +15,7 @@ export interface QueueItem {
   text: string;
   imageUrl?: string;
   scheduledAt: string; // ISO 8601 string
-  status: "pending" | "published" | "failed";
+  status: "pending" | "published" | "failed" | "skipped";
   publishedAt?: string;
   postId?: string;
   error?: string;
@@ -23,11 +25,11 @@ export interface QueueItem {
  * Publishes a text/image post directly to Threads using Meta Threads API.
  */
 export async function postToThreads(text: string, imageUrl?: string): Promise<{ success: boolean; id?: string; error?: string }> {
-  const userId = process.env.THREADS_USER_ID || "me";
-  const accessToken = process.env.THREADS_ACCESS_TOKEN;
+  const userId = getThreadsUserId();
+  const accessToken = getThreadsAccessToken();
 
   if (!accessToken) {
-    return { success: false, error: "THREADS_ACCESS_TOKEN is not configured in .env.local" };
+    return { success: false, error: "THREADS_ACCESS_TOKEN is not configured" };
   }
 
   try {

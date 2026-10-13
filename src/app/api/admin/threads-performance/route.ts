@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import { getQueue } from "@/lib/threads/publisher";
+import { getThreadsUserId, getThreadsAccessToken } from "@/lib/threads/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -95,8 +96,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(cachedData);
   }
 
-  const userId = process.env.THREADS_USER_ID;
-  const token = process.env.THREADS_ACCESS_TOKEN;
+  const userId = getThreadsUserId();
+  const token = getThreadsAccessToken();
 
   if (!userId || !token) {
     return NextResponse.json(
