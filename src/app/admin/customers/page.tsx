@@ -31,8 +31,9 @@ import { AdminCustomerResponse, CustomerSummary } from "@/app/api/admin/customer
 import { IPComplianceSection } from "@/components/features/settings/IPComplianceSection";
 import { CustomerUsageModal } from "@/components/features/admin/CustomerUsageModal";
 import { ManagementDashboardSection } from "@/components/features/admin/ManagementDashboardSection";
+import { ThreadsPerformanceSection } from "@/components/features/admin/ThreadsPerformanceSection";
 
-type AdminTab = "customers" | "compliance" | "management";
+type AdminTab = "customers" | "compliance" | "management" | "threads";
 type PlanFilter = "all" | "free" | "base" | "pro";
 type SortOption =
   | "newest"
@@ -520,6 +521,27 @@ export default function AdminCustomersPage() {
               進捗・仕様
             </span>
           </button>
+
+          <button
+            onClick={() => setActiveTab("threads")}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs ${
+              activeTab === "threads"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <TrendingUp className="w-4 h-4 text-blue-500" />
+            <span>Threads 投稿分析</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
+                activeTab === "threads"
+                  ? "bg-white/20 text-white"
+                  : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+              }`}
+            >
+              リアルタイム
+            </span>
+          </button>
         </div>
 
         {activeTab === "customers" ? (
@@ -539,14 +561,24 @@ export default function AdminCustomersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("threads")}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-500/30 hover:bg-blue-500/25 transition text-left cursor-pointer"
+                >
+                  <TrendingUp className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Threads 投稿分析</span>
+                  <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-[9px] font-black shrink-0">LIVE</span>
+                </button>
+
                 <Link
                   href="/diagnosis"
                   target="_blank"
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition"
                 >
                   <Flame className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">30秒TOEIC診断 (/diagnosis)</span>
+                  <span className="truncate">30秒TOEIC診断</span>
                   <ExternalLink className="w-3 h-3 opacity-70 shrink-0" />
                 </Link>
 
@@ -556,7 +588,7 @@ export default function AdminCustomersPage() {
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/30 hover:bg-purple-500/25 transition"
                 >
                   <Crown className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">紹介＆VIP登録LP (/waitlist)</span>
+                  <span className="truncate">紹介＆VIP登録LP</span>
                   <ExternalLink className="w-3 h-3 opacity-70 shrink-0" />
                 </Link>
 
@@ -1337,9 +1369,13 @@ export default function AdminCustomersPage() {
           <div className="space-y-6">
             <IPComplianceSection />
           </div>
-        ) : (
+        ) : activeTab === "management" ? (
           <div className="space-y-6">
             <ManagementDashboardSection />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <ThreadsPerformanceSection onRefreshParent={() => fetchCustomers()} />
           </div>
         )}
       </main>
