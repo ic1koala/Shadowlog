@@ -189,6 +189,55 @@ export function getSeasonalTrendContext(
   };
 }
 
+export interface ToeicLevelSpec {
+  toeicScore: number;
+  cefr: string;
+  name: string;
+  wordCeiling: string;
+  vocabularyRules: string;
+  forbiddenRules: string;
+  structureRules: string;
+}
+
+export const TOEIC_LEVEL_SPECS: Record<DifficultyLevel, ToeicLevelSpec> = {
+  beginner: {
+    toeicScore: 500,
+    cefr: "A2",
+    name: "初級 (TOEIC 500点レベル / CEFR A2)",
+    wordCeiling: "Strictly limited to the top 2,000 most frequent English words (NGSL Level 1 / Junior-High to Basic High-School foundation).",
+    vocabularyRules:
+      "Rely on essential high-frequency verbs (get, take, make, have, call, meet, send, check, start, need, help) and common everyday/workplace nouns (client, email, meeting, desk, lunch, time, store).",
+    forbiddenRules:
+      "STRICTLY FORBIDDEN: Abstract nouns ending in -tion, -ment, -ance, -ity (e.g., optimization, discrepancy, alignment, paradigm), formal corporate buzzwords (e.g., leverage, streamline, synthesize, execute), and literary or 3+ syllable obscure adjectives. Use simple phrasal verbs instead (e.g., set up, look for, call back).",
+    structureRules:
+      "Simple, direct SVO or SVC syntax. Single clauses or simple compound sentences joined by 'and', 'but', or 'so'. Absolutely NO relative clauses with whose/whom, no participial constructions, and no subjunctive mood.",
+  },
+  intermediate: {
+    toeicScore: 700,
+    cefr: "B1-B2",
+    name: "中級 (TOEIC 700点レベル / CEFR B1-B2)",
+    wordCeiling: "Standard workplace and practical conversational vocabulary (approx. 4,000-word vocabulary range).",
+    vocabularyRules:
+      "Standard professional and daily communication: scheduling, inquiries, polite requests, and routine business status updates (e.g., confirm, available, schedule, deadline, update, feedback, prepare, discuss, budget, conference, presentation).",
+    forbiddenRules:
+      "Avoid overly dense legal jargon, academic abstractions, or rare literary expressions. Keep phrasing natural for a mid-level international professional.",
+    structureRules:
+      "Compound or complex sentences using subordinating conjunctions (because, although, if, when, while), modal verbs (could, would, should), and polite inquiries (Could you confirm if... / We need to make sure that...).",
+  },
+  advanced: {
+    toeicScore: 850,
+    cefr: "B2-C1",
+    name: "上級 (TOEIC 850点以上レベル / CEFR B2-C1)",
+    wordCeiling: "Advanced professional, strategic, and executive vocabulary (approx. 8,000-word vocabulary range).",
+    vocabularyRules:
+      "Sophisticated executive vocabulary for analytical evaluations, cross-functional negotiations, and strategic discussions (e.g., evaluate, prioritize, constraint, strategic, consensus, perspective, feasible, comprehensive, benchmark).",
+    forbiddenRules:
+      "Avoid archaic, flowery, or poetic prose. Maintain crisp, authoritative, modern spoken English suitable for executive briefings or keynote presentations.",
+    structureRules:
+      "Sophisticated syntactic structures including participial clauses, conditional hypotheticals, concession clauses, and varied sentence rhythm.",
+  },
+};
+
 export function getSentenceGenerationPrompt(
   industry: Industry,
   level: DifficultyLevel,
@@ -203,22 +252,24 @@ export function getSentenceGenerationPrompt(
   const hasCustomWords = cleanCustomWords.length > 0;
   const customWordList = hasCustomWords ? cleanCustomWords.join(", ") : null;
 
+  const spec = TOEIC_LEVEL_SPECS[level];
+
   const levelGuidelines: Record<DifficultyLevel, string> = hasCustomWords
     ? {
         beginner:
-          "Target length: 10 to 14 words across 1 to 2 simple, connected sentences. Use clear basic structures Suitable for A1-A2 CEFR level.",
+          "Target length: 10 to 14 words across 1 to 2 simple, connected sentences. Use clear basic structures Suitable for A1-A2 CEFR level (TOEIC 500 calibrated). Basic 2,000-word vocabulary limit, no difficult abstract jargon.",
         intermediate:
-          "Target length: 15 to 20 words across 1 to 2 natural, connected sentences. Use practical business or conversational phrasing Suitable for B1-B2 CEFR level.",
+          "Target length: 15 to 20 words across 1 to 2 natural, connected sentences. Use practical business or conversational phrasing Suitable for B1-B2 CEFR level (TOEIC 700 calibrated).",
         advanced:
-          "Target length: 21 to 28 words across 1 to 2 sophisticated, connected sentences. Suitable for C1 CEFR level.",
+          "Target length: 21 to 28 words across 1 to 2 sophisticated, connected sentences. Suitable for C1 CEFR level (TOEIC 850+ calibrated).",
       }
     : {
         beginner:
-          "Target length: 6 to 10 words. Use simple subject-verb-object structures, clear basic vocabulary, and no difficult jargon. Suitable for A1-A2 CEFR level.",
+          "Target length: 6 to 10 words. Use simple subject-verb-object structures, clear basic vocabulary, and no difficult jargon. Suitable for A1-A2 CEFR level (TOEIC 500 calibrated, basic 2,000 words max).",
         intermediate:
-          "Target length: 12 to 18 words. Use compound sentences, business idioms or domain terminology, and natural phrasing. Suitable for B1-B2 CEFR level.",
+          "Target length: 12 to 18 words. Use compound sentences, business idioms or domain terminology, and natural phrasing. Suitable for B1-B2 CEFR level (TOEIC 700 calibrated).",
         advanced:
-          "Target length: 20 to 30 words. Use complex sentence structures (relative clauses, conditionals, participial constructions), sophisticated industry vocabulary, and natural rhythm suitable for professional presentations or executive meetings. Suitable for C1 CEFR level.",
+          "Target length: 20 to 30 words. Use complex sentence structures (relative clauses, conditionals, participial constructions), sophisticated industry vocabulary, and natural rhythm suitable for professional presentations or executive meetings. Suitable for C1 CEFR level (TOEIC 850+ calibrated).",
       };
 
   const normInd = normalizeIndustry(industry);
@@ -235,6 +286,15 @@ export function getSentenceGenerationPrompt(
 Your task is to generate ${hasCustomWords ? "a fresh, authentic 1-to-2 sentence English phrase" : "ONE fresh, authentic, contextually rich English sentence"} along with its natural Japanese translation.
 IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets (e.g., TOEIC, TOEFL), or copyrighted materials. All generated content must be 100% original and dynamically created.
 NEVER generate generic, repetitive, or cliché template sentences.
+
+TOEIC Score & Vocabulary Ceiling Calibration (STRICT):
+- Level Target: ${spec.name}
+- Target Score: ~${spec.toeicScore} points
+- Vocabulary Ceiling: ${spec.wordCeiling}
+- Allowed Vocabulary Scope: ${spec.vocabularyRules}
+- Prohibited Vocabulary / Syntax: ${spec.forbiddenRules}
+- Required Grammar / Structure: ${spec.structureRules}
+- Self-Verification Check: Before finalizing the output, inspect every single word in the English text. If any word exceeds the TOEIC ${spec.toeicScore} threshold (especially for Beginner: NO words beyond top 2,000 basic English), immediately rewrite it using simple, everyday vocabulary.
 
 Tone & Persona Guidance:
 ${
@@ -291,6 +351,10 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
   }
 
 Requirements:
+- Strictly adhere to ${spec.name} (~${spec.toeicScore} points, CEFR ${spec.cefr}):
+  - Vocabulary Limit: ${spec.wordCeiling}
+  - Prohibited Words/Phrases: ${spec.forbiddenRules}
+  - Sentence Structure: ${spec.structureRules}
 - Make the vocabulary, syntax, and sentence structure novel and distinct from typical textbook examples.
 - Only include a subtle seasonal or trend cue if it fits the core situation naturally; otherwise omit it completely.
 - Strictly avoid poetic seasonal clichés ("As we embrace the vibrant colors of autumn...") and abstract buzzwords ("work-life harmony", "digital wellness", "paradigm shift").${
@@ -319,6 +383,7 @@ export function getPassageGenerationPrompt(
   const randomSituation = situations[Math.floor(Math.random() * situations.length)];
   const randomSeed = Math.random().toString(36).substring(2, 8);
   const seasonal = getSeasonalTrendContext(normInd, referenceDate);
+  const spec = TOEIC_LEVEL_SPECS[level];
 
   const personaIntro = isDaily
     ? `You are a native English speaker sharing a natural, engaging, and authentic story or recommendation with a friend or colleague.
@@ -330,6 +395,15 @@ Write in the style of a clear, practical, and engaging business presentation, te
 Your task is to generate ONE coherent, natural spoken passage (paragraph of 3 to 5 sentences, 60 to 90 words total) along with its natural Japanese translation.
 IMPORTANT LEGAL & ORIGINALITY REQUIREMENT: Do NOT quote, reproduce, or copy sentences directly from existing commercial English textbooks, official test sets, or copyrighted materials. All generated content must be 100% original.
 Avoid formulaic openings like "Good morning everyone". Dive right into natural, substantive spoken content.
+
+TOEIC Score & Vocabulary Ceiling Calibration (STRICT):
+- Level Target: ${spec.name}
+- Target Score: ~${spec.toeicScore} points
+- Vocabulary Ceiling: ${spec.wordCeiling}
+- Allowed Vocabulary Scope: ${spec.vocabularyRules}
+- Prohibited Vocabulary / Syntax: ${spec.forbiddenRules}
+- Required Grammar / Structure: ${spec.structureRules}
+- Self-Verification Check: Before returning the passage, verify that every sentence conforms to the TOEIC ${spec.toeicScore} level. Replace any overly dense or uncharacteristic words with natural, level-appropriate equivalents.
 
 Season & Trend Awareness (Optional & Subtle):
 - Seasonal Context Rules:
@@ -356,9 +430,15 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
 - Scenario/Topic: ${topic ? topic : randomSituation}
 - Seasonal Timing & Cycle (Optional - omit if unnatural): ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
 - Modern Trend Angle (Optional reference): ${seasonal.trendingTopic}
-- Difficulty Level: ${level}
+- Difficulty Level: ${level} (${spec.name}, ~${spec.toeicScore} pts)
 - Target Word Count: 60 to 90 words (3 to 5 clear, rhythmic sentences)
 - Variation Seed: ${randomSeed}
+
+Requirements & Vocabulary Ceiling:
+- Strictly adhere to ${spec.name} (~${spec.toeicScore} pts):
+  - Vocabulary Limit: ${spec.wordCeiling}
+  - Prohibitions: ${spec.forbiddenRules}
+  - Structure: ${spec.structureRules}
 
 Style Guidelines:
 ${

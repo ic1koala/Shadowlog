@@ -158,4 +158,32 @@ describe("Seasonal & Trend Awareness Prompt Injection", () => {
       expect(ctx.trendingTopic.toLowerCase()).not.toContain("digital wellness");
     }
   });
+
+  it("calibrates difficulty levels to TOEIC 500, 700, and 850 with strict vocabulary ceilings", async () => {
+    const { getSentenceGenerationPrompt, TOEIC_LEVEL_SPECS } = await import("@/lib/ai/prompts");
+
+    // TOEIC Level specs consistency
+    expect(TOEIC_LEVEL_SPECS.beginner.toeicScore).toBe(500);
+    expect(TOEIC_LEVEL_SPECS.intermediate.toeicScore).toBe(700);
+    expect(TOEIC_LEVEL_SPECS.advanced.toeicScore).toBe(850);
+
+    // Beginner prompt verification
+    const beginnerPrompt = getSentenceGenerationPrompt("daily", "beginner");
+    expect(beginnerPrompt.systemPrompt).toContain("TOEIC 500");
+    expect(beginnerPrompt.systemPrompt).toContain("top 2,000 most frequent English words");
+    expect(beginnerPrompt.systemPrompt).toContain("STRICTLY FORBIDDEN: Abstract nouns ending in -tion");
+    expect(beginnerPrompt.userPrompt).toContain("TOEIC 500");
+
+    // Intermediate prompt verification
+    const intermediatePrompt = getSentenceGenerationPrompt("business", "intermediate");
+    expect(intermediatePrompt.systemPrompt).toContain("TOEIC 700");
+    expect(intermediatePrompt.systemPrompt).toContain("approx. 4,000-word vocabulary range");
+    expect(intermediatePrompt.userPrompt).toContain("TOEIC 700");
+
+    // Advanced prompt verification
+    const advancedPrompt = getSentenceGenerationPrompt("tech", "advanced");
+    expect(advancedPrompt.systemPrompt).toContain("TOEIC 850点以上レベル");
+    expect(advancedPrompt.systemPrompt).toContain("approx. 8,000-word vocabulary range");
+    expect(advancedPrompt.userPrompt).toContain("TOEIC 850");
+  });
 });

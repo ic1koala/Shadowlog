@@ -100,6 +100,8 @@
 - [x] **【完了・2026/10/06】最新仕様（FB-039迄）に基づくAI原価再計算 ＆ 収支シミュレーター (`AI cost/`)・統括ダッシュボード (`management/checklist.html`, `public/management.html`) 完全同期**
 - [x] **【完了・FB-046】管理者テストモード: Azure AI Speech 発音評価エンジン ＆ 音響環境メンション PoC実装（`AZURE_PRONUNCIATION_ASSESSMENT_SPEC.md`：全187テスト合格・本番ビルド成功）**
 - [x] **【完了・FB-047】「今日の学習を終了する」ボタン ＆ セッション完了サマリー窓・SNSシェア対応（`STUDY_SESSION_FINISH_MODAL_SPEC.md`：全187テスト合格・本番ビルド成功）**
+- [x] **【完了・FB-048】モバイル単語カード反転時の半透明透過バグ解消 ＆ GitHub Actions Threads 24時間365日30分間隔自動投稿ワークフロー導入**
+- [x] **【完了・FB-049】3段階難易度レベルのTOEIC 500 / 700 / 850 厳格語彙換算キャリブレーション ＆ Whisper 音声認識口語プロンプト最適化（全189テスト100%合格・本番ビルド成功）**
 - [ ] **【着手準備】Phase 2: 弱点データ蓄積基盤（Supabase `user_weaknesses` ＆ `/api/transcribe-diff`）**
 - [ ] **【着手準備】Phase 3: リベンジ例文自動生成プロンプト注入（`/api/generate-sentence`）**
 - [ ] 【進行中】クローズドβテスター（第1陣5名 ➔ 30〜50名）の利用ログ・フィードバック定点観測

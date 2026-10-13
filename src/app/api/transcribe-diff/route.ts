@@ -224,6 +224,8 @@ export async function POST(req: NextRequest) {
         model: "whisper-1",
         language: "en",
         temperature: 0.0,
+        prompt:
+          "Natural spoken English shadowing practice with common contractions like I'm, you're, we'll, don't, can't, and clear standard punctuation.",
       });
 
       transcriptionText = transcription.text.trim();
