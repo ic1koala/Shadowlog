@@ -202,6 +202,8 @@ export async function POST(req: NextRequest) {
 
     // ── Standard Whisper Engine (100% stable for all normal users) ──
     let transcriptionText = "";
+    let verboseWords: Array<{ word: string; start: number; end: number }> | undefined;
+    let effectiveAudioDuration: number | undefined = durationSeconds;
 
     try {
       const openai = getOpenAIClient();
@@ -224,11 +226,20 @@ export async function POST(req: NextRequest) {
         model: "whisper-1",
         language: "en",
         temperature: 0.0,
+        response_format: "verbose_json",
+        timestamp_granularities: ["word"],
         prompt:
-          "Natural spoken English shadowing practice with common contractions like I'm, you're, we'll, don't, can't, and clear standard punctuation.",
+          "Verbatim transcription of English speech. Do not auto-correct grammar, omissions, or mispronunciations.",
       });
 
       transcriptionText = transcription.text.trim();
+      verboseWords = (
+        transcription as {
+          words?: Array<{ word: string; start: number; end: number }>;
+        }
+      ).words;
+      effectiveAudioDuration =
+        (transcription as { duration?: number }).duration ?? durationSeconds;
     } catch (openaiError) {
       console.warn("Whisper transcription failed:", openaiError);
       return NextResponse.json(
@@ -237,8 +248,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Calculate diff between original and spoken text
-    const diff = calculateDiff(originalText, transcriptionText);
+    // Calculate time-aligned diff with word duration & timeline checking
+    const diff = calculateDiff(originalText, transcriptionText, {
+      spokenWordsWithTime: verboseWords,
+      audioDuration: effectiveAudioDuration,
+    });
 
     // Calculate WPM if duration is available (especially in passage mode)
     let wpmInfo: WPMInfo | undefined;

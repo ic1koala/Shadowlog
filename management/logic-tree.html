@@ -387,6 +387,44 @@
               priority: "low",
               notes: "日本語話者にありがちな「平坦な英語」を、視覚的に直すための高度なUIアイディア。",
               collapsed: false
+            },
+            {
+              id: "ux-onboarding-tour",
+              title: "🌱 無料初回起動：対話型オンボーディングツアー",
+              summary: "初めてアプリを開いた無料ユーザーへ、ツールチップ＆ポップアップによる対話型チュートリアルを実施",
+              status: "idea",
+              priority: "high",
+              notes: "アプリの基本操作(WPM/スラッシュ辞書/2系統録音/終了窓)を1分で体感させ、離脱を防ぐ。スキップ常設＋後から再確認可能。",
+              collapsed: false,
+              children: [
+                {
+                  id: "tour-tooltip-steps",
+                  title: "🧭 4ステップ・ツールチップ案内",
+                  summary: "①模範音声カプセル(WPM) ➔ ②スラッシュ・3D単語辞書 ➔ ③リピーティング/シャドーイング録音 ➔ ④学習終了窓",
+                  status: "idea",
+                  priority: "high",
+                  notes: "各要素にフキダシツールチップを順番にフォーカス。操作を促しながら次ステップへ導く直感的UX。",
+                  collapsed: false
+                },
+                {
+                  id: "tour-skip-revisit",
+                  title: "⚡️ スキップ常設 ＆ ヘルプからの再起動",
+                  summary: "慣れているユーザー向けにワンタップ「スキップ」を用意。画面右上「？」からいつでもツアーを再確認可能",
+                  status: "idea",
+                  priority: "medium",
+                  notes: "不要なユーザーにストレスを与えず、いつでも復習できる親切設計。",
+                  collapsed: false
+                },
+                {
+                  id: "tour-storage-flag",
+                  title: "💾 初回起動フラグ (LocalStorage連携)",
+                  summary: "初回完了時に shadowlog_onboarded_completed を保存し、2回目以降は通常起動で即練習開始",
+                  status: "idea",
+                  priority: "medium",
+                  notes: "1日2問しかない無料ユーザーの貴重な練習時間を2回目以降は奪わない。",
+                  collapsed: false
+                }
+              ]
             }
           ]
         },
@@ -577,10 +615,10 @@
                     {
                       id: "free-limits",
                       title: "🔒 ペルソナ設定・マイ単語帳のロック",
-                      summary: "業種・レベル固定や単語帳編集時に「月500円でアンロック」モーダルを表示",
+                      summary: "職種・業界のペルソナ登録や単語帳編集をロック。「月500円でアンロック」へ誘導",
                       status: "idea",
-                      priority: "medium",
-                      notes: "ストリーク(連続日数)とWPMは無料でも計測可能にし、利用習慣(DAU)を逃さない。",
+                      priority: "high",
+                      notes: "無料ユーザーはペルソナ登録不可（一般プラン昇格時に初回登録フローへ移行）。ストリーク(連続日数)とWPMは無料でも計測可能にし、利用習慣(DAU)を逃さない。",
                       collapsed: false
                     }
                   ]
@@ -588,12 +626,50 @@
                 {
                   id: "plan-base",
                   title: "⚡️ 一般ユーザー (Base ¥500/月)",
-                  summary: "短文シャドーイング無制限使い放題。学習データ永続保存。ペルソナ＆単語登録解禁",
+                  summary: "短文シャドーイング無制限使い放題。クラウド永続保存。ペルソナ初回登録＆単語帳解禁",
                   status: "idea",
                   priority: "high",
                   notes: "ワンコインの手軽さで使い放題。問題バンク運用によりAPI出題原価0円のため営業利益率70%超を維持可能。",
                   collapsed: false,
                   children: [
+                    {
+                      id: "base-persona-onboarding",
+                      title: "🎯 一般昇格時：ペルソナ初回登録＆解放フロー",
+                      summary: "一般メンバー加入時にペルソナ（職種＋分野）を日本語登録。登録完了で機能が初めて解放される",
+                      status: "idea",
+                      priority: "high",
+                      notes: "自分の仕事のカテゴリ(営業・技術等)と分野(例: 化学系メーカー営業、半導体等)を入力し、自分専用のパーソナライズ学習がスタート。",
+                      collapsed: false,
+                      children: [
+                        {
+                          id: "persona-input-form",
+                          title: "📝 日本語ペルソナ入力フォーム",
+                          summary: "【職種/ポジション】(営業・技術など) ＋ 【分野/業界】(化学系メーカー営業、半導体など)を自然な日本語で入力",
+                          status: "idea",
+                          priority: "high",
+                          notes: "自由入力形式＋おすすめサジェストタグ。ユーザーの実際のビジネスシーンを具体的にヒアリング。",
+                          collapsed: false
+                        },
+                        {
+                          id: "persona-settings-edit",
+                          title: "⚙️ 設定画面 (/settings) での後からの修正機能",
+                          summary: "人事異動やプロジェクト変更、新しい関心に合わせていつでも設定画面からペルソナを修正可能",
+                          status: "idea",
+                          priority: "medium",
+                          notes: "いつでも修正できる安心感を提供。更新内容は即座にAI文脈および次回出題へ反映。",
+                          collapsed: false
+                        },
+                        {
+                          id: "persona-ai-prompt",
+                          title: "🤖 ペルソナ特化AI例文生成プロンプト注入",
+                          summary: "登録された職種・業界・商材をプロンプトに動的注入し、極めて実践的なビジネス例文を生成",
+                          status: "idea",
+                          priority: "high",
+                          notes: "「化学系メーカー営業×半導体」なら納期調整、品質仕様交渉、顧客打合せ等の超リアルな英語を出題。",
+                          collapsed: false
+                        }
+                      ]
+                    },
                     {
                       id: "base-unlimited",
                       title: "🚀 短文シャドーイング利用制限なし (無制限)",
@@ -614,8 +690,8 @@
                     },
                     {
                       id: "base-custom-words",
-                      title: "🎯 ペルソナ固定 ＆ 苦手単語帳のフル活用",
-                      summary: "業種やレベルを固定でき、苦手単語帳から「リベンジ問題」を自動生成",
+                      title: "🎯 苦手単語帳のフル活用 ＆ リベンジ出題",
+                      summary: "苦手単語帳から「リベンジ問題」を自動生成し、弱点を徹底克服",
                       status: "idea",
                       priority: "medium",
                       notes: "業務の専門用語や苦手な音に絞ったパーソナライズ特訓が可能。",
@@ -725,7 +801,7 @@
     let currentSearchTerm = "";
     let currentFilterStatus = "all";
 
-    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v3";
+    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v4";
 
     // Initialize
     function init() {

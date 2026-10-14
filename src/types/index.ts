@@ -6,6 +6,10 @@ export interface DiffToken {
   spokenWord?: string;
   status: DiffStatus;
   similarity?: number; // 0.0 to 1.0
+  start?: number; // Word start timestamp in seconds
+  end?: number; // Word end timestamp in seconds
+  duration?: number; // Word duration in seconds
+  isTimingAnomaly?: boolean; // Swallowed (<75ms) or severely misplaced
 }
 
 export interface DiffResult {
@@ -16,6 +20,8 @@ export interface DiffResult {
   spokenWordCount: number;
   matchedWordCount: number;
   accuracyScore: number; // 0 to 100
+  temporalScore?: number; // Timing and pacing alignment score (0 to 100)
+  speechCoverageRate?: number; // Active speech span coverage ratio (0.0 to 1.0)
 }
 
 export type DifficultyLevel = "beginner" | "intermediate" | "advanced";

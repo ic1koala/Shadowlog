@@ -347,14 +347,22 @@ export function analyzeDiffWordsForToeic(diffTokens: DiffToken[]): {
  * - Score < 50%: Go DOWN one level (floor at A1)
  * - 50-74%: Stay at current level
  */
+/**
+ * Determines the next assessment level based on the composite score and accuracy.
+ * - Score >= 75% AND accuracy >= 70%: Go UP one level (cap at C1)
+ * - Score < 50% OR accuracy < 50%: Go DOWN one level (floor at A1)
+ * - Otherwise: Stay at current level
+ */
 function getNextLevel(
   currentLevel: AssessmentLevel,
-  compositeScore: number
+  compositeScore: number,
+  accuracyScore?: number
 ): AssessmentLevel {
   const idx = LEVEL_ORDER.indexOf(currentLevel);
-  if (compositeScore >= 75) {
+  const isAccurateEnough = accuracyScore === undefined || accuracyScore >= 70;
+  if (compositeScore >= 75 && isAccurateEnough) {
     return LEVEL_ORDER[Math.min(idx + 1, LEVEL_ORDER.length - 1)];
-  } else if (compositeScore < 50) {
+  } else if (compositeScore < 50 || (accuracyScore !== undefined && accuracyScore < 50)) {
     return LEVEL_ORDER[Math.max(idx - 1, 0)];
   }
   return currentLevel;
@@ -394,7 +402,8 @@ export function getNextQuestion(
   const lastAnswer = answers[n - 1];
   const nextLevel = getNextLevel(
     lastAnswer.assessmentLevel,
-    lastAnswer.compositeScore
+    lastAnswer.compositeScore,
+    lastAnswer.accuracyScore
   );
 
   // Early stop: level stabilized for 2 consecutive answers at the same level
@@ -420,7 +429,8 @@ export function getNextQuestion(
 /**
  * Calculates WPM追従度 (WPM follow rate).
  * Compares user's WPM to the target WPM for the given assessment level.
- * Capped at 100% — being slightly faster than target is fine.
+ * Natural shadowing speed within target * 1.35x receives full credit.
+ * Unnatural rushing (skipping/mumbling) is appropriately penalized.
  */
 export function calculateWPMFollowRate(
   userWPM: number,
@@ -428,7 +438,15 @@ export function calculateWPMFollowRate(
 ): number {
   const targetWPM = ASSESSMENT_LEVELS[assessmentLevel].targetWPM;
   if (targetWPM === 0) return 0;
-  return Math.min(100, Math.round((userWPM / targetWPM) * 100));
+  const ratio = userWPM / targetWPM;
+  if (ratio <= 1.0) {
+    return Math.max(0, Math.min(100, Math.round(ratio * 100)));
+  }
+  if (ratio <= 1.5) {
+    return 100;
+  }
+  const rushPenalty = (ratio - 1.5) * 45;
+  return Math.max(40, Math.min(100, Math.round(100 - rushPenalty)));
 }
 
 /**
@@ -497,13 +515,15 @@ export function calculateAssessmentResult(
   if (answers.length >= 2) {
     const secondLast = answers[answers.length - 2];
     if (lastAnswer.assessmentLevel === secondLast.assessmentLevel) {
-      const avgLast2 =
+      const avgLast2Composite =
         (lastAnswer.compositeScore + secondLast.compositeScore) / 2;
-      if (avgLast2 >= 75) {
+      const avgLast2Accuracy =
+        (lastAnswer.accuracyScore + secondLast.accuracyScore) / 2;
+      if (avgLast2Composite >= 75 && avgLast2Accuracy >= 70) {
         const idx = LEVEL_ORDER.indexOf(lastAnswer.assessmentLevel);
         recommendedLevel =
           LEVEL_ORDER[Math.min(idx + 1, LEVEL_ORDER.length - 1)];
-      } else if (avgLast2 < 50) {
+      } else if (avgLast2Composite < 50 || avgLast2Accuracy < 50) {
         const idx = LEVEL_ORDER.indexOf(lastAnswer.assessmentLevel);
         recommendedLevel = LEVEL_ORDER[Math.max(idx - 1, 0)];
       } else {
@@ -512,13 +532,15 @@ export function calculateAssessmentResult(
     } else {
       recommendedLevel = getNextLevel(
         lastAnswer.assessmentLevel,
-        lastAnswer.compositeScore
+        lastAnswer.compositeScore,
+        lastAnswer.accuracyScore
       );
     }
   } else {
     recommendedLevel = getNextLevel(
       lastAnswer.assessmentLevel,
-      lastAnswer.compositeScore
+      lastAnswer.compositeScore,
+      lastAnswer.accuracyScore
     );
   }
 
@@ -566,28 +588,36 @@ export function calculateAssessmentResult(
     speedFollow * 0.25 +
     modeBonus * 0.1;
 
-  // Base anchor by recommended CEFR level
-  const levelBaseMap: Record<AssessmentLevel, number> = {
-    A1: 340,
-    A2: 460,
-    B1: 580,
-    B2: 720,
-    C1: 850,
+  // Realistic CEFR to TOEIC score bounds established by ETS:
+  // A1: 300 - 445点相当 (基礎力育成レベル)
+  // A2: 450 - 545点相当 (初中級)
+  // B1: 550 - 695点相当 (中級・ビジネス基礎)
+  // B2: 700 - 845点相当 (中上級・実務応用)
+  // C1: 850 - 990点相当 (上級・ネイティブ即応)
+  const LEVEL_TOEIC_BOUNDS: Record<
+    AssessmentLevel,
+    { min: number; max: number }
+  > = {
+    A1: { min: 300, max: 445 },
+    A2: { min: 450, max: 545 },
+    B1: { min: 550, max: 695 },
+    B2: { min: 700, max: 845 },
+    C1: { min: 850, max: 990 },
   };
-  const baseToeic = levelBaseMap[recommendedLevel];
 
-  // Combine base anchor (55%) + continuous weighted index mapping (45%, scaled 300..990)
-  const continuousToeic = 300 + (weightedIndex / 100) * 690;
-  const rawToeic = baseToeic * 0.55 + continuousToeic * 0.45;
+  const bounds = LEVEL_TOEIC_BOUNDS[recommendedLevel];
+  const normPerf = Math.max(0, Math.min(100, weightedIndex)) / 100;
+  const rawToeic = bounds.min + normPerf * (bounds.max - bounds.min);
 
-  // Round to nearest 5 points (standard TOEIC step), clamped to [300, 990]
+  // Round to nearest 5 points (standard TOEIC step), clamped to level bounds
   const estimatedToeicScore = Math.max(
-    300,
-    Math.min(990, Math.round(rawToeic / 5) * 5)
+    bounds.min,
+    Math.min(bounds.max, Math.round(rawToeic / 5) * 5)
   );
 
-  // Listening score (150 - 495, 5-point increments, slightly higher weight on linking & speed)
-  const rawListening = estimatedToeicScore * 0.52;
+  // Listening score (150 - 495, 5-point increments, scaled by linking and speed)
+  const listeningRatio = 0.52 + (linkingReproduction / 100) * 0.04;
+  const rawListening = estimatedToeicScore * listeningRatio;
   const estimatedListeningScore = Math.max(
     150,
     Math.min(495, Math.round(rawListening / 5) * 5)
@@ -595,11 +625,23 @@ export function calculateAssessmentResult(
 
   const toeicNativeWpmGap = Math.max(0, 150 - effectiveWPM);
 
-  // Percentile calculation (Top X%)
-  const percentileTop = Math.max(
-    3,
-    Math.min(95, Math.round(100 - ((estimatedToeicScore - 300) / 690) * 92))
-  );
+  // Percentile calculation calibrated to official IIBC TOEIC score distribution
+  let percentileTop: number;
+  if (estimatedToeicScore >= 900) {
+    percentileTop = Math.max(1, Math.round(5 - ((estimatedToeicScore - 900) / 90) * 4));
+  } else if (estimatedToeicScore >= 800) {
+    percentileTop = Math.round(15 - ((estimatedToeicScore - 800) / 100) * 10);
+  } else if (estimatedToeicScore >= 700) {
+    percentileTop = Math.round(30 - ((estimatedToeicScore - 700) / 100) * 15);
+  } else if (estimatedToeicScore >= 600) {
+    percentileTop = Math.round(50 - ((estimatedToeicScore - 600) / 100) * 20);
+  } else if (estimatedToeicScore >= 500) {
+    percentileTop = Math.round(70 - ((estimatedToeicScore - 500) / 100) * 20);
+  } else if (estimatedToeicScore >= 400) {
+    percentileTop = Math.round(85 - ((estimatedToeicScore - 400) / 100) * 15);
+  } else {
+    percentileTop = Math.min(98, Math.round(95 - ((estimatedToeicScore - 300) / 100) * 10));
+  }
 
   // Aggregate unique missed words across answers
   const missedLinkingSet = new Set<string>();
