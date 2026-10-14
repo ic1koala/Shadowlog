@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
-  CalendarDays,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -22,17 +21,14 @@ interface ActivityWpmCardProps {
   totalWords: number;
   totalSessions: number;
   averageAccuracy?: number;
-  dailyCounts: Record<string, number>;
+  dailyCounts?: Record<string, number>;
   sessions: PracticeSession[];
 }
-
-const WEEKDAYS_JA = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
 export function ActivityWpmCard({
   totalWords,
   totalSessions,
   averageAccuracy,
-  dailyCounts,
   sessions,
 }: ActivityWpmCardProps) {
   // ── WPM Stats ──
@@ -73,95 +69,7 @@ export function ActivityWpmCard({
     return () => clearInterval(timer);
   }, [totalWords]);
 
-  // ── 14-Day Activity Heatmap Data ──
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const { days, totalPast2Weeks, activeDays, maxCount } = useMemo(() => {
-    const list: Array<{
-      dateKey: string;
-      date: Date;
-      dateLabel: string;
-      weekdayLabel: string;
-      isWeekend: boolean;
-      isSunday: boolean;
-      isSaturday: boolean;
-      isToday: boolean;
-      count: number;
-    }> = [];
-
-    const today = new Date();
-    const todayYear = today.getFullYear();
-    const todayMonth = String(today.getMonth() + 1).padStart(2, "0");
-    const todayDay = String(today.getDate()).padStart(2, "0");
-    const todayKey = `${todayYear}-${todayMonth}-${todayDay}`;
-
-    let total = 0;
-    let active = 0;
-
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const year = d.getFullYear();
-      const monthNum = d.getMonth() + 1;
-      const dayNum = d.getDate();
-      const month = String(monthNum).padStart(2, "0");
-      const day = String(dayNum).padStart(2, "0");
-      const dateKey = `${year}-${month}-${day}`;
-      const count = dailyCounts[dateKey] || 0;
-
-      const dayOfWeek = d.getDay();
-      const isSunday = dayOfWeek === 0;
-      const isSaturday = dayOfWeek === 6;
-      const isWeekend = isSunday || isSaturday;
-      const isToday = dateKey === todayKey;
-
-      total += count;
-      if (count > 0) active++;
-
-      list.push({
-        dateKey,
-        date: d,
-        dateLabel: `${monthNum}/${dayNum}`,
-        weekdayLabel: WEEKDAYS_JA[dayOfWeek],
-        isWeekend,
-        isSunday,
-        isSaturday,
-        isToday,
-        count,
-      });
-    }
-
-    const calculatedMax = Math.max(25, ...list.map((item) => item.count));
-
-    return {
-      days: list,
-      totalPast2Weeks: total,
-      activeDays: active,
-      maxCount: calculatedMax,
-    };
-  }, [dailyCounts]);
-
-  // Ensure "Today" (the rightmost column) is scrolled into view by default on mobile devices
-  useEffect(() => {
-    if (!scrollContainerRef.current) return;
-    const el = scrollContainerRef.current;
-    el.scrollLeft = el.scrollWidth;
-    const timer = setTimeout(() => {
-      if (el) {
-        el.scrollLeft = el.scrollWidth;
-      }
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [days]);
-
-  const getBarColor = (count: number) => {
-    if (count === 0) return "bg-muted/40 text-muted-foreground/60";
-    if (count <= 15)
-      return "bg-gradient-to-t from-emerald-600 to-emerald-400 text-white shadow-xs";
-    if (count <= 35)
-      return "bg-gradient-to-t from-teal-600 to-emerald-400 text-white shadow-sm";
-    return "bg-gradient-to-t from-blue-600 to-teal-400 text-white shadow-md";
-  };
 
   // ── 7-Day WPM SVG Chart Coordinates ──
   const chartPoints = useMemo(() => {
@@ -285,121 +193,7 @@ export function ActivityWpmCard({
         </div>
       </div>
 
-      {/* ── 2. 14-Day Activity Heatmap ── */}
-      <div className="space-y-3 pt-1">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-primary" />
-            <h3 className="text-xs sm:text-sm font-bold text-foreground">
-              直近14日間の学習アクティビティ
-            </h3>
-          </div>
-          <div className="text-[11px] text-muted-foreground">
-            2週間の合計: <span className="font-bold text-foreground font-mono">{totalPast2Weeks}</span> 語 ({activeDays}/14日)
-          </div>
-        </div>
-
-        {/* Bar chart scrollable container */}
-        <div
-          ref={scrollContainerRef}
-          className="overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide"
-        >
-          <div className="min-w-[480px] sm:min-w-full grid grid-cols-[repeat(14,minmax(0,1fr))] gap-1 sm:gap-2 items-end pt-2">
-            {days.map((item) => {
-              const heightPercent =
-                item.count > 0
-                  ? Math.min(100, Math.max(14, Math.round((item.count / maxCount) * 100)))
-                  : 6;
-
-              return (
-                <div
-                  key={item.dateKey}
-                  className={`group flex flex-col items-center justify-end rounded-xl p-1 transition-all duration-200 ${
-                    item.isToday
-                      ? "bg-primary/5 ring-1 ring-primary/30"
-                      : "hover:bg-muted/40"
-                  }`}
-                  title={`${item.dateKey} (${item.weekdayLabel}): ${item.count}語発話`}
-                >
-                  {/* Spoken Word Count Badge */}
-                  <div className="h-4 flex items-center justify-center mb-1">
-                    {item.count > 0 ? (
-                      <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-mono scale-95 group-hover:scale-110 transition-transform">
-                        {item.count}
-                      </span>
-                    ) : (
-                      <span className="text-[9px] text-muted-foreground/30 font-mono">
-                        -
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Vertical Bar Track */}
-                  <div className="w-full h-20 sm:h-24 flex items-end justify-center rounded-lg bg-muted/30 px-0.5 py-1">
-                    <div
-                      style={{ height: `${heightPercent}%` }}
-                      className={`w-full max-w-[20px] sm:max-w-[28px] rounded-md transition-all duration-500 ${getBarColor(
-                        item.count
-                      )} flex items-center justify-center`}
-                    >
-                      {item.count >= 25 && (
-                        <Sparkles className="w-2 h-2 text-white/80 hidden sm:block animate-pulse" />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Date & Weekday Label */}
-                  <div className="text-center mt-1.5 space-y-0.2">
-                    <div
-                      className={`text-[9px] sm:text-[10px] font-bold ${
-                        item.isSunday
-                          ? "text-rose-500"
-                          : item.isSaturday
-                          ? "text-blue-500"
-                          : "text-foreground"
-                      }`}
-                    >
-                      {item.weekdayLabel}
-                    </div>
-                    <div className="text-[8px] sm:text-[9px] text-muted-foreground font-mono">
-                      {item.dateLabel}
-                    </div>
-                    {item.isToday && (
-                      <span className="inline-block mt-0.5 px-1 py-0.1 bg-primary text-primary-foreground text-[8px] font-bold rounded-xs">
-                        今日
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/40">
-          <div className="flex items-center gap-2">
-            <span>発話量:</span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-xs bg-muted/40 border border-border inline-block" /> 0語
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-xs bg-emerald-500 inline-block" /> 1〜15
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-xs bg-teal-500 inline-block" /> 16〜35
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-xs bg-blue-600 inline-block" /> 36語+
-            </span>
-          </div>
-          <span className="hidden sm:inline text-muted-foreground/70">
-            練習した英単語数が自動記録されます
-          </span>
-        </div>
-      </div>
-
-      {/* ── 3. Accordion Toggle for WPM Details ── */}
+      {/* ── 2. Accordion Toggle for WPM Details ── */}
       <div className="pt-2 border-t border-border/70">
         <button
           type="button"

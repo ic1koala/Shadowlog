@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useStats } from "@/hooks/use-stats";
 import { StreakBadge } from "@/components/features/dashboard/StreakBadge";
+import { ActivityHeatmap } from "@/components/features/dashboard/ActivityHeatmap";
 import { GreetingBanner } from "@/components/features/dashboard/GreetingBanner";
 import { GuestSignupBanner } from "@/components/features/dashboard/GuestSignupBanner";
 import { ActivityWpmCard } from "@/components/features/dashboard/ActivityWpmCard";
@@ -57,7 +58,10 @@ export default function DashboardPage() {
         variant="compact"
       />
 
-      {/* 3. メインアクション（横並びボタン）：Primary/Secondary差別化、押しやすいmin-h-[48px] */}
+      {/* 3. 直近14日間のアクティビティ（Streakのすぐ下に配置） */}
+      <ActivityHeatmap dailyCounts={dailyCounts} />
+
+      {/* 4. メインアクション（横並びボタン）：Primary/Secondary差別化、押しやすいmin-h-[48px] */}
       <div className="grid grid-cols-2 gap-3 w-full">
         <Link
           href="/practice"
@@ -76,7 +80,15 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* 4. ウェルカムバナーの動的非表示：学習履歴が0件の初回のみ表示、1件以上で非表示 */}
+      {/* 5. 累計発話ワード数と平均話速WPM */}
+      <ActivityWpmCard
+        totalWords={totalWords}
+        totalSessions={totalSessions}
+        averageAccuracy={avgAccuracy}
+        sessions={sessions}
+      />
+
+      {/* 6. ウェルカムバナーの動的非表示：学習履歴が0件の初回のみ表示、1件以上で非表示 */}
       {sessions.length === 0 && (
         <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 p-5 sm:p-8 text-white shadow-xl relative overflow-hidden animate-in fade-in duration-300">
           <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
@@ -109,15 +121,6 @@ export default function DashboardPage() {
           </button>
         </div>
       )}
-
-      {/* 5. 学習アクティビティとWPMの統合（累計ワード数 & 平均WPMサマリー + 14日ヒートマップ + WPM詳細トグル） */}
-      <ActivityWpmCard
-        totalWords={totalWords}
-        totalSessions={totalSessions}
-        averageAccuracy={avgAccuracy}
-        dailyCounts={dailyCounts}
-        sessions={sessions}
-      />
 
       {/* Recent Sessions List */}
       <div className="bg-card rounded-2xl p-4 sm:p-8 border border-border shadow-sm space-y-4 sm:space-y-6">

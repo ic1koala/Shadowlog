@@ -102,13 +102,13 @@ export function ActivityHeatmap({ dailyCounts }: ActivityHeatmapProps) {
   };
 
   return (
-    <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-sm space-y-5 sm:space-y-6">
+    <div className="bg-card rounded-2xl p-4 sm:p-6 border border-border shadow-sm space-y-4 sm:space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border/60">
         <div>
           <h3 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-primary" />
-            学習アクティビティ
+            <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            直近14日間の学習アクティビティ
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             過去2週間（14日間）の日別発話単語数
