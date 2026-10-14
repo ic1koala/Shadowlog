@@ -19,7 +19,7 @@ function getJstIsoString(dayOffset: number, hour: number, minute: number): strin
 const postsData = [
   // --- Day 1 (10/11 - Sun) ---
   {
-    day: 0, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 0, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 日曜日ですね！みなさん休日の朝はどこで英語勉強してますか？自分はカフェで静かに発声練習するのが習慣になってます☕️
@@ -54,7 +54,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 2 (10/12 - Mon) ---
   {
-    day: 1, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 1, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 月曜日スタート！みなさん通勤・通学中ですか？
@@ -93,7 +93,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 3 (10/13 - Tue) ---
   {
-    day: 2, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 2, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 火曜日の朝！みなさん英語学習のモチベーション維持どうしてますか？
@@ -129,7 +129,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 4 (10/14 - Wed) ---
   {
-    day: 3, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 3, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 水曜日、折り返し地点ですね！
@@ -166,7 +166,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 5 (10/15 - Thu) ---
   {
-    day: 4, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 4, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 木曜日の朝！あと少しで週末ですね。
@@ -202,7 +202,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 6 (10/16 - Fri) ---
   {
-    day: 5, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 5, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 金曜日！今週ラストスパートですね！
@@ -235,7 +235,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 7 (10/17 - Sat) ---
   {
-    day: 6, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 6, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 土曜日の朝！休日ってついついダラダラしがちですが、朝イチで30秒だけ声を出しておくと脳がシャキッと目覚めますよ！
@@ -266,7 +266,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 8 (10/18 - Sun) ---
   {
-    day: 7, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 7, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 日曜日！みなさん英語学習で一番達成感感じるのってどんな瞬間ですか？
@@ -297,7 +297,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 9 (10/19 - Mon) ---
   {
-    day: 8, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 8, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 月曜日の朝！また1週間頑張っていきましょう！
@@ -334,7 +334,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 10 (10/20 - Tue) ---
   {
-    day: 9, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 9, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 火曜日！朝の30秒で英語脳を呼び覚ましましょう！
@@ -370,7 +370,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 11 (10/21 - Wed) ---
   {
-    day: 10, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 10, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 水曜日！週の折り返し地点ですね！
@@ -402,7 +402,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 12 (10/22 - Thu) ---
   {
-    day: 11, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 11, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 木曜日！週末まであと少し！
@@ -432,7 +432,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 13 (10/23 - Fri) ---
   {
-    day: 12, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 12, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 華金ですね！今日を乗り切れば週末！
@@ -463,7 +463,7 @@ https://shadowlog.vercel.app/diagnosis
 
   // --- Day 14 (10/24 - Sat) ---
   {
-    day: 13, slot: "morning", hour: 8, minute: 0, hasUrl: false,
+    day: 13, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
 2週間のThreadsチャレンジ最終日！いつも見てくださりありがとうございます！
