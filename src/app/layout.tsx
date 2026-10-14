@@ -9,6 +9,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
     { media: "(prefers-color-scheme: dark)", color: "#090d16" },
@@ -46,7 +47,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="min-h-dvh bg-background text-foreground antialiased selection:bg-primary/20">
+      <body className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20">
         {children}
         <PageTracker />
         <Analytics />

@@ -756,7 +756,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-8 pb-8 sm:pb-16">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-8 pb-36 sm:pb-16">
       {/* Header & Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
@@ -1186,7 +1186,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       {/* ── Floating Recording Bar ── */}
       {/* Shown while sentence is active and no result yet (recording phase) */}
       {sentence && !diffResult && !floatHasBlob && !showProModal && (
-        <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem)] sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4">
           <div className="pointer-events-auto flex flex-col gap-2 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full duration-300">
             {/* Status indicator row */}
             <div className="flex items-center justify-between gap-2">
@@ -1266,7 +1266,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       {/* ── Floating Pre-Evaluation Bar (Recorded, awaiting evaluation or retry) ── */}
       {/* Shown after recording is complete, before evaluation — allows retrying or submitting right from bottom */}
       {sentence && !diffResult && floatHasBlob && !showProModal && (
-        <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem)] sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
           <div className="pointer-events-auto flex items-center justify-between gap-2.5 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full duration-300">
             {/* Retry button */}
             <button
@@ -1303,7 +1303,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       {/* ── Floating Next Phrase & Finish Session Bar ── */}
       {/* Shown after practice result is displayed, guiding user smoothly to the next phrase or finish */}
       {sentence && diffResult && !isTranscribing && !showProModal && (
-        <div className="fixed bottom-24 sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4 [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem)] sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
           <div className="pointer-events-auto flex items-center justify-between gap-2.5 p-2.5 sm:px-4 sm:py-3 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl shadow-black/10 ring-1 ring-white/20 w-full duration-300">
             {/* Finish Session button */}
             <button
