@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShadowLog 改善ロジックツリー & 思考整理スタジオ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      user-select: none;
+    }
+    /* Grid background pattern with 10% opacity */
+    .bg-grid {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(15, 23, 42, 0.10) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.10) 1px, transparent 1px);
+    }
+    .dark .bg-grid {
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.10) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+    }
+    /* Smooth transition for lines and nodes */
+    .tree-node {
+      transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+    }
+    .tree-node:hover {
+      transform: translateY(-2px);
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .dark ::webkit-scrollbar-thumb {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 h-screen w-screen overflow-hidden flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shrink-0 z-30 shadow-xs">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-black text-base shadow-md shadow-indigo-500/20">
+        S
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">ShadowLog Logic Tree Studio</h1>
+          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+            改善思考整理マップ
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="flex items-center gap-2">
+      <!-- Search Box -->
+      <div class="relative w-44 sm:w-64">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="キーワードで検索・ハイライト..." 
+          oninput="handleSearch(this.value)"
+          class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100"
+        >
+        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+      </div>
+
+      <!-- Status Filter -->
+      <select 
+        id="statusFilter" 
+        onchange="filterByStatus(this.value)"
+        class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-hidden cursor-pointer"
+      >
+        <option value="all">全ステータス表示</option>
+        <option value="completed">🚀 実装完了</option>
+        <option value="in_progress">⚡️ 進行中</option>
+        <option value="idea">💡 検討・アイディア</option>
+        <option value="pending">📌 課題・保留</option>
+      </select>
+
+      <div class="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+      <!-- Quick Action Buttons -->
+      <button onclick="expandAll()" class="p-1.5 text-xs rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="すべて展開">
+        <span>全展開 📖</span>
+      </button>
+      <button onclick="collapseToRoots()" class="p-1.5 text-xs rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="主要ブランチに折りたたむ">
+        <span>折りたたむ 📁</span>
+      </button>
+
+      <div class="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+      <!-- Export / Import / Reset -->
+      <button onclick="exportData()" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1">
+        <span>💾 保存/エクスポート</span>
+      </button>
+      <button onclick="triggerImport()" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+        <span>読込</span>
+      </button>
+      <input type="file" id="importInput" accept=".json" class="hidden" onchange="handleImportFile(event)">
+
+      <button onclick="resetData()" class="p-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md transition" title="初期データに戻す">
+        <span>リセット</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Canvas Container with Zoom & Pan -->
+  <div class="flex-1 relative overflow-hidden bg-grid cursor-grab active:cursor-grabbing" id="canvasViewport">
+    
+    <!-- Floating Zoom & Center Controls -->
+    <div class="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg">
+      <button onclick="zoomIn()" class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+        ＋
+      </button>
+      <span id="zoomDisplay" class="text-xs font-bold text-slate-600 dark:text-slate-300 w-12 text-center select-none">
+        100%
+      </span>
+      <button onclick="zoomOut()" class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+        ー
+      </button>
+      <div class="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+      <button onclick="resetView()" class="px-2.5 h-8 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1">
+        <span>🎯 中央</span>
+      </button>
+    </div>
+
+    <!-- Mini Status Legend -->
+    <div class="absolute bottom-6 right-6 z-20 hidden md:flex items-center gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg text-xs font-medium text-slate-600 dark:text-slate-300">
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>🚀 実装完了</span>
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>⚡️ 進行中</span>
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>💡 検討・アイディア</span>
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>📌 課題・保留</span>
+    </div>
+
+    <!-- Scalable Transform Canvas -->
+    <div id="treeCanvas" class="absolute top-0 left-0 origin-top-left transition-transform duration-75">
+      <!-- SVG Connecting Lines Layer -->
+      <svg id="connectionSvg" class="absolute top-0 left-0 pointer-events-none" style="width: 5000px; height: 5000px;"></svg>
+
+      <!-- HTML Nodes Container -->
+      <div id="nodesContainer" class="p-20 relative"></div>
+    </div>
+  </div>
+
+  <!-- Detail / Edit Drawer Sidebar -->
+  <aside id="detailDrawer" class="fixed top-14 right-0 bottom-0 w-96 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl z-40 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Drawer Header -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950">
+      <div class="flex items-center gap-2">
+        <span id="drawerBadge" class="px-2 py-0.5 text-[10px] font-bold rounded-full"></span>
+        <span class="text-xs font-semibold text-slate-500">ノード詳細 & 議論メモ</span>
+      </div>
+      <button onclick="closeDrawer()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+        ✕
+      </button>
+    </div>
+
+    <!-- Drawer Content (Edit Form) -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+      <div>
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">ノード名 (タイトル)</label>
+        <input 
+          type="text" 
+          id="editTitle" 
+          class="w-full px-3 py-2 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+        >
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">ステータス</label>
+          <select 
+            id="editStatus" 
+            class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium"
+          >
+            <option value="completed">🚀 実装完了 (Completed)</option>
+            <option value="in_progress">⚡️ 進行中 (In Progress)</option>
+            <option value="idea">💡 検討・アイディア (Idea)</option>
+            <option value="pending">📌 課題・保留 (Pending)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">優先度</label>
+          <select 
+            id="editPriority" 
+            class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium"
+          >
+            <option value="high">🔥 高 (High)</option>
+            <option value="medium">⚡️ 中 (Medium)</option>
+            <option value="low">🌱 低 (Low)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">概要・目的</label>
+        <textarea 
+          id="editSummary" 
+          rows="3" 
+          placeholder="この施策の目的、ユーザーへの価値、背景など..."
+          class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none leading-relaxed"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">技術仕様・議論メモ・論点</label>
+        <textarea 
+          id="editNotes" 
+          rows="6" 
+          placeholder="API設計、課題、アルゴリズム、オーナー様との決定事項など..."
+          class="w-full px-3 py-2 font-mono text-[11px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none leading-relaxed"
+        ></textarea>
+      </div>
+
+      <!-- Quick Actions for Node -->
+      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+        <button 
+          onclick="addChildNodeFromDrawer()" 
+          class="w-full py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white font-bold transition shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2"
+        >
+          <span>＋ この下に新しいアイディアを追加</span>
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button 
+            onclick="saveNodeDetails()" 
+            class="flex-1 py-2 px-3 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold hover:opacity-90 transition"
+          >
+            変更を保存
+          </button>
+          <button 
+            onclick="deleteCurrentNode()" 
+            id="deleteNodeBtn"
+            class="py-2 px-3 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold transition"
+          >
+            削除
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Logic Tree Script -->
+  <script>
+    // Initial Seed Data reflecting current Shadowlog Status and Future Improvement Areas
+    const INITIAL_TREE_DATA = {
+      id: "root",
+      title: "🏆 ShadowLog アプリ体験 & 事業改善 (2026/10/14 最新版)",
+      summary: "発音精度向上、Core UX、学習習慣化、コンテンツ拡充、収益・集客成長の5大軸でプロダクト価値を最大化する",
+      status: "in_progress",
+      priority: "high",
+      notes: "全30テストファイル・189テスト100%通過。クローズドβテスターからのフィードバックに基づき、判定の厳密化と継続モチベーションを追求。",
+      collapsed: false,
+      children: [
+        {
+          id: "branch-quality",
+          title: "🎯 発音・採点精度の向上 (AI Engine)",
+          summary: "「適当に言っても100点になる」問題を完全撲滅し、厳密かつ納得感の高い採点を実現する",
+          status: "completed",
+          priority: "high",
+          notes: "Whisperの過度な文脈補正を排し、音素レベル照合＋口語プロンプト最適化で正確な発音評価を確立。",
+          collapsed: false,
+          children: [
+            {
+              id: "q-azure-poc",
+              title: "🚀 Azure AI Speech 発音評価PoC (FB-046)",
+              summary: "音素(Phoneme)レベルでネイティブ音響モデルと波形照合。適当発音を23点まで適正減点！",
+              status: "completed",
+              priority: "high",
+              notes: "Accuracy(正確さ), Fluency(流暢さ), Completeness(完全性), Prosody(抑揚)の4軸採点＋単語別Mispronunciation判定。F0無料枠(毎月5時間=約3,600回)で運用。",
+              collapsed: false
+            },
+            {
+              id: "q-env-mention",
+              title: "🚀 音響環境スマートメンション (FB-046)",
+              summary: "Azure SNR(雑音比)と入力音量から「マイクが遠い」「周囲ノイズ過多」を自動警告",
+              status: "completed",
+              priority: "high",
+              notes: "理不尽な低スコアを防ぎ、ユーザーに静かな環境やイヤホン装着を優しく促す親切設計。",
+              collapsed: false
+            },
+            {
+              id: "q-whisper-prompt",
+              title: "🚀 Whisper口語プロンプト最適化 (FB-049)",
+              summary: "I'm, you're, don't, can't等の縮約形を自然に文字起こしし、表記ゆれ誤判定を防止",
+              status: "completed",
+              priority: "high",
+              notes: "お題英文そのものは渡さないため、言い間違いや発音抜けの自動補正は100%防止。",
+              collapsed: false
+            },
+            {
+              id: "q-phoneme-carte",
+              title: "💡 苦手音素(Phoneme)カルテ化",
+              summary: "L/R, TH, V/B, 曖昧母音など、日本人特有の脱落・置換音を自動集計して弱点克服へ",
+              status: "idea",
+              priority: "medium",
+              notes: "Words[].Phonemes のスコアをSupabaseに蓄積し、レーダーチャート等で可視化する案。",
+              collapsed: false
+            },
+            {
+              id: "q-voice-mental",
+              title: "💡 声相(せいそう)メンタルコンディション診断",
+              summary: "発声ピッチ・音圧・抑揚から「今日のエネルギー度: 82%」など毎朝のコンディションを測定",
+              status: "idea",
+              priority: "low",
+              notes: "勉強ではなくヘルスケア・メンタルチェックの文脈で声を出させる仕掛け（日常アプリ20選）。",
+              collapsed: false
+            }
+          ]
+        },
+        {
+          id: "branch-ux",
+          title: "🎧 シャドーイング操作性 & 音響 (Core UX)",
+          summary: "音声を耳で聴きながら影のように発声する「真のシャドーイング」を快適に行う環境づくり",
+          status: "completed",
+          priority: "high",
+          notes: "ブラウザ/OSのダッキング防止、Bluetooth機器との完全互換、話速WPM表示、モバイル反転バグ解消完了。",
+          collapsed: false,
+          children: [
+            {
+              id: "ux-2button-recording",
+              title: "🚀 2ボタン録音分割 (FB-026〜028)",
+              summary: "「🗣️ リピーティング(お手本停止)」と「🎧 シャドーイング(イヤホン推奨)」の2系統を全開放",
+              status: "completed",
+              priority: "high",
+              notes: "シャドーイング時は echoCancellation: false でダッキング(音量低下)を防止。",
+              collapsed: false
+            },
+            {
+              id: "ux-bluetooth-primer",
+              title: "🚀 Bluetooth頭切れ防止 (FB-036〜037)",
+              summary: "-74dB無音プライマー通信でAirPods等の休眠を防止＆自動停止タイマーを廃止し手動統一",
+              status: "completed",
+              priority: "high",
+              notes: "長文でも文頭が途切れず、ユーザーの呼吸・ペースで納得いくまで録音できる。",
+              collapsed: false
+            },
+            {
+              id: "ux-dynamic-wpm",
+              title: "🚀 模範音声の動的WPM表示 (FB-022)",
+              summary: "音声の実際の長さと単語数から実効WPMをリアルタイム算出(~78/~130/~156 WPM)",
+              status: "completed",
+              priority: "high",
+              notes: "学習目標としてのネイティブ速度を直感的に把握可能。遅延0ms。",
+              collapsed: false
+            },
+            {
+              id: "ux-chunk-slash",
+              title: "🚀 チャンク青スラッシュ & 3D単語辞書",
+              summary: "意味の塊(/)を太字表示＆単語タップで意味表示＋発音再生できる学習支援UI",
+              status: "completed",
+              priority: "medium",
+              notes: "カラオケハイライトと完璧に連動。",
+              collapsed: false
+            },
+            {
+              id: "ux-mobile-flip",
+              title: "🚀 モバイル単語反転バグ完全解消 (FB-048)",
+              summary: "Android Chrome等の単語カードめくり時の半透明・透過バグをCSSハードウェア加速で修正",
+              status: "completed",
+              priority: "high",
+              notes: "transform-style: preserve-3d; backface-visibility: hidden により滑らか描画を担保。",
+              collapsed: false
+            },
+            {
+              id: "ux-pitch-visualizer",
+              title: "💡 抑揚(ピッチカーブ)波形比較",
+              summary: "模範音声の周波数F0カーブとユーザーの発話ピッチを重ねて抑揚の違いを視覚化",
+              status: "idea",
+              priority: "low",
+              notes: "日本語話者にありがちな「平坦な英語」を、視覚的に直すための高度なUIアイディア。",
+              collapsed: false
+            }
+          ]
+        },
+        {
+          id: "branch-habit",
+          title: "🔥 習慣化 & リテンション (Habit & Retention)",
+          summary: "毎日アプリを開きたくなる仕掛けと、練習終わりの最高の達成感を演出する",
+          status: "completed",
+          priority: "high",
+          notes: "勉強終了サマリー窓の新設により、クロージング体験とSNS口コミ導線を強化完了。",
+          collapsed: false,
+          children: [
+            {
+              id: "h-finish-modal",
+              title: "🚀 「今日の学習を終了」サマリー窓 (FB-047)",
+              summary: "学習時間＋連続ストリーク＋AIコーチ労い＋復習ポイント＋X/Threads/Instagramシェア",
+              status: "completed",
+              priority: "high",
+              notes: "採点結果の「次のフレーズへ」の横に新設。1回の練習の区切りと達成感を最大化。",
+              collapsed: false
+            },
+            {
+              id: "h-streak-push",
+              title: "🚀 ストリーク管理 & Web Push通知 (FB-034)",
+              summary: "連続学習日数のバッジカウント＆毎日定時のリマインド通知機能",
+              status: "completed",
+              priority: "high",
+              notes: "学習習慣が途切れそうな夜に優しく通知する。",
+              collapsed: false
+            },
+            {
+              id: "h-emotional-detox",
+              title: "💡 愚痴・モヤモヤの「スマート英語昇華」",
+              summary: "今日の上司への不満等を日本語で吐き出すと、AIが洗練された皮肉・ユーモア英語に変換して発声",
+              status: "idea",
+              priority: "high",
+              notes: "勉強ではなく「ストレス発散とスッキリ感」を目的に大声でシャドーイングさせるキラー企画。",
+              collapsed: false
+            },
+            {
+              id: "h-daily-battle",
+              title: "💡 Wordle型「日替わり全国共通ワンセンテンス」",
+              summary: "毎朝7時に全ユーザーへ共通の1文を配信。発音スコアとWPMの全国順位が即座に出る1日1回対決",
+              status: "idea",
+              priority: "high",
+              notes: "手軽さとゲーム性でSNS拡散性（「今日のセンテンス全国12位！」）が極めて高い。",
+              collapsed: false
+            },
+            {
+              id: "h-voice-diary",
+              title: "💡 AI音声英語日記 (1日1言ライフログ)",
+              summary: "今日の出来事から美しい英語1文を生成し、声で吹き込んで保存。1年後に去年の声が聴ける",
+              status: "idea",
+              priority: "medium",
+              notes: "自分の声の蓄積が人生の記録（ライフログ資産）になるため、強烈な継続動機になる。",
+              collapsed: false
+            },
+            {
+              id: "h-morning-alarm",
+              title: "💡 声出し強制覚醒アラーム",
+              summary: "指定の英語フレーズを明瞭にシャドーイングしないと音が止まらない朝のルーティン機能",
+              status: "idea",
+              priority: "low",
+              notes: "ベッドの中で声を出すことで強制的に脳を覚醒させる実用ツール連動。",
+              collapsed: false
+            }
+          ]
+        },
+        {
+          id: "branch-content",
+          title: "📚 コンテンツ & パーソナライズ (Content)",
+          summary: "飽きのこない多様な例文と、受講者の業務・関心・弱点に最適化された問題配信",
+          status: "completed",
+          priority: "high",
+          notes: "TOEIC 500/700/850換算を完了し、語彙難易度のブレを完全解決。",
+          collapsed: false,
+          children: [
+            {
+              id: "c-toeic-calibration",
+              title: "🚀 TOEIC 500/700/850 厳格語彙換算 (FB-049)",
+              summary: "初級は最頻出2,000語上限・-tion/-ity抽象語完全禁止。レベルに忠実な日常文を保証",
+              status: "completed",
+              priority: "high",
+              notes: "初級500点/中級700点/上級850点に完全キャリブレーション。生成前のAI自己検証ステップ付。",
+              collapsed: false
+            },
+            {
+              id: "c-sentence-bank",
+              title: "🚀 3,600文問題バンク & 週10%入替 (FB-020)",
+              summary: "4大ジャンル×3難易度=3,600文。DB配信で0.0秒遷移＆API出題原価0円を実現",
+              status: "completed",
+              priority: "high",
+              notes: "利用上位10%を毎週自動ローテーションし、鮮度を保つ。",
+              collapsed: false
+            },
+            {
+              id: "c-custom-words",
+              title: "🚀 3単語カスタム例文生成 (FB-035)",
+              summary: "好きな英単語やトピックを3つ入力して自分専用の例文を生成(プラン別制限あり)",
+              status: "completed",
+              priority: "medium",
+              notes: "「自分の現場で使う専門用語」を練習したいユーザーのニーズを満たす。",
+              collapsed: false
+            },
+            {
+              id: "c-seasonal-trend",
+              title: "🚀 季節(四季) & 現代ビジネストレンド・バズワード排除 (FB-038)",
+              summary: "四半期Q1〜Q4のトピックを反映しつつ、work-life harmony等の不自然なバズワードを排除",
+              status: "completed",
+              priority: "medium",
+              notes: "教科書英語ではない「今すぐ現場で使える」実践英語を提供。",
+              collapsed: false
+            },
+            {
+              id: "c-tinder-swipe",
+              title: "💡 Tinder型「言いたい/言わない」直感スワイプ",
+              summary: "日常フレーズをスワイプ仕分け。「言いたい！」と選んだ文だけが自分の練習山札に溜まる",
+              status: "idea",
+              priority: "medium",
+              notes: "自分事化されたフレーズのみを練習できるため、教材の押し付け感をゼロにできる。",
+              collapsed: false
+            },
+            {
+              id: "c-dialogue-mode",
+              title: "💡 対話型(2人掛け合い)シャドーイング",
+              summary: "「Aさんの質問 ➔ Bさんの回答」を交互にシャドーイングするロールプレイ形式",
+              status: "idea",
+              priority: "low",
+              notes: "単文の読み上げから、実際のミーティング会話に近い臨場感あるトレーニングへ進化。",
+              collapsed: false
+            }
+          ]
+        },
+        {
+          id: "branch-growth",
+          title: "📈 集客・収益化 & 運営 (Growth & Business)",
+          summary: "テスターから有料会員（Basic/Pro）への転換と、自立的な収益化の確立",
+          status: "completed",
+          priority: "high",
+          notes: "損益分岐点（Basicわずか5〜6名）の超高収益モデル＋Threads自動投稿24/7稼働中。",
+          collapsed: false,
+          children: [
+            {
+              id: "g-threads-cron",
+              title: "🚀 Threads 24/7 自動投稿ワークフロー (FB-048)",
+              summary: "GitHub Actions cronにより30分間隔で自律投稿。3投稿に1回URLリンクでアルゴリズム最適化",
+              status: "completed",
+              priority: "high",
+              notes: ".threads-queue.json を自動更新し、日中・夜間問わず完全自動で発信・集客。",
+              collapsed: false
+            },
+            {
+              id: "g-stripe-billing",
+              title: "🚀 Stripe決済 & 3段階チケット制",
+              summary: "Guest(無料2問) / Basic(月500円/使い放題) / Pro(月1480円/使い放題)のインフラ完成",
+              status: "completed",
+              priority: "high",
+              notes: "月間固定費1,650円に対して、黒字化ハードルを極小化（有料会員5〜6名で回収）。",
+              collapsed: false
+            },
+            {
+              id: "g-waitlist-lp",
+              title: "🚀 先行登録LP & 1問デモ (/waitlist)",
+              summary: "登録不要で1問シャドーイングを体験できるバイラルLP＆14日間無料クーポン自動発行",
+              status: "completed",
+              priority: "high",
+              notes: "Threads等のSNS集客からの着地先として稼働中。",
+              collapsed: false
+            },
+            {
+              id: "g-admin-risk",
+              title: "🚀 顧客採算リスク & 統括ダッシュボードタブ統合 (/admin)",
+              summary: "API利用コストと会費の差額を自動計算し、逆ざやリスクを検知。統括ダッシュボードもタブ統合",
+              status: "completed",
+              priority: "medium",
+              notes: "メンバーごとの日次利用回数折れ線グラフも完備。",
+              collapsed: false
+            },
+            {
+              id: "g-logic-tree",
+              title: "🚀 思考整理ロジックツリースタジオ (FB-050)",
+              summary: "アプリ改善アイディアと技術論点を5大ブランチで可視化・編集・localStorage保存",
+              status: "completed",
+              priority: "medium",
+              notes: "統括ダッシュボードからワンクリックでアクセス可能。",
+              collapsed: false
+            },
+            {
+              id: "g-ugc-campaign",
+              title: "💡 #今日のシャドーイング 口コミ拡散企画",
+              summary: "勉強終了窓からのSNSシェアで「今月も継続中！」のUGCを増やし自然流入を獲得",
+              status: "idea",
+              priority: "medium",
+              notes: "シェアしたユーザーに限定バッジや特典を付与する仕組みの検討。",
+              collapsed: false
+            }
+          ]
+        }
+      ]
+    };
+
+    // State Variables
+    let treeData = null;
+    let selectedNodeId = null;
+    let scale = 1.0;
+    let panX = 40;
+    let panY = 80;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let currentSearchTerm = "";
+    let currentFilterStatus = "all";
+
+    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v1";
+
+    // Initialize
+    function init() {
+      loadData();
+      setupEventListeners();
+      renderTree();
+      updateZoomDisplay();
+    }
+
+    // Load from LocalStorage or Default
+    function loadData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          treeData = JSON.parse(saved);
+        } else {
+          treeData = JSON.parse(JSON.stringify(INITIAL_TREE_DATA));
+        }
+      } catch (e) {
+        console.warn("Failed to load saved tree, using defaults:", e);
+        treeData = JSON.parse(JSON.stringify(INITIAL_TREE_DATA));
+      }
+    }
+
+    // Save to LocalStorage
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(treeData));
+      } catch (e) {
+        console.error("Failed to save tree:", e);
+      }
+    }
+
+    // Reset Data
+    function resetData() {
+      if (confirm("ロジックツリーを初期データにリセットしますか？\n（編集した内容は破棄されます）")) {
+        treeData = JSON.parse(JSON.stringify(INITIAL_TREE_DATA));
+        saveData();
+        closeDrawer();
+        renderTree();
+      }
+    }
+
+    // Find node by ID (Recursive)
+    function findNode(id, node = treeData) {
+      if (node.id === id) return node;
+      if (node.children) {
+        for (const child of node.children) {
+          const found = findNode(id, child);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    // Find parent of a node
+    function findParentNode(id, node = treeData) {
+      if (node.children) {
+        for (const child of node.children) {
+          if (child.id === id) return node;
+          const found = findParentNode(id, child);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    // Toggle Collapse
+    function toggleCollapse(nodeId, e) {
+      e.stopPropagation();
+      const node = findNode(nodeId);
+      if (node && node.children && node.children.length > 0) {
+        node.collapsed = !node.collapsed;
+        saveData();
+        renderTree();
+      }
+    }
+
+    function expandAll() {
+      function traverse(n) {
+        n.collapsed = false;
+        if (n.children) n.children.forEach(traverse);
+      }
+      traverse(treeData);
+      saveData();
+      renderTree();
+    }
+
+    function collapseToRoots() {
+      function traverse(n, depth = 0) {
+        if (depth >= 1) n.collapsed = true;
+        if (n.children) n.children.forEach(c => traverse(c, depth + 1));
+      }
+      traverse(treeData, 0);
+      saveData();
+      renderTree();
+    }
+
+    // Status Styling Helpers
+    function getStatusBadge(status) {
+      switch (status) {
+        case "completed":
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">🚀 実装完了</span>`;
+        case "in_progress":
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-200 dark:border-blue-800">⚡️ 進行中</span>`;
+        case "idea":
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800">💡 検討・アイディア</span>`;
+        case "pending":
+        default:
+          return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">📌 課題・保留</span>`;
+      }
+    }
+
+    function getPriorityTag(priority) {
+      switch (priority) {
+        case "high":
+          return `<span class="text-[9px] font-extrabold text-rose-600 dark:text-rose-400">P1 高</span>`;
+        case "medium":
+          return `<span class="text-[9px] font-bold text-amber-600 dark:text-amber-400">P2 中</span>`;
+        case "low":
+        default:
+          return `<span class="text-[9px] font-medium text-slate-400">P3 低</span>`;
+      }
+    }
+
+    // Render Tree Recursively into DOM
+    function renderTree() {
+      const container = document.getElementById("nodesContainer");
+      container.innerHTML = "";
+
+      const rootEl = createNodeDOM(treeData, 0);
+      container.appendChild(rootEl);
+
+      // Re-draw connection SVG curves after DOM render
+      requestAnimationFrame(() => {
+        drawConnections();
+      });
+    }
+
+    function createNodeDOM(node, depth = 0) {
+      const isRoot = depth === 0;
+      const isSelected = selectedNodeId === node.id;
+      const hasChildren = node.children && node.children.length > 0;
+      const isVisible = checkVisibility(node);
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex items-center gap-12 my-2";
+      wrapper.id = `wrapper-${node.id}`;
+
+      // Node Card Element
+      const card = document.createElement("div");
+      card.id = `node-${node.id}`;
+      card.onclick = () => openDrawer(node.id);
+
+      const isMatch = currentSearchTerm && (
+        node.title.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+        (node.summary && node.summary.toLowerCase().includes(currentSearchTerm.toLowerCase()))
+      );
+
+      // Width and padding based on depth
+      const widthClass = isRoot ? "w-80" : depth === 1 ? "w-72" : "w-64";
+      const bgClass = isRoot 
+        ? "bg-gradient-to-br from-indigo-900 to-slate-900 text-white shadow-xl shadow-indigo-950/30 border-2 border-indigo-500/40"
+        : isSelected
+        ? "bg-white dark:bg-slate-900 ring-2 ring-indigo-500 shadow-xl border-transparent"
+        : "bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:border-slate-300 dark:hover:border-slate-700";
+
+      const highlightClass = isMatch ? "ring-2 ring-amber-400 shadow-lg scale-102" : "";
+      const opacityClass = !isVisible ? "opacity-30" : "opacity-100";
+
+      card.className = `tree-node ${widthClass} p-3.5 rounded-2xl relative cursor-pointer ${bgClass} ${highlightClass} ${opacityClass}`;
+
+      // Card Inner Content
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-2 mb-1.5">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            ${isRoot ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/30 text-indigo-300">CORE MISSION</span>` : getStatusBadge(node.status)}
+            ${!isRoot && node.priority ? getPriorityTag(node.priority) : ""}
+          </div>
+          ${hasChildren ? `
+            <button 
+              onclick="toggleCollapse('${node.id}', event)"
+              class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${isRoot ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'} hover:scale-110 transition shrink-0"
+              title="${node.collapsed ? '展開する' : '折りたたむ'}"
+            >
+              ${node.collapsed ? `+${node.children.length}` : '−'}
+            </button>
+          ` : `
+            <button 
+              onclick="promptAddChild('${node.id}', event)"
+              class="w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800 transition shrink-0"
+              title="子アイディアを追加"
+            >
+              ＋
+            </button>
+          `}
+        </div>
+
+        <h3 class="text-xs sm:text-sm font-bold tracking-tight line-clamp-2 leading-snug ${isRoot ? 'text-white' : 'text-slate-900 dark:text-white'}">
+          ${node.title}
+        </h3>
+
+        ${node.summary ? `
+          <p class="text-[11px] mt-1 leading-relaxed line-clamp-2 ${isRoot ? 'text-indigo-200/80' : 'text-slate-500 dark:text-slate-400'}">
+            ${node.summary}
+          </p>
+        ` : ''}
+      `;
+
+      wrapper.appendChild(card);
+
+      // Render Children Container if expanded
+      if (hasChildren && !node.collapsed) {
+        const childrenContainer = document.createElement("div");
+        childrenContainer.className = "flex flex-col gap-3 relative";
+        childrenContainer.id = `children-${node.id}`;
+
+        node.children.forEach(child => {
+          const childDOM = createNodeDOM(child, depth + 1);
+          childrenContainer.appendChild(childDOM);
+        });
+
+        wrapper.appendChild(childrenContainer);
+      }
+
+      return wrapper;
+    }
+
+    function checkVisibility(node) {
+      if (currentFilterStatus === "all") return true;
+      if (node.id === "root") return true;
+      if (node.status === currentFilterStatus) return true;
+      if (node.children) {
+        return node.children.some(c => checkVisibility(c));
+      }
+      return false;
+    }
+
+    // Draw Smooth Bezier Curves between Parent and Children
+    function drawConnections() {
+      const svg = document.getElementById("connectionSvg");
+      svg.innerHTML = "";
+
+      const canvasRect = document.getElementById("nodesContainer").getBoundingClientRect();
+
+      function connectNodes(node) {
+        if (!node.children || node.collapsed) return;
+
+        const parentCard = document.getElementById(`node-${node.id}`);
+        if (!parentCard) return;
+
+        const parentRect = parentCard.getBoundingClientRect();
+        // Right middle anchor point of parent card
+        const startX = (parentRect.right - canvasRect.left) / scale;
+        const startY = (parentRect.top + parentRect.height / 2 - canvasRect.top) / scale;
+
+        node.children.forEach(child => {
+          const childCard = document.getElementById(`node-${child.id}`);
+          if (!childCard) return;
+
+          const childRect = childCard.getBoundingClientRect();
+          // Left middle anchor point of child card
+          const endX = (childRect.left - canvasRect.left) / scale;
+          const endY = (childRect.top + childRect.height / 2 - canvasRect.top) / scale;
+
+          // Bezier control points for smooth S-curve
+          const deltaX = (endX - startX) * 0.55;
+          const d = `M ${startX} ${startY} C ${startX + deltaX} ${startY}, ${endX - deltaX} ${endY}, ${endX} ${endY}`;
+
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", d);
+          path.setAttribute("fill", "none");
+          path.setAttribute("stroke", child.status === "completed" ? "#10b981" : child.status === "in_progress" ? "#6366f1" : "#94a3b8");
+          path.setAttribute("stroke-width", "2");
+          path.setAttribute("stroke-opacity", "0.65");
+          path.setAttribute("stroke-dasharray", child.status === "idea" ? "4,4" : "none");
+
+          svg.appendChild(path);
+
+          // Recursively connect children
+          connectNodes(child);
+        });
+      }
+
+      connectNodes(treeData);
+    }
+
+    // Pan & Zoom Logic
+    function updateTransform() {
+      const canvas = document.getElementById("treeCanvas");
+      canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      updateZoomDisplay();
+      requestAnimationFrame(drawConnections);
+    }
+
+    function updateZoomDisplay() {
+      document.getElementById("zoomDisplay").textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    function zoomIn() {
+      scale = Math.min(2.0, scale + 0.15);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      scale = Math.max(0.4, scale - 0.15);
+      updateTransform();
+    }
+
+    function resetView() {
+      scale = 0.95;
+      panX = 60;
+      panY = 60;
+      updateTransform();
+    }
+
+    function setupEventListeners() {
+      const viewport = document.getElementById("canvasViewport");
+
+      viewport.addEventListener("mousedown", (e) => {
+        // Only drag if clicking background or container, not nodes/buttons
+        if (e.target.closest(".tree-node") || e.target.closest("button") || e.target.closest("aside") || e.target.closest("input")) {
+          return;
+        }
+        isDragging = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        updateTransform();
+      });
+
+      window.addEventListener("mouseup", () => {
+        isDragging = false;
+      });
+
+      viewport.addEventListener("wheel", (e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey) {
+          e.preventDefault();
+          const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+          scale = Math.max(0.35, Math.min(2.2, scale * zoomFactor));
+          updateTransform();
+        } else {
+          // Normal scroll pans canvas
+          panX -= e.deltaX * 0.8;
+          panY -= e.deltaY * 0.8;
+          updateTransform();
+        }
+      }, { passive: false });
+
+      // Window resize re-draws curves
+      window.addEventListener("resize", () => {
+        drawConnections();
+      });
+    }
+
+    // Drawer / Detail Edit Logic
+    function openDrawer(nodeId) {
+      selectedNodeId = nodeId;
+      const node = findNode(nodeId);
+      if (!node) return;
+
+      const drawer = document.getElementById("detailDrawer");
+      drawer.classList.remove("translate-x-full");
+
+      document.getElementById("drawerBadge").innerHTML = getStatusBadge(node.status);
+      document.getElementById("editTitle").value = node.title || "";
+      document.getElementById("editStatus").value = node.status || "idea";
+      document.getElementById("editPriority").value = node.priority || "medium";
+      document.getElementById("editSummary").value = node.summary || "";
+      document.getElementById("editNotes").value = node.notes || "";
+
+      // Root cannot be deleted
+      document.getElementById("deleteNodeBtn").style.display = node.id === "root" ? "none" : "block";
+
+      renderTree();
+    }
+
+    function closeDrawer() {
+      selectedNodeId = null;
+      document.getElementById("detailDrawer").classList.add("translate-x-full");
+      renderTree();
+    }
+
+    function saveNodeDetails() {
+      if (!selectedNodeId) return;
+      const node = findNode(selectedNodeId);
+      if (!node) return;
+
+      node.title = document.getElementById("editTitle").value.trim() || "無題のノード";
+      node.status = document.getElementById("editStatus").value;
+      node.priority = document.getElementById("editPriority").value;
+      node.summary = document.getElementById("editSummary").value.trim();
+      node.notes = document.getElementById("editNotes").value.trim();
+
+      saveData();
+      renderTree();
+      document.getElementById("drawerBadge").innerHTML = getStatusBadge(node.status);
+    }
+
+    function promptAddChild(parentId, e) {
+      if (e) e.stopPropagation();
+      const parent = findNode(parentId);
+      if (!parent) return;
+
+      const title = prompt(`「${parent.title}」の配下に新しいアイディアや施策を追加します。\nタイトルを入力してください:`);
+      if (title && title.trim()) {
+        const newChild = {
+          id: `node-${Date.now()}`,
+          title: title.trim(),
+          summary: "",
+          status: "idea",
+          priority: "medium",
+          notes: "",
+          collapsed: false
+        };
+        if (!parent.children) parent.children = [];
+        parent.children.push(newChild);
+        parent.collapsed = false;
+
+        saveData();
+        renderTree();
+        openDrawer(newChild.id);
+      }
+    }
+
+    function addChildNodeFromDrawer() {
+      if (!selectedNodeId) return;
+      promptAddChild(selectedNodeId);
+    }
+
+    function deleteCurrentNode() {
+      if (!selectedNodeId || selectedNodeId === "root") return;
+      const node = findNode(selectedNodeId);
+      if (!node) return;
+
+      if (confirm(`ノード「${node.title}」とその配下のアイディアを削除しますか？`)) {
+        const parent = findParentNode(selectedNodeId);
+        if (parent && parent.children) {
+          parent.children = parent.children.filter(c => c.id !== selectedNodeId);
+          saveData();
+          closeDrawer();
+          renderTree();
+        }
+      }
+    }
+
+    // Filter & Search
+    function handleSearch(term) {
+      currentSearchTerm = term.trim();
+      renderTree();
+    }
+
+    function filterByStatus(status) {
+      currentFilterStatus = status;
+      renderTree();
+    }
+
+    // Export & Import
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(treeData, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `shadowlog_improvement_tree_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function triggerImport() {
+      document.getElementById("importInput").click();
+    }
+
+    function handleImportFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && parsed.id && parsed.children) {
+            treeData = parsed;
+            saveData();
+            renderTree();
+            alert("ロジックツリーを正常に読み込みました！");
+          } else {
+            alert("無効なロジックツリーデータです。JSONの構造をご確認ください。");
+          }
+        } catch (err) {
+          alert("JSONの読み込みに失敗しました: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    // Run on Mount
+    window.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>

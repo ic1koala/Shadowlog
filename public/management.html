@@ -33,6 +33,9 @@
       </div>
 
       <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+        <a href="logic-tree.html" target="_blank" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-300 font-bold hover:bg-indigo-100 transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+          <span>🌳</span> 改善ロジックツリー
+        </a>
         <a href="javascript:void(0)" onclick="openSimulation()" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold hover:bg-emerald-100 transition shadow-xs flex items-center gap-1.5 cursor-pointer">
           <span>💰</span> 収益試算シミュレーター
         </a>
@@ -503,10 +506,10 @@
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-            <h3 class="text-base font-bold text-slate-900">3. AI・音響パイプライン ＆ コスト・キャパシティ構造（2026/10/09 再計算版）</h3>
+            <h3 class="text-base font-bold text-slate-900">3. AI・音響パイプライン ＆ コスト・キャパシティ構造（2026/10/14 最新版）</h3>
           </div>
           <span class="text-xs font-mono text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200">
-            2026/10/09 最新仕様（FB-038迄）反映済
+            2026/10/14 最新仕様（FB-050迄・TOEIC/Azure/Threads自動化）反映済
           </span>
         </div>
 
@@ -717,6 +720,11 @@
           { id: "s2-3", text: "【FB-033】習慣化Web Pushリマインド通知（Service Worker通知＋練習済み日のスマートスキップ）", done: true },
           { id: "s2-19", text: "【FB-035】✨ 3単語カスタム例文生成機能（無料累計2回 / Base 1日3回 / Pro 1日10回制限）", done: true },
           { id: "s2-20", text: "【FB-036〜038】Bluetooth頭切れ防止無音プライマー・録音強制終了タイマー廃止・バズワード排除＆日常会話プロンプト刷新", done: true },
+          { id: "s2-21", text: "【FB-046】Azure AI Speech 音素レベル発音評価PoC ＆ S/N比音響環境メンション実装（管理者モード）", done: true },
+          { id: "s2-22", text: "【FB-047】「今日の学習を終了する」ボタン ＆ セッション完了サマリー窓・3大SNSシェア（𝕏/Threads/Instagram）対応", done: true },
+          { id: "s2-23", text: "【FB-048】モバイル単語反転バグ解消 ＆ GitHub Actions による24時間365日Threads自動投稿（30分間隔）", done: true },
+          { id: "s2-24", text: "【FB-049】3難易度レベルのTOEIC 500 / 700 / 850 厳格語彙換算キャリブレーション ＆ Whisper口語プロンプト最適化", done: true },
+          { id: "s2-25", text: "【FB-050】思考整理・アプリ改善ロジックツリースタジオ新設（/logic-tree.html / ダッシュボード連携）", done: true },
           { id: "s2-4", text: "SNSシェア用OGP画像自動生成機能（「#今日のシャドーイング」拡散用）", done: false },
           { id: "s2-5", text: "βテスター（30〜50名拡大）への1on1ヒアリング・価格納得感（月500円/1,480円）の検証", done: false }
         ]
@@ -731,7 +739,7 @@
           { id: "s3-1", text: "Zenn/Note開発ストーリー執筆「シャドテンが高すぎてAI版を個人開発した話」", done: false },
           { id: "s3-2", text: "Product Hunt & 各種SaaSディレクトリへの掲載・ローンチ", done: false },
           { id: "s3-3", text: "英語学習系マイクロインフルエンサーへの無償Pro体験オファー", done: false },
-          { id: "s3-4", text: "SEO用比較ランディングページ（シャドテン vs ShadowLog 等）の公開", done: false },
+          { id: "s3-4", text: "SEO用比較ランディングページ（/compare/shadoten: シャドテン vs ShadowLog 等）の公開", done: true },
           { id: "s3-5", text: "初期ローンチ限定「初月半額」または「年払い特割」キャンペーン実施", done: false }
         ]
       },
@@ -751,7 +759,7 @@
 
     let stages = [];
     let currentFilter = 'all';
-    const STORAGE_KEY = 'shadowlog_mgmt_stages_v20261009';
+    const STORAGE_KEY = 'shadowlog_mgmt_stages_v20261014';
 
     function init() {
       const saved = localStorage.getItem(STORAGE_KEY);
