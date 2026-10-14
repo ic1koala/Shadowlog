@@ -521,6 +521,15 @@
               collapsed: false
             },
             {
+              id: "c-persona-preload-hybrid",
+              title: "💡 アイデア3: アプリ起動時事前プリロード＆ストックハイブリッド出題 (FB-053)",
+              summary: "アプリ起動時に当日のペルソナ枠（Base: 5問、Pro: 15問）をバックグラウンド事前生成。スタート待機0.0秒＆枠終了後はストック移行で原価ガード",
+              status: "idea",
+              priority: "high",
+              notes: "技術相談役との仕様確定：都度生成の待ち時間（2〜3秒）を完全排除。Baseは1日5問、Proは1日15問までペルソナ特化、以降は設定カテゴリの3,600問ストックから出題。",
+              collapsed: false
+            },
+            {
               id: "c-custom-words",
               title: "🚀 3単語カスタム例文生成 (FB-035)",
               summary: "好きな英単語やトピックを3つ入力して自分専用の例文を生成(プラン別制限あり)",
@@ -569,11 +578,11 @@
           children: [
             {
               id: "g-plan-differentiation",
-              title: "💡 新・3段階会員プラン設計 (無料 / 一般500円 / プロ1480円)",
-              summary: "無料と一般(500円)の明確な差別化と、プロ(1480円)の1日1回プレミアムAI高精度レビュー",
+              title: "💡 新・3段階会員プラン設計 (無料 / 一般500円 / プロ1,000円)",
+              summary: "無料と一般(500円)の明確な差別化と、プロ(1,000円)のペルソナ15問/日＋長文＆AIレビュー",
               status: "idea",
               priority: "high",
-              notes: "無料ユーザーは1日2問・週最大5問(月曜復活)＆問題バンク0円配信。2週目月曜に登録促進ポップアップ。一般は無制限＋クラウド永続。プロは長文＋AI高精度レビュー1日1回(検討中)。",
+              notes: "プロ価格を1,000円に改定。ペルソナ出題枠はBase: 5問/日、Pro: 15問/日。上限後は問題バンク(ストック)から出題し原価ゼロ＆使い放題を両立。アプリ起動時事前プリロードで待機0.0秒。",
               collapsed: false,
               children: [
                 {
@@ -626,12 +635,21 @@
                 {
                   id: "plan-base",
                   title: "⚡️ 一般ユーザー (Base ¥500/月)",
-                  summary: "短文シャドーイング無制限使い放題。クラウド永続保存。ペルソナ初回登録＆単語帳解禁",
+                  summary: "ペルソナ特化1日5問＋以降ストック無制限。クラウド永続保存。ペルソナ初回登録＆単語帳解禁",
                   status: "idea",
                   priority: "high",
-                  notes: "ワンコインの手軽さで使い放題。問題バンク運用によりAPI出題原価0円のため営業利益率70%超を維持可能。",
+                  notes: "ワンコインの手軽さで使い放題。1日5問ペルソナ＋以降既存ストックでAI原価月26円以下、営業利益率80%超を維持可能。",
                   collapsed: false,
                   children: [
+                    {
+                      id: "base-persona-quota",
+                      title: "🎯 1日5問ペルソナ反映 ＆ 6問目以降ストック出題（アイデア3: 事前プリロード）",
+                      summary: "1日5問までペルソナ特化AI文を出題。6問目以降は学習設定カテゴリの既存ストックから出題。アプリ起動時に事前準備し待機0.0秒",
+                      status: "idea",
+                      priority: "high",
+                      notes: "アイデア3採用：アプリを開いた瞬間に裏でバックグラウンド生成・キャッシュ。スタートボタン待機時間ゼロを実現。",
+                      collapsed: false
+                    },
                     {
                       id: "base-persona-onboarding",
                       title: "🎯 一般昇格時：ペルソナ初回登録＆解放フロー",
@@ -676,7 +694,7 @@
                       summary: "1日何問でも好きなだけ練習可能。英語学習アプリ業界最強のコスパ",
                       status: "idea",
                       priority: "high",
-                      notes: "出題は問題バンク＋先読み0.0秒遷移でサクサク練習できる。",
+                      notes: "ペルソナ枠終了後は問題バンク(3,600問)から0.0秒遷移でサクサク練習できる。",
                       collapsed: false
                     },
                     {
@@ -701,13 +719,22 @@
                 },
                 {
                   id: "plan-pro",
-                  title: "👑 プロユーザー (Pro ¥1,480/月)",
-                  summary: "プロ長文機能(Passage) ＋ 【検討中】AI高精度レビューを「1日1回」受講可能",
+                  title: "👑 プロユーザー (Pro ¥1,000/月)",
+                  summary: "ペルソナ特化1日15問＋以降ストック ＋ プロ長文(Passage) ＋ AI高精度レビュー1日1回",
                   status: "idea",
                   priority: "high",
-                  notes: "一般機能に加えて、スピーチ・プレゼン特化の長文練習と1日1回限定のプレミアムAI添削。",
+                  notes: "価格を1,000円に改定。ペルソナ1日15問枠(アプリ起動時事前ロード)＋長文スピーチ＋1日1回プレミアムAI添削。",
                   collapsed: false,
                   children: [
+                    {
+                      id: "pro-persona-quota",
+                      title: "🎯 1日15問ペルソナ反映 ＆ 16問目以降ストック出題（アイデア3: 事前プリロード）",
+                      summary: "1日15問までペルソナ特化AI文/長文を出題。16問目以降は学習設定カテゴリの既存ストックから出題。アプリ起動時に事前準備し待機0.0秒",
+                      status: "idea",
+                      priority: "high",
+                      notes: "アイデア3採用：アプリ起動時に裏でバッチプリロード。スタートボタン待機時間0.0秒。15問以降はストック移行で原価天井を厳格ガード。",
+                      collapsed: false
+                    },
                     {
                       id: "pro-passage",
                       title: "🎙️ プロ長文機能 (Passage Mode)",
@@ -747,6 +774,64 @@
               priority: "high",
               notes: "月間固定費1,650円に対して、黒字化ハードルを極小化（有料会員5〜6名で回収）。",
               collapsed: false
+            },
+            {
+              id: "g-payment-methods",
+              title: "💳 多彩な決済手段 ＆ 支払いサイクル設計 (新設・検討)",
+              summary: "クレジットカード(Stripe安全保存)に加え、PayPay(3ヶ月まとめ)やApple/Google Payに対応",
+              status: "idea",
+              priority: "high",
+              notes: "スマホ決済の普及率を捉え、クレカ不要層の取り込みと、スマホワンタップ決済によるCVR最大化を狙う。",
+              collapsed: false,
+              children: [
+                {
+                  id: "pay-credit-security",
+                  title: "🔒 クレジットカード決済 ＆ Stripe安全保存表示",
+                  summary: "世界最高水準(PCI-DSS Level 1)のStripeで暗号化保存される安心感をUI上で明示",
+                  status: "idea",
+                  priority: "high",
+                  notes: "「カード情報は世界標準の決済機関Stripeに直接暗号化保存され、当アプリには保存されません」というセキュリティバッジと鍵アイコンを表示して信頼性を担保。月額自動更新。",
+                  collapsed: false
+                },
+                {
+                  id: "pay-paypay-quarterly",
+                  title: "📱 PayPay決済 (3ヶ月まとめ払い)",
+                  summary: "3ヶ月ごとの一括支払い(一般: ¥1,500 / プロ: ¥4,440)。クレカ未保持層の取り込み",
+                  status: "idea",
+                  priority: "high",
+                  notes: "PayPayの決済特性に合わせ「3ヶ月まとめ」で前受。毎月の更新離脱(チャーン)を防ぎ、LTVを確実に確保する高収益設計。",
+                  collapsed: false,
+                  children: [
+                    {
+                      id: "paypay-cycle-rules",
+                      title: "📅 3ヶ月サイクルの期限管理 ＆ 更新リマインド",
+                      summary: "決済から90日間の有効期限管理。期限7日前と前日にWeb Pushやメールで更新案内を自動通知",
+                      status: "idea",
+                      priority: "high",
+                      notes: "未更新時は自動的に無料プラン（1日2問制限）へフォールバックし、いつでも再開可能とする。",
+                      collapsed: false
+                    },
+                    {
+                      id: "paypay-integration-tech",
+                      title: "⚙️ PayPay連携方式 (Stripe PayPay / 直接連携)",
+                      summary: "Stripe経由のPayPay決済、または国内決済ゲートウェイの接続検証",
+                      status: "idea",
+                      priority: "medium",
+                      notes: "QRコード表示またはスマホPayPayアプリ自動ディープリンクで即時決済完了。",
+                      collapsed: false
+                    }
+                  ]
+                },
+                {
+                  id: "pay-mobile-wallets",
+                  title: "⚡️ Apple Pay ＆ Google Pay (ワンタップ決済)",
+                  summary: "Face ID / Touch IDでカード入力不要の即時決済。スマホからの離脱を最小化",
+                  status: "idea",
+                  priority: "high",
+                  notes: "Stripe Elements / Checkoutの標準ウォレット機能を有効化。SafariではApple Pay、Chrome/AndroidではGoogle Payが自動出現。",
+                  collapsed: false
+                }
+              ]
             },
             {
               id: "g-waitlist-lp",
@@ -801,7 +886,7 @@
     let currentSearchTerm = "";
     let currentFilterStatus = "all";
 
-    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v4";
+    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v6";
 
     // Initialize
     function init() {

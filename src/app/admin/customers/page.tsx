@@ -24,6 +24,7 @@ import {
   Globe,
   BookOpen,
   LayoutDashboard,
+  GitBranch,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
@@ -32,8 +33,9 @@ import { IPComplianceSection } from "@/components/features/settings/IPCompliance
 import { CustomerUsageModal } from "@/components/features/admin/CustomerUsageModal";
 import { ManagementDashboardSection } from "@/components/features/admin/ManagementDashboardSection";
 import { ThreadsPerformanceSection } from "@/components/features/admin/ThreadsPerformanceSection";
+import { LogicTreeSection } from "@/components/features/admin/LogicTreeSection";
 
-type AdminTab = "customers" | "compliance" | "management" | "threads";
+type AdminTab = "customers" | "compliance" | "management" | "threads" | "logic_tree";
 type PlanFilter = "all" | "free" | "base" | "pro";
 type SortOption =
   | "newest"
@@ -456,7 +458,7 @@ export default function AdminCustomersPage() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         {/* Navigation Tabs: 顧客管理 vs コンプライアンス監査ログ */}
-        <div className="flex items-center gap-2 border-b border-border pb-3">
+        <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 [&>button]:shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button
             onClick={() => setActiveTab("customers")}
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs ${
@@ -540,6 +542,27 @@ export default function AdminCustomersPage() {
               }`}
             >
               リアルタイム
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("logic_tree")}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs ${
+              activeTab === "logic_tree"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <GitBranch className="w-4 h-4 text-violet-500" />
+            <span>ロジックツリー</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
+                activeTab === "logic_tree"
+                  ? "bg-white/20 text-white"
+                  : "bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/20"
+              }`}
+            >
+              改善整理
             </span>
           </button>
         </div>
@@ -1372,6 +1395,10 @@ export default function AdminCustomersPage() {
         ) : activeTab === "management" ? (
           <div className="space-y-6">
             <ManagementDashboardSection />
+          </div>
+        ) : activeTab === "logic_tree" ? (
+          <div className="space-y-6">
+            <LogicTreeSection />
           </div>
         ) : (
           <div className="space-y-6">

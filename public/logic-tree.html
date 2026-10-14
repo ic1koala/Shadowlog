@@ -749,6 +749,64 @@
               collapsed: false
             },
             {
+              id: "g-payment-methods",
+              title: "💳 多彩な決済手段 ＆ 支払いサイクル設計 (新設・検討)",
+              summary: "クレジットカード(Stripe安全保存)に加え、PayPay(3ヶ月まとめ)やApple/Google Payに対応",
+              status: "idea",
+              priority: "high",
+              notes: "スマホ決済の普及率を捉え、クレカ不要層の取り込みと、スマホワンタップ決済によるCVR最大化を狙う。",
+              collapsed: false,
+              children: [
+                {
+                  id: "pay-credit-security",
+                  title: "🔒 クレジットカード決済 ＆ Stripe安全保存表示",
+                  summary: "世界最高水準(PCI-DSS Level 1)のStripeで暗号化保存される安心感をUI上で明示",
+                  status: "idea",
+                  priority: "high",
+                  notes: "「カード情報は世界標準の決済機関Stripeに直接暗号化保存され、当アプリには保存されません」というセキュリティバッジと鍵アイコンを表示して信頼性を担保。月額自動更新。",
+                  collapsed: false
+                },
+                {
+                  id: "pay-paypay-quarterly",
+                  title: "📱 PayPay決済 (3ヶ月まとめ払い)",
+                  summary: "3ヶ月ごとの一括支払い(一般: ¥1,500 / プロ: ¥4,440)。クレカ未保持層の取り込み",
+                  status: "idea",
+                  priority: "high",
+                  notes: "PayPayの決済特性に合わせ「3ヶ月まとめ」で前受。毎月の更新離脱(チャーン)を防ぎ、LTVを確実に確保する高収益設計。",
+                  collapsed: false,
+                  children: [
+                    {
+                      id: "paypay-cycle-rules",
+                      title: "📅 3ヶ月サイクルの期限管理 ＆ 更新リマインド",
+                      summary: "決済から90日間の有効期限管理。期限7日前と前日にWeb Pushやメールで更新案内を自動通知",
+                      status: "idea",
+                      priority: "high",
+                      notes: "未更新時は自動的に無料プラン（1日2問制限）へフォールバックし、いつでも再開可能とする。",
+                      collapsed: false
+                    },
+                    {
+                      id: "paypay-integration-tech",
+                      title: "⚙️ PayPay連携方式 (Stripe PayPay / 直接連携)",
+                      summary: "Stripe経由のPayPay決済、または国内決済ゲートウェイの接続検証",
+                      status: "idea",
+                      priority: "medium",
+                      notes: "QRコード表示またはスマホPayPayアプリ自動ディープリンクで即時決済完了。",
+                      collapsed: false
+                    }
+                  ]
+                },
+                {
+                  id: "pay-mobile-wallets",
+                  title: "⚡️ Apple Pay ＆ Google Pay (ワンタップ決済)",
+                  summary: "Face ID / Touch IDでカード入力不要の即時決済。スマホからの離脱を最小化",
+                  status: "idea",
+                  priority: "high",
+                  notes: "Stripe Elements / Checkoutの標準ウォレット機能を有効化。SafariではApple Pay、Chrome/AndroidではGoogle Payが自動出現。",
+                  collapsed: false
+                }
+              ]
+            },
+            {
               id: "g-waitlist-lp",
               title: "🚀 先行登録LP & 1問デモ (/waitlist)",
               summary: "登録不要で1問シャドーイングを体験できるバイラルLP＆14日間無料クーポン自動発行",
@@ -801,7 +859,7 @@
     let currentSearchTerm = "";
     let currentFilterStatus = "all";
 
-    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v4";
+    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v5";
 
     // Initialize
     function init() {
