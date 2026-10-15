@@ -114,7 +114,9 @@
     "text": "アプリ開発しててユーザーさんから「自分の得意・苦手が数値で分かって面白い！」って言ってもらえたのが一番嬉しかったな…✨\n\nAIが0秒であなたの発音速度（WPM）と推定TOEIC点数を割り出します！\n\n無料30秒AI診断はこちら👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #個人開発 #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-15T20:00:00+09:00",
-    "status": "pending"
+    "status": "published",
+    "publishedAt": "2026-10-15T12:36:25.777Z",
+    "postId": "17914096242280477"
   },
   {
     "id": "queue_humanized_3in1_6_morning_1791681309113_gkb9",
