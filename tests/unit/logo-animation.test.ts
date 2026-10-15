@@ -4,16 +4,16 @@ import {
   LogoAnimationPattern,
 } from "@/components/features/onboarding/LogoAnimationPlayer";
 
-describe("LogoAnimationPlayer Specifications", () => {
-  it("should have exactly 5 distinct animation patterns", () => {
+describe("LogoAnimationPlayer Specifications (Official BrandLogo Zero-to-Reveal)", () => {
+  it("should have exactly 5 distinct animation patterns emerging from nothingness", () => {
     expect(LOGO_ANIMATION_PATTERNS).toHaveLength(5);
     const ids = LOGO_ANIMATION_PATTERNS.map((p) => p.id);
     const expectedIds: LogoAnimationPattern[] = [
-      "prism",
-      "waveform",
-      "eclipse",
-      "sonic",
-      "minimal",
+      "sparkle_wave",
+      "particle_converge",
+      "blur_focus",
+      "blueprint_trace",
+      "dimensional_rise",
     ];
     expect(ids).toEqual(expectedIds);
   });
