@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { getPlanType } from "@/lib/storage/user-learning-store";
+import { checkAndApplyVipInviteFromUrl } from "@/lib/auth/vip-checker";
 
 function getOrCreateVisitorId(): string {
   if (typeof window === "undefined") return "server";
@@ -23,6 +24,16 @@ export function PageTracker() {
   const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Check and apply VIP invite URL query parameter if present
+    try {
+      const isVip = checkAndApplyVipInviteFromUrl();
+      if (isVip && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("shadowlog:ticket-update"));
+      }
+    } catch {
+      // ignore
+    }
+
     if (!pathname || pathname === lastPathRef.current) return;
     lastPathRef.current = pathname;
 

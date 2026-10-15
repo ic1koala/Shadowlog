@@ -136,7 +136,7 @@ export function VipRemainingBadge({
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
           <p className="text-[11px] text-muted-foreground">
-            ※ VIP登録者は10/30まで月額1,480円の全Pro機能（短文・長文・AIコーチ）が無制限0円で使い放題になります。
+            ※ VIP登録者は月額1,000円の全Pro機能（短文・長文・AIコーチ）が無制限0円で使い放題になります。
           </p>
           <Link
             href="/signup?vip=1"

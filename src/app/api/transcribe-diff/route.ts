@@ -248,9 +248,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Whisper's `words` array can tokenize differently from whitespace splitting
+    // (hyphens, numbers, abbreviations). Only use timings when counts match 1:1,
+    // otherwise index-based timing lookup would attach wrong durations to words.
+    const spokenTokenCount = transcriptionText.split(/\s+/).filter(Boolean).length;
+    const alignedTimings =
+      verboseWords && verboseWords.length === spokenTokenCount ? verboseWords : undefined;
+
     // Calculate time-aligned diff with word duration & timeline checking
     const diff = calculateDiff(originalText, transcriptionText, {
-      spokenWordsWithTime: verboseWords,
+      spokenWordsWithTime: alignedTimings,
       audioDuration: effectiveAudioDuration,
     });
 

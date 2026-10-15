@@ -3,16 +3,43 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Sparkles, Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, UserPlus, LogIn } from "lucide-react";
+import { Sparkles, Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, UserPlus, LogIn, Crown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { migrateGuestDataToSupabase } from "@/lib/storage/sync-service";
+import { isInvitedVip, setInvitedVip } from "@/lib/auth/vip-checker";
 
 function LoginContent() {
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const initialMode =
+    searchParams.get("mode") === "signup" || searchParams.get("mode") === "vip"
+      ? "signup"
+      : "login";
   const [authMode, setAuthMode] = useState<"login" | "signup">(initialMode);
+  const [isVipInvited, setIsVipInvited] = useState(false);
 
   useEffect(() => {
+    const vipParam = searchParams.get("vip");
+    const testerParam = searchParams.get("tester");
+    const inviteParam = searchParams.get("invite");
+    const modeParam = searchParams.get("mode");
+
+    const hasVipParam =
+      vipParam === "true" ||
+      vipParam === "1" ||
+      testerParam === "vip" ||
+      inviteParam === "vip" ||
+      modeParam === "vip";
+
+    if (hasVipParam) {
+      setInvitedVip(true);
+      setIsVipInvited(true);
+      if (modeParam === "vip" || vipParam === "true" || vipParam === "1") {
+        setAuthMode("signup");
+      }
+    } else if (isInvitedVip()) {
+      setIsVipInvited(true);
+    }
+
     if (searchParams.get("mode") === "signup") {
       setAuthMode("signup");
     }
@@ -133,7 +160,8 @@ function LoginContent() {
     try {
       const vipEmail = "shadowlog.app@gmail.com";
       if (typeof window !== "undefined") {
-        const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
+        const { upgradeGuestToRegisteredUser, setInvitedVip } = await import("@/lib/storage/ticket-store");
+        setInvitedVip(true);
         upgradeGuestToRegisteredUser(vipEmail);
         localStorage.setItem("shadowlog_user_email", vipEmail);
         await migrateGuestDataToSupabase();
@@ -169,6 +197,19 @@ function LoginContent() {
             🎁 無料会員登録で +15チケット ＆ Pro味見2回プレゼント
           </div>
         </div>
+
+        {/* VIP Invite Notification Banner */}
+        {isVipInvited && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border border-amber-500/30 text-center space-y-1.5 animate-in fade-in slide-in-from-top-1 shadow-xs">
+            <div className="text-xs font-black text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1.5">
+              <Crown className="w-4 h-4 text-amber-500" />
+              <span>👑 VIPテスター招待が適用されています</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              ご案内URLからのアクセスを確認しました。アカウントを作成すると、自動的に全機能完全使い放題（Proプラン相当）でご利用いただけます。
+            </p>
+          </div>
+        )}
 
         {/* Tab Selector: Login vs Sign Up */}
         <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-xl text-xs font-bold">

@@ -42,7 +42,7 @@ import {
   Zap,
 } from "lucide-react";
 
-const MAX_QUESTIONS = 3;
+const MAX_QUESTIONS = 5;
 
 interface ToeicDiagnosisClientProps {
   mode?: "public" | "settings";
@@ -296,10 +296,10 @@ export function ToeicDiagnosisClient({
     setCurrentQuestion(getInitialQuestion());
   };
 
-  // ── Result Screen (3問完了後の高精度TOEIC診断カルテ) ──
+  // ── Result Screen (5問完了後の高精度TOEIC診断カルテ) ──
   if (isComplete && result) {
     const shareText = encodeURIComponent(
-      `🎙️ AI英語発話診断の結果、私の推定TOEICスコアは【${result.estimatedToeicScore}点相当】（実効速度: ${result.effectiveWPM} WPM / CEFR ${result.recommendedLevel}・上位${result.percentileTop}%）でした！\n\n30秒で自分の英語スピードと弱点リンキングが測れます👇\nhttps://shadowlog.vercel.app/diagnosis\n#ShadowLog #英語学習 #TOEIC #シャドーイング`
+      `🎙️ AI英語発話診断（全5問）の結果、私の推定TOEICスコアは【${result.estimatedToeicScore}点相当】（実効速度: ${result.effectiveWPM} WPM / CEFR ${result.recommendedLevel}・上位${result.percentileTop}%）でした！\n\nたった1分で自分の英語スピードと弱点リンキングが測れます👇\nhttps://shadowlog.vercel.app/diagnosis\n#ShadowLog #英語学習 #TOEIC #シャドーイング`
     );
     const threadsShareUrl = `https://www.threads.net/intent/post?text=${shareText}`;
     const xShareUrl = `https://twitter.com/intent/tweet?text=${shareText}`;
@@ -312,7 +312,7 @@ export function ToeicDiagnosisClient({
 
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-extrabold border border-primary/20">
             <Award className="w-4 h-4" />
-            <span>AI 3ステップ実力診断カルテ</span>
+            <span>AI 5ステップ実力診断カルテ</span>
           </div>
 
           <div className="space-y-1">
@@ -595,7 +595,7 @@ export function ToeicDiagnosisClient({
               STEP {currentQNum} / {MAX_QUESTIONS}
             </span>
             <span className="text-xs sm:text-sm font-bold text-foreground">
-              30秒 TOEIC換算＆スピード実力診断
+              1分 本格TOEIC換算＆スピード実力診断（全5問）
             </span>
           </div>
 
@@ -606,9 +606,9 @@ export function ToeicDiagnosisClient({
           </span>
         </div>
 
-        {/* 3-Step Visual Indicator */}
-        <div className="grid grid-cols-3 gap-2">
-          {[1, 2, 3].map((step) => {
+        {/* 5-Step Visual Indicator */}
+        <div className="grid grid-cols-5 gap-2">
+          {Array.from({ length: MAX_QUESTIONS }, (_, i) => i + 1).map((step) => {
             const done = step < currentQNum;
             const active = step === currentQNum;
             return (
@@ -692,7 +692,7 @@ export function ToeicDiagnosisClient({
               <span>
                 {currentQNum < MAX_QUESTIONS
                   ? `次の問題へ進む（あと ${MAX_QUESTIONS - currentQNum} 問）`
-                  : "🏆 3問完了！TOEIC換算＆診断カルテを見る"}
+                  : "🏆 5問完了！TOEIC換算＆診断カルテを見る"}
               </span>
               <ArrowRight className="w-5 h-5" />
             </button>
@@ -849,7 +849,7 @@ export function ToeicDiagnosisClient({
             >
               <span>
                 {currentQNum < MAX_QUESTIONS
-                  ? `次の問題へ (${currentQNum}/3)`
+                  ? `次の問題へ (${currentQNum}/${MAX_QUESTIONS})`
                   : "🏆 診断カルテを見る"}
               </span>
               <ArrowRight className="w-4 h-4" />

@@ -71,6 +71,14 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
           "status": "idea",
           "priority": "low",
           "notes": "勉強ではなくヘルスケア・メンタルチェックの文脈で声を出させる仕掛け（日常アプリ20選）。"
+        },
+        {
+          "id": "q-toeic-5q-renewal",
+          "title": "🚀 1分本格TOEIC診断リニューアル (全5問化 ＆ 判定厳格化)",
+          "summary": "甘すぎた判定を抜本改修。下限保証撤廃＋早口減点＋全5問適応型で±50点の高信頼診断へ",
+          "status": "completed",
+          "priority": "high",
+          "notes": "3問➔5問へ拡張し各レベル計25問を配備。適当発音での850点固定を排除し、正確性×WPM×リンキングの絶対評価に刷新。Threads告知バナー連動。"
         }
       ]
     },
@@ -447,18 +455,18 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
         {
           "id": "g-stripe-billing",
           "title": "🚀 Stripe決済 & 3段階チケット制",
-          "summary": "Guest(無料2問) / Basic(月500円/使い放題) / Pro(月1,000円/使い放題)のインフラ完成",
+          "summary": "Guest(無料2問) / Basic(月500円/使い放題) / Pro(現行1,480円・新1,000円改定対応予定)のインフラ完成",
           "status": "completed",
           "priority": "high",
-          "notes": "月間固定費1,650円に対して、黒字化ハードルを極小化（有料会員4〜5名で回収）。Pro価格を¥1,000/月へ改定対応完了（料金表示・特商法・Stripeエンドポイント更新済み）。"
+          "notes": "月間固定費1,650円に対して、黒字化ハードルを極小化（有料会員4〜5名で回収）。Pro価格を¥1,000/月へ改定する場合、Stripeの新Price作成・価格ID差し替え・料金表示/特商法ページの更新が必要（現行実装は¥1,480）。"
         },
         {
           "id": "g-payment-methods",
-          "title": "💳 多彩な決済手段 ＆ 支払いサイクル設計 (新設・検討)",
+          "title": "💳 多彩な決済手段 ＆ 支払いサイクル設計 (10/21〜着手予定)",
           "summary": "クレジットカード(Stripe安全保存)に加え、PayPay(3ヶ月まとめ)やApple/Google Payに対応",
           "status": "idea",
           "priority": "high",
-          "notes": "スマホ決済の普及率を捉え、クレカ不要層の取り込みと、スマホワンタップ決済によるCVR最大化を狙う。",
+          "notes": "【確定スケジュール】2026/10/21頃より実装着手。クレカ安全保存表示＋PayPay 3ヶ月まとめ払い(一般¥1,500/プロ¥3,000の都度一括・90日有効期限)＋Apple/Google Payワンタップ決済を導入予定。",
           "children": [
             {
               "id": "pay-credit-security",
@@ -470,11 +478,11 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
             },
             {
               "id": "pay-paypay-quarterly",
-              "title": "📱 PayPay決済 (3ヶ月まとめ払い)",
+              "title": "📱 PayPay決済 (3ヶ月まとめ払い・10/21〜着手)",
               "summary": "3ヶ月ごとの一括支払い(一般: ¥1,500 / プロ: ¥3,000)。クレカ未保持層の取り込み",
               "status": "idea",
               "priority": "high",
-              "notes": "PayPayの決済特性に合わせ「3ヶ月まとめ」で前受。毎月の更新離脱(チャーン)を防ぎ、LTVを確実に確保する高収益設計。",
+              "notes": "【仕様合意・10/21〜着手】PayPayは3ヶ月チケット(都度一括決済)として実装。90日間有効とし、期限前リマインド通知を経て未更新時は無料プランへ自動フォールバック。チャーンを防ぎLTVを最大化。",
               "children": [
                 {
                   "id": "paypay-cycle-rules",

@@ -101,12 +101,12 @@ export function UpgradeModal({
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {/* Header */}
-          <div className="text-center max-w-md mx-auto space-y-2 mb-6">
+          <div className="text-center max-w-md mx-auto space-y-2 mb-4">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
               ShadowLog プレミアムプラン
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
               シャドーイングで英語脳を覚醒させよう
             </h2>
             <p className="text-xs text-slate-500">
@@ -114,22 +114,34 @@ export function UpgradeModal({
             </p>
           </div>
 
+          {/* Closed Beta Testing Notice */}
+          <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-left space-y-1">
+            <div className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+              <span>📢</span>
+              <span>現在、無料会員ベータ版テストを実施中</span>
+            </div>
+            <p className="text-[11px] text-amber-900/80 dark:text-amber-200/80 leading-relaxed">
+              有料プラン（ベース / Pro）は現在VIPテスター限定で先行公開中（一般受付準備中）です。
+              無料会員登録を行うことで、累計20回（ゲスト5回＋登録15回）およびPro長文2回のお試しをご利用いただけます。
+            </p>
+          </div>
+
           {/* Guest Upsell to Free Registration */}
           {isGuest && (
-            <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-left">
-                <div className="text-xs font-bold text-amber-900">
-                  🎁 無料会員登録で「さらに15回分」プレゼント！
+                <div className="text-xs font-bold text-emerald-900">
+                  🎁 無料会員登録で「さらに15回分」チケットプレゼント！
                 </div>
-                <div className="text-[11px] text-amber-700 mt-0.5">
-                  学習カルテの保存とストリーク機能、Pro長文モード2回お試しも解放されます。
+                <div className="text-[11px] text-emerald-700 mt-0.5">
+                  学習カルテの保存とストリーク機能、Pro長文モード2回お試し、カスタムマイ単語も解放されます。
                 </div>
               </div>
               <a
-                href="/login"
-                className="shrink-0 text-xs font-bold px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition"
+                href="/login?mode=signup"
+                className="shrink-0 text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
               >
-                無料登録する
+                無料登録して試す
               </a>
             </div>
           )}
@@ -138,17 +150,12 @@ export function UpgradeModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             {/* Base Plan */}
             <div
-              onClick={() => setSelectedPlan("base")}
-              className={`p-5 rounded-2xl border-2 transition cursor-pointer flex flex-col justify-between ${
-                selectedPlan === "base"
-                  ? "border-indigo-600 bg-indigo-50/30 shadow-md"
-                  : "border-slate-200 hover:border-slate-300 bg-white"
-              }`}
+              className="p-5 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between"
             >
               <div>
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                    ライト習慣化
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                    🔒 VIP先行公開中
                   </span>
                   <div className="text-right">
                     <span className="text-2xl font-extrabold text-slate-900">¥500</span>
@@ -174,29 +181,17 @@ export function UpgradeModal({
                 </ul>
               </div>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCheckout("base");
-                }}
-                disabled={isLoading}
-                className="mt-6 w-full py-2.5 px-4 text-xs font-bold rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition"
-              >
-                ベースプランを選ぶ
-              </button>
+              <div className="mt-6 w-full py-2.5 px-4 text-xs font-bold text-center rounded-xl bg-slate-100 text-slate-500 border border-slate-200">
+                🔒 VIPテスター限定先行公開中
+              </div>
             </div>
 
             {/* Pro Plan */}
             <div
-              onClick={() => setSelectedPlan("pro")}
-              className={`p-5 rounded-2xl border-2 transition cursor-pointer relative flex flex-col justify-between ${
-                selectedPlan === "pro"
-                  ? "border-indigo-600 bg-indigo-50/40 shadow-lg ring-2 ring-indigo-600/20"
-                  : "border-slate-200 hover:border-slate-300 bg-white"
-              }`}
+              className="p-5 rounded-2xl border-2 border-indigo-600/50 bg-indigo-50/20 shadow-md relative flex flex-col justify-between"
             >
               <div className="absolute -top-3 right-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-sm">
-                一番人気 / おすすめ
+                🔒 VIP先行公開中
               </div>
 
               <div>
@@ -206,7 +201,7 @@ export function UpgradeModal({
                     完全無制限
                   </span>
                   <div className="text-right">
-                    <span className="text-2xl font-extrabold text-indigo-600">¥1,480</span>
+                    <span className="text-2xl font-extrabold text-indigo-600">¥1,000</span>
                     <span className="text-xs text-slate-500"> /月</span>
                   </div>
                 </div>
@@ -233,21 +228,9 @@ export function UpgradeModal({
                 </ul>
               </div>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCheckout("pro");
-                }}
-                disabled={isLoading}
-                className="mt-6 w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 transition flex items-center justify-center gap-1.5"
-              >
-                {isLoading ? "決済画面へ接続中..." : (
-                  <>
-                    Proプランで始める
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
+              <div className="mt-6 w-full py-2.5 px-4 text-xs font-bold text-center rounded-xl bg-indigo-100/80 text-indigo-700 border border-indigo-200">
+                🔒 VIPテスター限定先行公開中
+              </div>
             </div>
           </div>
 

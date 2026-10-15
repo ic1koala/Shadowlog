@@ -139,6 +139,30 @@ export const ASSESSMENT_BENCHMARK_SENTENCES: Record<
       industry: "daily",
       level: "beginner",
     },
+    {
+      id: "bench-a1-3",
+      english: "We need to order more office supplies before the end of the week.",
+      japanese: "今週が終わる前に追加のオフィス用品を発注する必要があります。",
+      wordCount: 13,
+      industry: "business",
+      level: "beginner",
+    },
+    {
+      id: "bench-a1-4",
+      english: "The cafeteria on the second floor is open from eleven to two.",
+      japanese: "2階のカフェテリアは11時から14時まで営業しています。",
+      wordCount: 12,
+      industry: "daily",
+      level: "beginner",
+    },
+    {
+      id: "bench-a1-5",
+      english: "Please leave your message after the tone and I will call you back.",
+      japanese: "発信音の後にメッセージを残してください。折り返しお電話いたします。",
+      wordCount: 13,
+      industry: "daily",
+      level: "beginner",
+    },
   ],
   A2: [
     {
@@ -154,6 +178,30 @@ export const ASSESSMENT_BENCHMARK_SENTENCES: Record<
       english: "Please let me know if you need any help with the presentation tomorrow.",
       japanese: "明日のプレゼンテーションで何か手伝いが必要であればお知らせください。",
       wordCount: 13,
+      industry: "business",
+      level: "beginner",
+    },
+    {
+      id: "bench-a2-3",
+      english: "The manager asked all staff members to submit their weekly timesheets by Friday afternoon.",
+      japanese: "マネージャーは全スタッフに対し、金曜日の午後までに週報タイムシートを提出するよう求めました。",
+      wordCount: 14,
+      industry: "business",
+      level: "beginner",
+    },
+    {
+      id: "bench-a2-4",
+      english: "Our customer service desk can assist you with product returns and warranty registration.",
+      japanese: "カスタマーサービスデスクにて、製品の返品や保証登録のお手続きを承ります。",
+      wordCount: 12,
+      industry: "daily",
+      level: "beginner",
+    },
+    {
+      id: "bench-a2-5",
+      english: "If you cannot attend the training workshop, please notify human resources in advance.",
+      japanese: "研修ワークショップに参加できない場合は、事前に人事部までお知らせください。",
+      wordCount: 12,
       industry: "business",
       level: "beginner",
     },
@@ -175,6 +223,30 @@ export const ASSESSMENT_BENCHMARK_SENTENCES: Record<
       industry: "business",
       level: "intermediate",
     },
+    {
+      id: "bench-b1-3",
+      english: "The shipment was delayed due to severe weather, but it should arrive by tomorrow morning.",
+      japanese: "悪天候のため発送が遅れましたが、明日の午前中には到着する予定です。",
+      wordCount: 15,
+      industry: "business",
+      level: "intermediate",
+    },
+    {
+      id: "bench-b1-4",
+      english: "Several clients have requested additional details regarding the terms of our service contract.",
+      japanese: "複数のクライアントから、サービス契約条件に関する詳細資料の追加提供を求められています。",
+      wordCount: 13,
+      industry: "business",
+      level: "intermediate",
+    },
+    {
+      id: "bench-b1-5",
+      english: "Please make sure to back up all project files before the scheduled system maintenance tonight.",
+      japanese: "今夜予定されているシステムメンテナンスの前に、すべてのプロジェクトファイルを必ずバックアップしてください。",
+      wordCount: 15,
+      industry: "tech",
+      level: "intermediate",
+    },
   ],
   B2: [
     {
@@ -190,6 +262,30 @@ export const ASSESSMENT_BENCHMARK_SENTENCES: Record<
       english: "Due to unexpected supply chain delays, we will have to reschedule the product launch for next month.",
       japanese: "予期せぬサプライチェーンの遅延により、製品発表を来月に再調整しなければなりません。",
       wordCount: 17,
+      industry: "business",
+      level: "intermediate",
+    },
+    {
+      id: "bench-b2-3",
+      english: "Despite intense market competition, our quarterly financial results exceeded initial Wall Street expectations.",
+      japanese: "激しい市場競争にもかかわらず、当社の四半期決算は当初の市場予想を上回りました。",
+      wordCount: 13,
+      industry: "business",
+      level: "intermediate",
+    },
+    {
+      id: "bench-b2-4",
+      english: "We are currently evaluating potential vendor proposals to optimize our logistics operations and reduce freight costs.",
+      japanese: "物流業務の最適化と輸送コスト削減に向け、取引先候補からの提案を評価しています。",
+      wordCount: 16,
+      industry: "business",
+      level: "intermediate",
+    },
+    {
+      id: "bench-b2-5",
+      english: "Management has decided to implement a hybrid work policy to improve employee retention and satisfaction.",
+      japanese: "経営陣は従業員の定着率と満足度を向上させるため、ハイブリッド勤務制度の導入を決定しました。",
+      wordCount: 15,
       industry: "business",
       level: "intermediate",
     },
@@ -209,6 +305,30 @@ export const ASSESSMENT_BENCHMARK_SENTENCES: Record<
       japanese: "中核業務フローへの人工知能の統合により、全社的な業務効率が飛躍的に向上しました。",
       wordCount: 15,
       industry: "tech",
+      level: "advanced",
+    },
+    {
+      id: "bench-c1-3",
+      english: "The board unanimously approved the strategic merger following extensive due diligence and regulatory compliance assessments.",
+      japanese: "取締役会は詳細なデューデリジェンスと規制遵守評価を経て、戦略的合併を満場一致で承認しました。",
+      wordCount: 14,
+      industry: "business",
+      level: "advanced",
+    },
+    {
+      id: "bench-c1-4",
+      english: "Our research division has spearheaded pioneering initiatives that mitigate environmental impact while sustaining robust economic margins.",
+      japanese: "当社の研究部門は、強固な収益性を維持しながら環境負荷を低減する先駆的な取り組みを主導してきました。",
+      wordCount: 15,
+      industry: "tech",
+      level: "advanced",
+    },
+    {
+      id: "bench-c1-5",
+      english: "Navigating these unprecedented macroeconomic headwinds requires resilient risk governance and agile organizational responsiveness.",
+      japanese: "前例のないマクロ経済の逆風を乗り切るには、強靭なリスクガバナンスと機敏な組織対応力が不可欠です。",
+      wordCount: 13,
+      industry: "business",
       level: "advanced",
     },
   ],
@@ -359,10 +479,22 @@ function getNextLevel(
   accuracyScore?: number
 ): AssessmentLevel {
   const idx = LEVEL_ORDER.indexOf(currentLevel);
-  const isAccurateEnough = accuracyScore === undefined || accuracyScore >= 70;
-  if (compositeScore >= 75 && isAccurateEnough) {
+  const acc = accuracyScore ?? compositeScore;
+
+  // Strict CEFR calibration thresholds:
+  // - To C1: requires 85%+ accuracy AND 85%+ composite (native-like fluency & accuracy)
+  // - To B2: requires 80%+ accuracy AND 80%+ composite
+  // - To B1: requires 75%+ accuracy AND 75%+ composite
+  // - To A2: requires 70%+ accuracy AND 70%+ composite
+  let promoReq = 75;
+  if (currentLevel === "B2") promoReq = 85;
+  else if (currentLevel === "B1") promoReq = 80;
+  else if (currentLevel === "A2") promoReq = 75;
+  else if (currentLevel === "A1") promoReq = 70;
+
+  if (compositeScore >= promoReq && acc >= promoReq) {
     return LEVEL_ORDER[Math.min(idx + 1, LEVEL_ORDER.length - 1)];
-  } else if (compositeScore < 50 || (accuracyScore !== undefined && accuracyScore < 50)) {
+  } else if (compositeScore < 55 || acc < 55) {
     return LEVEL_ORDER[Math.max(idx - 1, 0)];
   }
   return currentLevel;
@@ -434,19 +566,31 @@ export function getNextQuestion(
  */
 export function calculateWPMFollowRate(
   userWPM: number,
-  assessmentLevel: AssessmentLevel
+  assessmentLevel: AssessmentLevel,
+  accuracyScore?: number
 ): number {
   const targetWPM = ASSESSMENT_LEVELS[assessmentLevel].targetWPM;
   if (targetWPM === 0) return 0;
   const ratio = userWPM / targetWPM;
+
+  let baseScore: number;
   if (ratio <= 1.0) {
-    return Math.max(0, Math.min(100, Math.round(ratio * 100)));
+    baseScore = Math.max(0, Math.min(100, Math.round(ratio * 100)));
+  } else if (ratio <= 1.5) {
+    // 1.0〜1.5倍までは自然な範囲として満点
+    baseScore = 100;
+  } else {
+    // 1.5倍を超える過度な早口・読み飛ばしは厳格に減点
+    const rushPenalty = (ratio - 1.5) * 55;
+    baseScore = Math.max(30, Math.min(100, Math.round(100 - rushPenalty)));
   }
-  if (ratio <= 1.5) {
-    return 100;
+
+  // 早口ごまかしペナルティ: 正確性が低いのにWPMだけ速い場合、スピードに下駄を履かせない
+  if (accuracyScore !== undefined && accuracyScore < 70 && ratio > 1.1) {
+    baseScore = Math.min(baseScore, accuracyScore);
   }
-  const rushPenalty = (ratio - 1.5) * 45;
-  return Math.max(40, Math.min(100, Math.round(100 - rushPenalty)));
+
+  return baseScore;
 }
 
 /**
@@ -519,11 +663,11 @@ export function calculateAssessmentResult(
         (lastAnswer.compositeScore + secondLast.compositeScore) / 2;
       const avgLast2Accuracy =
         (lastAnswer.accuracyScore + secondLast.accuracyScore) / 2;
-      if (avgLast2Composite >= 75 && avgLast2Accuracy >= 70) {
+      if (avgLast2Composite >= 80 && avgLast2Accuracy >= 80) {
         const idx = LEVEL_ORDER.indexOf(lastAnswer.assessmentLevel);
         recommendedLevel =
           LEVEL_ORDER[Math.min(idx + 1, LEVEL_ORDER.length - 1)];
-      } else if (avgLast2Composite < 50 || avgLast2Accuracy < 50) {
+      } else if (avgLast2Composite < 55 || avgLast2Accuracy < 55) {
         const idx = LEVEL_ORDER.indexOf(lastAnswer.assessmentLevel);
         recommendedLevel = LEVEL_ORDER[Math.max(idx - 1, 0)];
       } else {
@@ -573,46 +717,58 @@ export function calculateAssessmentResult(
     )
   );
 
-  // 4. Mode Bonus (10% weight): Shadowing (simultaneous) = 100, Repeating = 75
+  // 4. Mode Bonus (10% weight): Shadowing (simultaneous) = 100, Repeating = 70
   const modeBonus = Math.round(
     answers.reduce(
-      (sum, a) => sum + (a.recordingMode === "shadowing" ? 100 : 75),
+      (sum, a) => sum + (a.recordingMode === "shadowing" ? 100 : 70),
       0
     ) / answers.length
   );
 
-  // Weighted 100-point index
-  const weightedIndex =
+  // Weighted 100-point performance index
+  const performanceIndex =
     vocabularyCatch * 0.35 +
     linkingReproduction * 0.3 +
     speedFollow * 0.25 +
     modeBonus * 0.1;
 
-  // Realistic CEFR to TOEIC score bounds established by ETS:
-  // A1: 300 - 445点相当 (基礎力育成レベル)
-  // A2: 450 - 545点相当 (初中級)
-  // B1: 550 - 695点相当 (中級・ビジネス基礎)
-  // B2: 700 - 845点相当 (中上級・実務応用)
-  // C1: 850 - 990点相当 (上級・ネイティブ即応)
-  const LEVEL_TOEIC_BOUNDS: Record<
-    AssessmentLevel,
-    { min: number; max: number }
-  > = {
-    A1: { min: 300, max: 445 },
-    A2: { min: 450, max: 545 },
-    B1: { min: 550, max: 695 },
-    B2: { min: 700, max: 845 },
-    C1: { min: 850, max: 990 },
+  // Level weight multiplier for continuous calibrated mapping:
+  // A1: 0.70, A2: 0.85, B1: 1.00, B2: 1.15, C1: 1.25
+  const LEVEL_MULTIPLIER: Record<AssessmentLevel, number> = {
+    A1: 0.70,
+    A2: 0.85,
+    B1: 1.00,
+    B2: 1.15,
+    C1: 1.25,
   };
 
-  const bounds = LEVEL_TOEIC_BOUNDS[recommendedLevel];
-  const normPerf = Math.max(0, Math.min(100, weightedIndex)) / 100;
-  const rawToeic = bounds.min + normPerf * (bounds.max - bounds.min);
+  // Eliminate artificial level floors. Calculate calibrated absolute scale:
+  const levelMult = LEVEL_MULTIPLIER[recommendedLevel];
+  const scaledScore = performanceIndex * levelMult; // range: ~0 - 125
 
-  // Round to nearest 5 points (standard TOEIC step), clamped to level bounds
+  // Map scaledScore to authentic TOEIC scale (300 - 990):
+  // scaledScore <= 35: 300 - 450 (初級)
+  // scaledScore 35-65: 450 - 650 (中級・ボリュームゾーン)
+  // scaledScore 65-85: 650 - 800 (中上級)
+  // scaledScore 85-100: 800 - 900 (上級)
+  // scaledScore > 100: 900 - 990 (ハイスコア)
+  let rawToeic: number;
+  if (scaledScore <= 35) {
+    rawToeic = 300 + (scaledScore / 35) * 150;
+  } else if (scaledScore <= 65) {
+    rawToeic = 450 + ((scaledScore - 35) / 30) * 200;
+  } else if (scaledScore <= 85) {
+    rawToeic = 650 + ((scaledScore - 65) / 20) * 150;
+  } else if (scaledScore <= 100) {
+    rawToeic = 800 + ((scaledScore - 85) / 15) * 100;
+  } else {
+    rawToeic = 900 + Math.min(1, (scaledScore - 100) / 25) * 90;
+  }
+
+  // Round to nearest 5 points (standard TOEIC step), clamped between 300 and 990
   const estimatedToeicScore = Math.max(
-    bounds.min,
-    Math.min(bounds.max, Math.round(rawToeic / 5) * 5)
+    300,
+    Math.min(990, Math.round(rawToeic / 5) * 5)
   );
 
   // Listening score (150 - 495, 5-point increments, scaled by linking and speed)

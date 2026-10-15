@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const stripe = getStripeServer();
 
     const isBase = plan === "base";
-    const unitAmount = isBase ? 500 : 1480;
+    const unitAmount = isBase ? 500 : 1000;
     const productName = isBase
       ? "ShadowLog ベースプラン (月額)"
       : "ShadowLog Proプラン (月額)";

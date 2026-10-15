@@ -8,16 +8,17 @@ import {
   GUEST_MAX_TICKETS,
   REGISTERED_TOTAL_TICKETS,
   PRO_TRIAL_MAX_TICKETS,
+  isInvitedVip,
+  setInvitedVip,
+  checkAndApplyVipInviteFromUrl,
 } from "@/lib/storage/ticket-store";
 import {
   isVipEmail,
-  isCampaignVip,
   getVipType,
-  CAMPAIGN_REGISTRATION_DEADLINE,
-  CAMPAIGN_EXPIRATION_DATE,
 } from "@/lib/auth/vip-checker";
+import { setPlanType } from "@/lib/storage/user-learning-store";
 
-describe("Ticket Store & VIP Whitelist & Campaign Tests", () => {
+describe("Ticket Store & VIP Whitelist & Beta Specs", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
@@ -47,16 +48,16 @@ describe("Ticket Store & VIP Whitelist & Campaign Tests", () => {
     expect(consumeTicket("short")).toBe(false);
   });
 
-  it("upgrades guest to registered user outside campaign, granting 20 total tickets and 2 Pro trials", () => {
+  it("upgrades guest to registered user as free member, granting 20 total tickets and 2 Pro trials", () => {
     // Guest uses 2 tickets first
     consumeTicket("short");
     consumeTicket("short");
     expect(getTicketStatus().availableTickets).toBe(3);
 
-    // User registered AFTER campaign deadline (2026-10-25)
-    upgradeGuestToRegisteredUser("regular_user@example.com", "2026-10-25T12:00:00+09:00");
+    // Normal registration during beta testing
+    upgradeGuestToRegisteredUser("regular_user@example.com", "2026-10-15T12:00:00+09:00");
 
-    const status = getTicketStatus(undefined, "2026-10-25T12:00:00+09:00");
+    const status = getTicketStatus(undefined, "2026-10-15T12:00:00+09:00");
     expect(status.isRegistered).toBe(true);
     expect(status.plan).toBe("free");
     expect(status.isVip).toBe(false);
@@ -73,57 +74,63 @@ describe("Ticket Store & VIP Whitelist & Campaign Tests", () => {
   });
 
   it("consumes Pro trials for registered non-VIP users up to 2 times", () => {
-    upgradeGuestToRegisteredUser("user@example.com", "2026-10-25T12:00:00+09:00");
+    upgradeGuestToRegisteredUser("user@example.com", "2026-10-15T12:00:00+09:00");
 
     // 1st Pro trial
     expect(consumeTicket("long")).toBe(true);
-    expect(getTicketStatus(undefined, "2026-10-25T12:00:00+09:00").availableProTrials).toBe(1);
+    expect(getTicketStatus().availableProTrials).toBe(1);
 
     // 2nd Pro trial
     expect(consumeTicket("long")).toBe(true);
-    expect(getTicketStatus(undefined, "2026-10-25T12:00:00+09:00").availableProTrials).toBe(0);
-    expect(getTicketStatus(undefined, "2026-10-25T12:00:00+09:00").canPracticePro).toBe(false);
+    expect(getTicketStatus().availableProTrials).toBe(0);
+    expect(getTicketStatus().canPracticePro).toBe(false);
 
     // 3rd Pro attempt should fail
     expect(consumeTicket("long")).toBe(false);
   });
 
-  it("grants October Campaign VIP (unlimited Pro) to users registered on or before 10/20", () => {
-    // Registered on 2026-10-10, evaluated on 2026-10-15
-    const regDate = "2026-10-10T12:00:00+09:00";
-    const evalDate = new Date("2026-10-15T12:00:00+09:00");
+  it("detects VIP invitation URL (?vip=true etc.) and grants unlimited Pro access", () => {
+    expect(isInvitedVip()).toBe(false);
 
-    upgradeGuestToRegisteredUser("campaign_user@example.com", regDate);
+    // Detect from URL query
+    const applied = checkAndApplyVipInviteFromUrl("?vip=true");
+    expect(applied).toBe(true);
+    expect(isInvitedVip()).toBe(true);
 
-    const status = getTicketStatus(undefined, regDate, evalDate);
-    expect(status.isVip).toBe(true);
-    expect(status.vipType).toBe("campaign");
-    expect(status.plan).toBe("pro");
-    expect(status.availableTickets).toBe(Infinity);
-    expect(status.availableProTrials).toBe(Infinity);
-    expect(status.canPracticeShort).toBe(true);
-    expect(status.canPracticePro).toBe(true);
+    // Even without address registered yet, user has VIP conditions (unlimited Pro)
+    const guestVipStatus = getTicketStatus();
+    expect(guestVipStatus.isVip).toBe(true);
+    expect(guestVipStatus.vipType).toBe("invite");
+    expect(guestVipStatus.plan).toBe("pro");
+    expect(guestVipStatus.availableTickets).toBe(Infinity);
+    expect(guestVipStatus.availableProTrials).toBe(Infinity);
+    expect(guestVipStatus.canPracticeShort).toBe(true);
+    expect(guestVipStatus.canPracticePro).toBe(true);
 
-    // Tickets are not consumed for campaign VIP
+    // After registering email, user retains Pro VIP
+    upgradeGuestToRegisteredUser("tester_with_url@example.com");
+    const regStatus = getTicketStatus();
+    expect(regStatus.isVip).toBe(true);
+    expect(regStatus.plan).toBe("pro");
+
+    // VIP should never consume tickets
     expect(consumeTicket("short")).toBe(true);
     expect(consumeTicket("long")).toBe(true);
+    expect(getTicketStatus().availableTickets).toBe(Infinity);
   });
 
-  it("expires Campaign VIP access after 2026-10-30", () => {
-    // Registered on 2026-10-10, but evaluated on 2026-11-01 (post-campaign)
-    const regDate = "2026-10-10T12:00:00+09:00";
-    const evalDate = new Date("2026-11-01T00:00:00+09:00");
+  it("detects alternate VIP invitation URL parameters (tester=vip, invite=vip, mode=vip)", () => {
+    setInvitedVip(false);
+    expect(checkAndApplyVipInviteFromUrl("?tester=vip")).toBe(true);
+    expect(isInvitedVip()).toBe(true);
 
-    expect(isCampaignVip(regDate, evalDate)).toBe(false);
+    setInvitedVip(false);
+    expect(checkAndApplyVipInviteFromUrl("?invite=vip")).toBe(true);
+    expect(isInvitedVip()).toBe(true);
 
-    upgradeGuestToRegisteredUser("campaign_user@example.com", regDate);
-
-    const status = getTicketStatus(undefined, regDate, evalDate);
-    expect(status.isVip).toBe(false);
-    expect(status.vipType).toBeNull();
-    // Reverts to free plan
-    expect(status.plan).toBe("free");
-    expect(status.totalTickets).toBe(REGISTERED_TOTAL_TICKETS);
+    setInvitedVip(false);
+    expect(checkAndApplyVipInviteFromUrl("?mode=vip")).toBe(true);
+    expect(isInvitedVip()).toBe(true);
   });
 
   it("identifies VIP tester email (shadowlog.app@gmail.com) and grants permanent unlimited access", () => {
@@ -133,9 +140,7 @@ describe("Ticket Store & VIP Whitelist & Campaign Tests", () => {
 
     upgradeGuestToRegisteredUser("shadowlog.app@gmail.com");
 
-    // Even after 2026-10-30, permanent whitelist VIP remains active
-    const postCampaignDate = new Date("2026-12-01T00:00:00+09:00");
-    const vipStatus = getTicketStatus(undefined, undefined, postCampaignDate);
+    const vipStatus = getTicketStatus();
     expect(vipStatus.isVip).toBe(true);
     expect(vipStatus.vipType).toBe("whitelist");
     expect(vipStatus.plan).toBe("pro");
@@ -147,6 +152,19 @@ describe("Ticket Store & VIP Whitelist & Campaign Tests", () => {
     // VIP should never consume tickets
     expect(consumeTicket("short")).toBe(true);
     expect(consumeTicket("long")).toBe(true);
-    expect(getTicketStatus(undefined, undefined, postCampaignDate).availableTickets).toBe(Infinity);
+    expect(getTicketStatus().availableTickets).toBe(Infinity);
+  });
+
+  it("retains VIP access for existing Pro tester accounts", () => {
+    setPlanType("pro");
+    setCurrentUserEmail("existing_tester@example.com");
+
+    const status = getTicketStatus();
+    expect(status.isVip).toBe(true);
+    expect(status.plan).toBe("pro");
+    expect(status.availableTickets).toBe(Infinity);
+    expect(status.canPracticeShort).toBe(true);
+    expect(status.canPracticePro).toBe(true);
   });
 });
+

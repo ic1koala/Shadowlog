@@ -71,7 +71,7 @@ export default function TokushohoPage() {
               <span className="font-bold text-foreground">販売価格（対価）</span>
               <div className="sm:col-span-2 text-muted-foreground space-y-1">
                 <p>・<strong>ベースプラン</strong>: 月額 500 円（税込）</p>
-                <p>・<strong>Proプラン</strong>: 月額 1,480 円（税込）</p>
+                <p>・<strong>Proプラン</strong>: 月額 1,000 円（税込）</p>
                 <p className="text-[11px]">※ プランの詳細な仕様はプラン案内画面（アップセル画面）に表示されます。</p>
               </div>
             </div>

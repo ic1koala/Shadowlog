@@ -2,9 +2,16 @@ import { UserPlanType } from "@/types";
 import {
   getVipType,
   VipType,
+  isVipEmail,
+  isInvitedVip,
+  setInvitedVip,
+  checkAndApplyVipInviteFromUrl,
+  KEY_INVITED_VIP,
   CAMPAIGN_REGISTRATION_DEADLINE,
 } from "@/lib/auth/vip-checker";
 import { getPlanType, setPlanType } from "@/lib/storage/user-learning-store";
+
+export { isInvitedVip, setInvitedVip, checkAndApplyVipInviteFromUrl, KEY_INVITED_VIP };
 
 // Ticket Configuration
 export const GUEST_MAX_TICKETS = 5;
@@ -96,7 +103,8 @@ export function setCurrentUserCreatedAt(createdAt: string | null): void {
 export function getTicketStatus(
   emailOverride?: string | null,
   registeredAtOverride?: string | null,
-  nowOverride?: Date
+  nowOverride?: Date,
+  invitedOverride?: boolean
 ): TicketStatus {
   if (typeof window === "undefined") {
     return {
@@ -115,46 +123,20 @@ export function getTicketStatus(
   }
 
   const email = emailOverride !== undefined ? emailOverride : getCurrentUserEmail();
-  let registeredAt = registeredAtOverride !== undefined ? registeredAtOverride : getCurrentUserCreatedAt();
+  const registeredAt = registeredAtOverride !== undefined ? registeredAtOverride : getCurrentUserCreatedAt();
   const now = nowOverride || new Date();
-
-  // If user is registered (email exists) but registeredAt isn't saved yet,
-  // and we're currently before the campaign registration deadline,
-  // record current time so they qualify for Campaign VIP.
-  if (email && !registeredAt && now <= new Date(CAMPAIGN_REGISTRATION_DEADLINE)) {
-    registeredAt = now.toISOString();
-    try {
-      localStorage.setItem(KEY_USER_CREATED_AT, registeredAt);
-    } catch {}
-  }
-
-  const vipType = getVipType({ email, registeredAt, now });
-  const isVip = vipType !== null;
+  const invited = invitedOverride !== undefined ? invitedOverride : isInvitedVip();
   const currentPlan = getPlanType();
 
-  // If VIP (whitelist or campaign), automatically grant unlimited Pro access
+  const vipType = getVipType({ email, registeredAt, isInvited: invited, now });
+  const isVip = vipType !== null || currentPlan === "pro";
+
+  // If VIP (whitelist, invited via URL, or existing Pro tester), automatically grant unlimited Pro access
   if (isVip) {
     return {
       isVip: true,
-      vipType,
-      isRegistered: true,
-      plan: "pro",
-      availableTickets: Infinity,
-      usedTickets: 0,
-      totalTickets: Infinity,
-      availableProTrials: Infinity,
-      usedProTrials: 0,
-      totalProTrials: Infinity,
-      canPracticeShort: true,
-      canPracticePro: true,
-    };
-  }
-
-  // If paid Pro user
-  if (currentPlan === "pro") {
-    return {
-      isVip: false,
-      isRegistered: true,
+      vipType: vipType || "whitelist",
+      isRegistered: !!email || currentPlan === "pro" || invited,
       plan: "pro",
       availableTickets: Infinity,
       usedTickets: 0,
@@ -268,9 +250,9 @@ export function upgradeGuestToRegisteredUser(
 
   const vipType = getVipType({ email, registeredAt: effectiveCreatedAt });
 
-  if (vipType === "whitelist") {
+  if (vipType === "whitelist" || vipType === "invite" || isInvitedVip()) {
     setPlanType("pro");
-  } else if (getPlanType() === "guest") {
+  } else {
     setPlanType("free");
   }
 
@@ -280,3 +262,4 @@ export function upgradeGuestToRegisteredUser(
     localStorage.setItem(KEY_USER_TICKETS_USED, String(guestUsed));
   }
 }
+
