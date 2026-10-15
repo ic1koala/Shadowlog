@@ -72,7 +72,7 @@ describe("OnboardingTourModal and TOUR_STEPS (Admin Tour Test)", () => {
 
     expect(screen.getByText("STEP 1 / 4")).toBeDefined();
     expect(screen.getByText("模範音声 & 速度調整")).toBeDefined();
-    expect(screen.getByText(/ネイティブ音声を聴いて/)).toBeDefined();
+    expect(screen.getByText(/ネイティブの発音/)).toBeDefined();
     expect(screen.getByText("スキップ")).toBeDefined();
     expect(screen.getByText("次へ")).toBeDefined();
   });

@@ -29,7 +29,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: "模範音声 & 速度調整",
     icon: Volume2,
     description:
-      "ネイティブ音声を聴いてリズムを確認。[0.8x / 1.0x / 1.2x] で自分に合った話速（WPM）に調整できます。",
+      "「フレーズ音声を聴く」でネイティブの発音とリズムを確認できます。右側の [0.8x / 1.0x / 1.2x] ボタンで自分に合った話速（WPM）に調整可能です。まずは標準速度で耳を慣らし、全体のイントネーションを掴みましょう。",
     preferredPlacement: "bottom",
   },
   {
@@ -39,7 +39,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: "意味のかたまり（/）& 3D単語フリップ",
     icon: BookOpen,
     description:
-      "スラッシュ（/）は息継ぎの目安。単語タップで日本語訳と音声が開き、弱点単語帳に自動登録されます。",
+      "青いスラッシュ（/）は息継ぎと意味の区切り（チャンク）の目印です。わからない単語をタップするとカードが立体回転し、日本語訳と音声が再生されます。調べた単語は弱点単語帳に自動保存され、いつでも復習可能です。",
     preferredPlacement: "bottom",
   },
   {
@@ -49,7 +49,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: "目的別の2大録音モード",
     icon: Mic,
     description:
-      "「🗣️ 音読録音（青）」で発音を確認。「🎧 シャドーイング録音（紫）」でお手本と同時に発声して耳と口を鍛えます。",
+      "「🗣️ 音読録音（青）」はお手本を停止し、自分のペースで発音練習ができます。「🎧 シャドーイング録音（紫）」はお手本と同時に発声して耳と口を鍛えます。まずは音読で口を慣らし、次にシャドーイングに挑戦しましょう。",
     preferredPlacement: "top",
   },
   {
@@ -59,7 +59,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: "今日の学習を終了 & 成果シェア",
     icon: Award,
     description:
-      "1問だけでもOK！「🏁 今日の学習を終了」で本日の発話数・WPMを記録し、成果をSNSへワンタップでシェアできます。",
+      "練習後に「🏁 今日の学習を終了」を押すと本日の学習サマリーが開きます。1問だけでもOK！総発話単語数や実効WPM、連続ストリークが記録されます。日々の成長をワンタップでXやThreadsへシェアして習慣化しましょう。",
     preferredPlacement: "center",
   },
 ];
@@ -163,7 +163,7 @@ export function OnboardingTourModal({
   let bubbleStyle: React.CSSProperties = {
     position: "fixed",
     left: `${Math.max(16, (vWidth - bubbleWidth) / 2)}px`,
-    top: `${Math.max(80, (vHeight - 190) / 2)}px`,
+    top: `${Math.max(80, (vHeight - 210) / 2)}px`,
     width: `${bubbleWidth}px`,
   };
   let arrowLeft = bubbleWidth / 2;
@@ -180,15 +180,15 @@ export function OnboardingTourModal({
     const spaceAbove = targetRect.top;
 
     if (currentStep.preferredPlacement === "top") {
-      placement = spaceAbove >= 140 ? "top" : "bottom";
+      placement = spaceAbove >= 160 ? "top" : "bottom";
     } else if (currentStep.preferredPlacement === "bottom") {
-      placement = spaceBelow >= 150 ? "bottom" : "top";
+      placement = spaceBelow >= 170 ? "bottom" : "top";
     } else {
-      placement = spaceBelow >= 160 ? "bottom" : "top";
+      placement = spaceBelow >= 180 ? "bottom" : "top";
     }
 
     if (placement === "bottom") {
-      const top = Math.min(vHeight - 170, Math.max(16, targetRect.bottom + 12));
+      const top = Math.min(vHeight - 190, Math.max(16, targetRect.bottom + 12));
       bubbleStyle = {
         position: "fixed",
         left: `${computedLeft}px`,
@@ -253,20 +253,20 @@ export function OnboardingTourModal({
             width: targetRect.width + 16,
             height: targetRect.height + 16,
           }}
-          className="pointer-events-none z-[9991] rounded-2xl ring-4 ring-primary shadow-2xl ring-offset-2 ring-offset-background/50 animate-pulse duration-1000"
+          className="pointer-events-none z-[9991] rounded-2xl ring-4 ring-amber-400 shadow-2xl ring-offset-2 ring-offset-background/50 animate-pulse duration-1000"
         />
       )}
 
-      {/* ── Speech Bubble (吹き出し) ── */}
+      {/* ── Speech Bubble (吹き出し: 明るく読みやすいソフトイエロー背景) ── */}
       <div
         style={bubbleStyle}
-        className="z-[9995] pointer-events-auto bg-card/98 backdrop-blur-xl border-2 border-primary/50 rounded-2xl shadow-2xl p-4 sm:p-5 ring-1 ring-white/20 animate-in fade-in zoom-in-95 duration-200"
+        className="z-[9995] pointer-events-auto bg-[#FFFDF0] border-2 border-amber-400 rounded-2xl shadow-2xl p-4 sm:p-5 ring-2 ring-amber-300/40 text-slate-900 animate-in fade-in zoom-in-95 duration-200"
       >
         {/* 吹き出しの三角ポインター（上向き: ターゲットが上にある場合） */}
         {placement === "bottom" && (
           <div
             style={{ left: `${arrowLeft}px` }}
-            className="absolute -top-2 w-3.5 h-3.5 bg-card border-t-2 border-l-2 border-primary/50 rotate-45 -translate-x-1/2 z-10"
+            className="absolute -top-2 w-3.5 h-3.5 bg-[#FFFDF0] border-t-2 border-l-2 border-amber-400 rotate-45 -translate-x-1/2 z-10"
           />
         )}
 
@@ -274,21 +274,21 @@ export function OnboardingTourModal({
         {placement === "top" && (
           <div
             style={{ left: `${arrowLeft}px` }}
-            className="absolute -bottom-2 w-3.5 h-3.5 bg-card border-b-2 border-r-2 border-primary/50 rotate-45 -translate-x-1/2 z-10"
+            className="absolute -bottom-2 w-3.5 h-3.5 bg-[#FFFDF0] border-b-2 border-r-2 border-amber-400 rotate-45 -translate-x-1/2 z-10"
           />
         )}
 
         {/* Header: Badge, Title & Skip Button */}
-        <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-amber-200/80">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] sm:text-xs font-black tracking-wide border border-primary/25">
+            <span className="px-2 py-0.5 rounded-full bg-amber-200/90 text-amber-950 text-[10px] sm:text-xs font-black tracking-wide border border-amber-300/80 shadow-2xs">
               {currentStep.badge}
             </span>
-            <div className="flex items-center gap-1">
-              <IconComponent className="w-3.5 h-3.5 text-primary shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <IconComponent className="w-4 h-4 text-amber-700 shrink-0" />
               <h2
                 id="tour-modal-title"
-                className="text-xs sm:text-sm font-black text-foreground leading-snug"
+                className="text-xs sm:text-sm font-black text-amber-950 leading-snug"
               >
                 {currentStep.title}
               </h2>
@@ -298,20 +298,20 @@ export function OnboardingTourModal({
           <button
             type="button"
             onClick={handleSkip}
-            className="text-[11px] font-bold text-muted-foreground hover:text-foreground transition px-1.5 py-0.5 rounded-md hover:bg-muted active:scale-95 cursor-pointer shrink-0"
+            className="text-[11px] font-bold text-amber-800/80 hover:text-amber-950 transition px-1.5 py-0.5 rounded-md hover:bg-amber-100 active:scale-95 cursor-pointer shrink-0"
             title="ツアーをスキップ"
           >
             スキップ
           </button>
         </div>
 
-        {/* Concise Description */}
-        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-3 font-medium">
+        {/* 3-Line Concise & Readable Description */}
+        <p className="text-xs sm:text-[13px] text-slate-800 font-medium leading-relaxed mb-3">
           {currentStep.description}
         </p>
 
         {/* Footer: Step Dots & Navigation Buttons */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-amber-200/80">
           {/* Step Dots */}
           <div className="flex items-center gap-1.5">
             {TOUR_STEPS.map((_, idx) => (
@@ -321,8 +321,8 @@ export function OnboardingTourModal({
                 onClick={() => setCurrentStepIndex(idx)}
                 className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                   idx === currentStepIndex
-                    ? "w-4 bg-primary"
-                    : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                    ? "w-4 bg-amber-500"
+                    : "w-1.5 bg-amber-200 hover:bg-amber-300"
                 }`}
                 aria-label={`ステップ ${idx + 1} へ移動`}
               />
@@ -335,7 +335,7 @@ export function OnboardingTourModal({
               <button
                 type="button"
                 onClick={handlePrev}
-                className="inline-flex items-center justify-center gap-0.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition active:scale-95 cursor-pointer min-h-[32px]"
+                className="inline-flex items-center justify-center gap-0.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-950 transition active:scale-95 cursor-pointer min-h-[32px] border border-amber-200"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span>戻る</span>
@@ -345,7 +345,7 @@ export function OnboardingTourModal({
             <button
               type="button"
               onClick={handleNext}
-              className="inline-flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-sm active:scale-95 cursor-pointer min-h-[32px]"
+              className="inline-flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition shadow-sm shadow-amber-500/25 active:scale-95 cursor-pointer min-h-[32px]"
             >
               <span>{isLastStep ? "完了して練習を始める ✨" : "次へ"}</span>
               {!isLastStep && <ChevronRight className="w-3.5 h-3.5" />}
