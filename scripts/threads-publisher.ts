@@ -36,6 +36,17 @@ async function main() {
       const result = await postToThreads(text, imageUrl);
       if (result.success) {
         console.log(`🎉 Successfully published to Threads! Post ID: ${result.id}`);
+        const queue = getQueue();
+        queue.push({
+          id: `direct_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          text,
+          imageUrl,
+          scheduledAt: new Date().toISOString(),
+          status: "published",
+          publishedAt: new Date().toISOString(),
+          postId: result.id,
+        });
+        saveQueue(queue);
       } else {
         console.error(`❌ Failed to publish:`, result.error);
         process.exit(1);
