@@ -106,7 +106,9 @@
     "text": "【大型リニューアル速報】AI英語TOEIC診断を大幅アップデートしました！🔥\n\n「判定が甘い気がする…」というテスターの声を反映し、判定エンジンを徹底的に厳格化しました。\n\n✨ リニューアルのポイント：\n① 全5問の本格適応型テスト（約1分完結）\n② 適当発音への下限保証を完全撤廃\n③ 早口ごまかし・音の連結（リンキング）を1単語単位で厳密採点\n\n本当にネイティブ並みにスラスラ発音できた人だけが800〜900点に到達できるガチ仕様です。\nあなたの現在の実効WPMとTOEIC実力をぜひ測ってみてください👇\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #シャドーイング #英語勉強法 #個人開発 #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/banners/toeic-diagnosis-5q-renewal.png",
     "scheduledAt": "2026-10-15T12:44:43.955Z",
-    "status": "pending"
+    "status": "published",
+    "publishedAt": "2026-10-15T15:23:41.579Z",
+    "postId": "17910076053478899"
   },
   {
     "id": "queue_humanized_3in1_5_lunch_1791681309113_yl8j",

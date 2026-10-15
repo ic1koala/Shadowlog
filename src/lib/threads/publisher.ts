@@ -56,6 +56,13 @@ export async function postToThreads(text: string, imageUrl?: string): Promise<{ 
 
     const createData = await createRes.json();
     if (!createRes.ok || !createData.id) {
+      // If image upload fails (e.g. URI inaccessible or format issue), fallback to text-only post
+      if (imageUrl) {
+        console.warn(
+          `[Threads Publisher] Image container failed (${createData.error?.message || "download error"}), retrying as text-only post...`
+        );
+        return postToThreads(text);
+      }
       return {
         success: false,
         error: createData.error?.message || `Failed to create thread container: ${JSON.stringify(createData)}`,

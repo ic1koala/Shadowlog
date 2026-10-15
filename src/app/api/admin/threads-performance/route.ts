@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import { getQueue } from "@/lib/threads/publisher";
 import { getThreadsUserId, getThreadsAccessToken } from "@/lib/threads/constants";
@@ -55,18 +56,62 @@ export interface ThreadsPerformanceResponse {
   fetchedAt: string;
 }
 
-// In-memory cache for 30 seconds to prevent hitting Threads API rate limits
+// In-memory cache for 15 seconds to prevent hitting Threads API rate limits
 let cachedData: ThreadsPerformanceResponse | null = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 30 * 1000;
+const CACHE_TTL_MS = 15 * 1000;
+
+function getSupabaseAdmin() {
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    "https://placeholder-project.supabase.co";
+
+  const supabaseServiceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    "placeholder-key";
+
+  return createSupabaseClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
 
 async function isAuthorizedAdmin(req: NextRequest): Promise<boolean> {
-  const cronSecret = process.env.CRON_SECRET;
+  // Test mock
+  if (process.env.NODE_ENV === "test") {
+    const mockEmail = req.headers.get("x-mock-admin-email");
+    if (mockEmail && isAdminEmail(mockEmail)) return true;
+  }
+
   const authHeader = req.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
     return true;
   }
 
+  // Check Bearer user access token from Supabase client
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "").trim();
+    try {
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+      if (!userError && userData?.user?.email && isAdminEmail(userData.user.email)) {
+        return true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Fallback to cookies
   try {
     const supabase = await createServerClient();
     const {
@@ -82,10 +127,16 @@ async function isAuthorizedAdmin(req: NextRequest): Promise<boolean> {
   return false;
 }
 
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 export async function GET(req: NextRequest) {
   const authorized = await isAuthorizedAdmin(req);
   if (!authorized) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_CACHE_HEADERS });
   }
 
   const { searchParams } = new URL(req.url);
@@ -93,7 +144,7 @@ export async function GET(req: NextRequest) {
 
   const now = Date.now();
   if (!forceRefresh && cachedData && now - lastCacheTime < CACHE_TTL_MS) {
-    return NextResponse.json(cachedData);
+    return NextResponse.json(cachedData, { headers: NO_CACHE_HEADERS });
   }
 
   const userId = getThreadsUserId();
@@ -257,10 +308,10 @@ export async function GET(req: NextRequest) {
     cachedData = responsePayload;
     lastCacheTime = now;
 
-    return NextResponse.json(responsePayload);
+    return NextResponse.json(responsePayload, { headers: NO_CACHE_HEADERS });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error("[Threads Performance API Error]:", errorMsg);
-    return NextResponse.json({ error: errorMsg }, { status: 500 });
+    return NextResponse.json({ error: errorMsg }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }

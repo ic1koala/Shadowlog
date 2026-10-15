@@ -52,6 +52,7 @@ export default function AdminCustomersPage() {
   const [authChecking, setAuthChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   const [data, setData] = useState<AdminCustomerResponse | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -98,6 +99,7 @@ export default function AdminCustomersPage() {
           if (mounted) {
             setIsAuthorized(true);
             setAdminEmail(userEmail);
+            setAuthToken(accessToken || null);
             setAuthChecking(false);
             fetchCustomers(accessToken);
           }
@@ -1402,7 +1404,10 @@ export default function AdminCustomersPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            <ThreadsPerformanceSection onRefreshParent={() => fetchCustomers()} />
+            <ThreadsPerformanceSection
+              authToken={authToken}
+              onRefreshParent={() => fetchCustomers(authToken || undefined)}
+            />
           </div>
         )}
       </main>
