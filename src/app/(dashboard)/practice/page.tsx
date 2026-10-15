@@ -39,6 +39,7 @@ import {
 } from "@/lib/storage/custom-words-store";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
 import { StudySessionSummaryModal } from "@/components/features/practice/StudySessionSummaryModal";
+import { OnboardingTourModal } from "@/components/features/practice/OnboardingTourModal";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import { convertBlobToWav } from "@/lib/audio/wav-converter";
 import {
@@ -64,6 +65,8 @@ export default function PracticePage() {
   const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
 
   const isAdmin = isAdminEmail(userEmail);
+  const [showAdminTour, setShowAdminTour] = useState(false);
+  const adminTourCheckedRef = useRef(false);
   const [scoringEngine, setScoringEngine] = useState<"whisper" | "azure">("azure");
   const [azureAssessment, setAzureAssessment] = useState<AzureAssessmentResult | undefined>();
   const [showFinishModal, setShowFinishModal] = useState(false);
@@ -176,6 +179,23 @@ export default function PracticePage() {
       window.removeEventListener("shadowlog:ticket-update", handleCustomWordsSync);
     };
   }, []);
+
+  // Auto-launch onboarding tour for admin testing on first sentence loaded
+  useEffect(() => {
+    if (!isAdmin || !sentence || adminTourCheckedRef.current) return;
+    adminTourCheckedRef.current = true;
+    try {
+      const hasSeen = localStorage.getItem("shadowlog_admin_tour_seen");
+      if (!hasSeen) {
+        const timer = setTimeout(() => {
+          setShowAdminTour(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // ignore
+    }
+  }, [isAdmin, sentence]);
 
   // Silently prefetches the next question in the background while the user is practicing
   const prefetchNextSentence = useCallback(
@@ -970,6 +990,16 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                     >
                       Whisper
                     </button>
+                    <span className="text-purple-400/40 dark:text-purple-500/40">|</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminTour(true)}
+                      className="px-2 py-0.5 rounded-md text-purple-700 dark:text-purple-300 hover:bg-purple-600 hover:text-white transition cursor-pointer flex items-center gap-1"
+                      title="オンボーディングツアーをテスト起動（管理者専用）"
+                    >
+                      <span>🧭</span>
+                      <span>ツアー体験</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -1140,7 +1170,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
 
       {/* Next Sentence & Finish Session Buttons */}
       {sentence && diffResult && (
-        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2">
+        <div id="tour-finish-section" className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2">
           <button
             type="button"
             onClick={() => setShowFinishModal(true)}
@@ -1186,7 +1216,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       {/* ── Floating Recording Bar ── */}
       {/* Shown while sentence is active and no result yet (recording phase) */}
       {sentence && !diffResult && !floatHasBlob && !showProModal && (
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem)] sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4">
+        <div id="tour-recording-bar" className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem)] sm:bottom-10 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4">
           <div className="pointer-events-auto flex flex-col gap-2 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full duration-300">
             {/* Status indicator row */}
             <div className="flex items-center justify-between gap-2">
@@ -1336,6 +1366,19 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
         elapsedSeconds={Math.max(60, Math.round((Date.now() - sessionStartTimeRef.current) / 1000))}
         streakDays={calculateUserStats(loadAllSessions()).currentStreak}
         lastDiffResult={diffResult}
+      />
+
+      {/* Interactive Onboarding Tour (Admin Test Mode) */}
+      <OnboardingTourModal
+        isOpen={showAdminTour}
+        onClose={() => setShowAdminTour(false)}
+        onComplete={() => {
+          try {
+            localStorage.setItem("shadowlog_admin_tour_seen", "true");
+          } catch {
+            // ignore
+          }
+        }}
       />
     </div>
   );

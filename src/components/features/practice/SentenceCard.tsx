@@ -1133,7 +1133,7 @@ export function SentenceCard({
 
       <div className="space-y-2 sm:space-y-3">
         {/* English sentence with blue bold karaoke highlight (tap word to toggle Japanese translation) */}
-        <div className="relative p-1 -m-1 select-none rounded-xl">
+        <div id="tour-sentence-text" className="relative p-1 -m-1 select-none rounded-xl">
           <p className="text-xl sm:text-3xl font-semibold leading-snug tracking-normal text-foreground flex flex-wrap gap-y-0.5 sm:gap-y-1 items-baseline relative z-10">
             {parsedWords.map((w, idx) => {
               const isCurrent = isPlaying && activeWordIndex === idx;
@@ -1207,7 +1207,10 @@ export function SentenceCard({
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-2 border-t border-border">
+      <div
+        id="tour-audio-player"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-2 border-t border-border"
+      >
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
           <button
             type="button"
