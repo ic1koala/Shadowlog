@@ -25,6 +25,7 @@ import {
   BookOpen,
   LayoutDashboard,
   GitBranch,
+  Film,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
@@ -34,8 +35,9 @@ import { CustomerUsageModal } from "@/components/features/admin/CustomerUsageMod
 import { ManagementDashboardSection } from "@/components/features/admin/ManagementDashboardSection";
 import { ThreadsPerformanceSection } from "@/components/features/admin/ThreadsPerformanceSection";
 import { LogicTreeSection } from "@/components/features/admin/LogicTreeSection";
+import { LogoAnimationPreviewSection } from "@/components/features/admin/LogoAnimationPreviewSection";
 
-type AdminTab = "customers" | "compliance" | "management" | "threads" | "logic_tree";
+type AdminTab = "customers" | "compliance" | "management" | "threads" | "logic_tree" | "logo_animation";
 type PlanFilter = "all" | "free" | "base" | "pro";
 type SortOption =
   | "newest"
@@ -565,6 +567,27 @@ export default function AdminCustomersPage() {
               }`}
             >
               改善整理
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("logo_animation")}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs ${
+              activeTab === "logo_animation"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <Film className="w-4 h-4 text-cyan-400" />
+            <span>ロゴアニメーション</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
+                activeTab === "logo_animation"
+                  ? "bg-white/20 text-white"
+                  : "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20"
+              }`}
+            >
+              5案プレビュー
             </span>
           </button>
         </div>
@@ -1401,6 +1424,10 @@ export default function AdminCustomersPage() {
         ) : activeTab === "logic_tree" ? (
           <div className="space-y-6">
             <LogicTreeSection />
+          </div>
+        ) : activeTab === "logo_animation" ? (
+          <div className="space-y-6">
+            <LogoAnimationPreviewSection />
           </div>
         ) : (
           <div className="space-y-6">
