@@ -45,7 +45,7 @@ export default function WaitlistPage() {
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition"
             >
               <Zap className="w-3.5 h-3.5" />
-              <span>30秒TOEIC診断</span>
+              <span>1min TOEIC診断</span>
             </Link>
             <Link
               href="/login"
@@ -327,7 +327,7 @@ export default function WaitlistPage() {
                   <span className="text-xs font-bold text-muted-foreground">実務・本格派</span>
                   <h3 className="text-lg font-bold text-foreground">プロプラン</h3>
                   <div className="pt-1">
-                    <span className="text-2xl font-black text-foreground">¥1,480</span>
+                    <span className="text-2xl font-black text-foreground">¥1,000</span>
                     <span className="text-xs text-muted-foreground ml-1">/ 月 (税込)</span>
                   </div>
                   <ul className="space-y-2 text-xs text-muted-foreground pt-2">

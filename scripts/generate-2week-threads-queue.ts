@@ -24,7 +24,7 @@ const postsData = [
 
 日曜日ですね！みなさん休日の朝はどこで英語勉強してますか？自分はカフェで静かに発声練習するのが習慣になってます☕️
 
-そういえば自分の英語の発話スピード（WPM）って測ったことありますか？気になる方はプロフィールのリンクから30秒でAIチェックできますよ！
+そういえば自分の英語の発話スピード（WPM）って測ったことありますか？気になる方はプロフィールのリンクから1分でAIチェックできますよ！
 
 #英語学習 #TOEIC #朝活 #ShadowLog`
   },
@@ -45,7 +45,7 @@ const postsData = [
 
 実はシャドテンを使いたかったんですが月2万円が高すぎて継続を断念し…悔しくて自分で作ったのがこの「ShadowLog」です（笑）
 
-30秒声を吹き込むだけで発声WPMと推定TOEICスコアが無料判定できるので、今日の締めくくりにぜひ試してみてください！
+1分声を吹き込むだけで発声WPMと推定TOEICスコアが無料判定できるので、今日の締めくくりにぜひ試してみてください！
 
 https://shadowlog.vercel.app/diagnosis
 
@@ -84,7 +84,7 @@ https://shadowlog.vercel.app/diagnosis
 「英語を話す時、頭の中で英作文しちゃって言葉が詰まる…」って悩みありませんか？
 これ、単語力じゃなくて脳内の単語検索スピード（WPM）の問題だったりします。
 
-30秒で自分のWPMと弱点が可視化できるAI診断、夜の学習のついでにやってみてね！
+1分で自分のWPMと弱点が可視化できるAI診断、夜の学習のついでにやってみてね！
 
 https://shadowlog.vercel.app/diagnosis
 
@@ -118,7 +118,7 @@ https://shadowlog.vercel.app/diagnosis
     day: 2, slot: "night", hour: 20, minute: 0, hasUrl: true,
     text: `【先着20名限定】初期VIPモニター募集中！
 
-実は30秒AI診断を受けてくれた方限定で、正式版もPro機能（無制限練習・詳細AIフィードバック）が使い放題になるVIPモニター枠を開放しています！
+実は1min AI診断を受けてくれた方限定で、正式版もPro機能（無制限練習・詳細AIフィードバック）が使い放題になるVIPモニター枠を開放しています！
 
 残り枠数をリアルタイム表示中。気になる方はお早めにどうぞ👇
 
@@ -141,7 +141,7 @@ https://shadowlog.vercel.app/diagnosis
   },
   {
     day: 3, slot: "lunch", hour: 12, minute: 30, hasUrl: false,
-    text: `お昼休み30秒チェック！
+    text: `お昼休み1分チェック！
 
 「シャドーイングって難しそう…」という声をもらったので、お手本を聞いてから落ち着いて発声できる「音読モード」も作りました。
 
@@ -157,7 +157,7 @@ https://shadowlog.vercel.app/diagnosis
 2. 変化した音が聞き取れない（リンキング未定着）
 3. スピードについていけない（WPM不足）
 
-自分がどこで詰まってるか知るだけで効率変わります！30秒AI診断はこちら👇
+自分がどこで詰まってるか知るだけで効率変わります！1min AI診断はこちら👇
 
 https://shadowlog.vercel.app/diagnosis
 
@@ -194,7 +194,7 @@ https://shadowlog.vercel.app/diagnosis
 
 AIが0秒であなたの発音速度（WPM）と推定TOEIC点数を割り出します！
 
-無料30秒AI診断はこちら👇
+無料1min AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #個人開発 #ShadowLog`
@@ -224,7 +224,7 @@ https://shadowlog.vercel.app/diagnosis
     text: `1週間お仕事・お勉強お疲れ様でした！🍻
 
 金曜夜の解放感最高ですね。
-「今週英語頑張ったな〜」という方も、「来週から頑張る！」という方も、今の実力を30秒で記録しておきませんか？
+「今週英語頑張ったな〜」という方も、「来週から頑張る！」という方も、今の実力を1分で記録しておきませんか？
 
 推定TOEICスコアもその場で出ます👇
 
@@ -238,7 +238,7 @@ https://shadowlog.vercel.app/diagnosis
     day: 6, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-土曜日の朝！休日ってついついダラダラしがちですが、朝イチで30秒だけ声を出しておくと脳がシャキッと目覚めますよ！
+土曜日の朝！休日ってついついダラダラしがちですが、朝イチで1分だけ声を出しておくと脳がシャキッと目覚めますよ！
 
 #英語学習 #TOEIC #英会話 #ShadowLog`
   },
@@ -257,7 +257,7 @@ https://shadowlog.vercel.app/diagnosis
 
 全Pro機能が無制限使い放題になる初期VIPモニター枠、少しずつ枠が埋まってきています！
 
-30秒AI診断を受けると診断結果画面からエントリーできます。残枠表示をチェックしてみてね👇
+1min AI診断を受けると診断結果画面からエントリーできます。残枠表示をチェックしてみてね👇
 
 https://shadowlog.vercel.app/diagnosis
 
@@ -288,7 +288,7 @@ https://shadowlog.vercel.app/diagnosis
     text: `明日からまた新しい1週間が始まりますね！
 
 「今週こそ英語学習習慣化するぞ！」という意気込み、応援してます🔥
-まずは今夜の30秒で現在の発声速度と推定TOEICスコアをスタート地点として記録しておきませんか？
+まずは今夜の1分で現在の発声速度と推定TOEICスコアをスタート地点として記録しておきませんか？
 
 https://shadowlog.vercel.app/diagnosis
 
@@ -325,7 +325,7 @@ https://shadowlog.vercel.app/diagnosis
 「リスニング力伸ばしたいけどシャドーイングって正しくできてるか不安…」という方へ。
 Whisper AIがあなたの発音を可視化してくれるので、ひとりでも安心して練習できます！
 
-まずは30秒無料診断からどうぞ👇
+まずは1min無料診断からどうぞ👇
 
 https://shadowlog.vercel.app/diagnosis
 
@@ -337,7 +337,7 @@ https://shadowlog.vercel.app/diagnosis
     day: 9, slot: "morning", hour: 6, minute: 30, hasUrl: false,
     text: `おはようございます！というと皆と仲良くなれると聞きました！☀️
 
-火曜日！朝の30秒で英語脳を呼び覚ましましょう！
+火曜日！朝の1分で英語脳を呼び覚ましましょう！
 
 今日も一歩ずつ前進です🔥
 
@@ -360,9 +360,9 @@ https://shadowlog.vercel.app/diagnosis
     text: `【残りわずか】先着20名初期VIPモニター！
 
 全Pro機能無制限使い放題のVIPモニター枠、まもなく終了となります。
-気になる方は30秒AI診断後のエントリー画面からお早めに応募してくださいね！
+気になる方は1min AI診断後のエントリー画面からお早めに応募してくださいね！
 
-無料30秒AI診断はこちら👇
+無料1min AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #TOEIC #VIPモニター #ShadowLog`
@@ -394,7 +394,7 @@ https://shadowlog.vercel.app/diagnosis
 
 これからもみんなが楽しく声を出せるアプリを目指して改善していきます！
 
-まずは30秒診断で遊んでみてね👇
+まずは1min診断で遊んでみてね👇
 https://shadowlog.vercel.app/diagnosis
 
 #英語学習 #個人開発 #ShadowLog`
@@ -423,7 +423,7 @@ https://shadowlog.vercel.app/diagnosis
     text: `【いよいよラスト枠！】初期VIPモニター募集
 
 Pro機能無制限使い放題のVIPモニター枠、残りわずかです！
-30秒AI診断を受けると結果画面からワンタップで応募できます。お見逃しなく！
+1min AI診断を受けると結果画面からワンタップで応募できます。お見逃しなく！
 
 https://shadowlog.vercel.app/diagnosis
 
@@ -453,7 +453,7 @@ https://shadowlog.vercel.app/diagnosis
     day: 12, slot: "night", hour: 20, minute: 0, hasUrl: true,
     text: `1週間本当にお疲れ様でした！🍻
 
-週末の短時間学習に、現在の自分の英語力（WPM＆推定TOEICスコア）を30秒で記録しておきませんか？
+週末の短時間学習に、現在の自分の英語力（WPM＆推定TOEICスコア）を1分で記録しておきませんか？
 
 無料AI診断はこちら👇
 https://shadowlog.vercel.app/diagnosis
@@ -490,7 +490,7 @@ https://shadowlog.vercel.app/diagnosis
 
 これからもみんなが楽しく、効果的に英語を学べる機能をどんどん作っていきます！
 
-まずは30秒無料AI診断であなたの実力を試してみてね🔥
+まずは1min無料AI診断であなたの実力を試してみてね🔥
 
 https://shadowlog.vercel.app/diagnosis
 

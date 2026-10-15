@@ -102,6 +102,13 @@
     "postId": "18107667643959002"
   },
   {
+    "id": "queue_renewal_toeic_diagnosis_5q_1792067983955",
+    "text": "【大型リニューアル速報】AI英語TOEIC診断を大幅アップデートしました！🔥\n\n「判定が甘い気がする…」というテスターの声を反映し、判定エンジンを徹底的に厳格化しました。\n\n✨ リニューアルのポイント：\n① 全5問の本格適応型テスト（約1分完結）\n② 適当発音への下限保証を完全撤廃\n③ 早口ごまかし・音の連結（リンキング）を1単語単位で厳密採点\n\n本当にネイティブ並みにスラスラ発音できた人だけが800〜900点に到達できるガチ仕様です。\nあなたの現在の実効WPMとTOEIC実力をぜひ測ってみてください👇\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #シャドーイング #英語勉強法 #個人開発 #ShadowLog",
+    "imageUrl": "https://shadowlog.vercel.app/banners/toeic-diagnosis-5q-renewal.png",
+    "scheduledAt": "2026-10-15T12:44:43.955Z",
+    "status": "pending"
+  },
+  {
     "id": "queue_humanized_3in1_5_lunch_1791681309113_yl8j",
     "text": "英語の音変化あるある💡\n\n・Water ➔ ワラ\n・An apple ➔ アナップル\n・Going to ➔ ゴナ\n\n自分の口で言えるようになると自然と聞き取れるようになりますよ！\n\n#英語学習 #TOEIC #発音 #ShadowLog",
     "scheduledAt": "2026-10-15T12:30:00+09:00",
@@ -111,7 +118,7 @@
   },
   {
     "id": "queue_humanized_3in1_5_night_1791681309113_ocqm",
-    "text": "アプリ開発しててユーザーさんから「自分の得意・苦手が数値で分かって面白い！」って言ってもらえたのが一番嬉しかったな…✨\n\nAIが0秒であなたの発音速度（WPM）と推定TOEIC点数を割り出します！\n\n無料30秒AI診断はこちら👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #個人開発 #ShadowLog",
+    "text": "アプリ開発しててユーザーさんから「自分の得意・苦手が数値で分かって面白い！」って言ってもらえたのが一番嬉しかったな…✨\n\nAIが0秒であなたの発音速度（WPM）と推定TOEIC点数を割り出します！\n\n無料1min AI診断はこちら👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #個人開発 #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-15T20:00:00+09:00",
     "status": "published",
@@ -132,14 +139,14 @@
   },
   {
     "id": "queue_humanized_3in1_6_night_1791681309113_ifth",
-    "text": "1週間お仕事・お勉強お疲れ様でした！🍻\n\n金曜夜の解放感最高ですね。\n「今週英語頑張ったな〜」という方も、「来週から頑張る！」という方も、今の実力を30秒で記録しておきませんか？\n\n推定TOEICスコアもその場で出ます👇\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #ShadowLog",
+    "text": "1週間お仕事・お勉強お疲れ様でした！🍻\n\n金曜夜の解放感最高ですね。\n「今週英語頑張ったな〜」という方も、「来週から頑張る！」という方も、今の実力を1分で記録しておきませんか？\n\n推定TOEICスコアもその場で出ます👇\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-16T20:00:00+09:00",
     "status": "pending"
   },
   {
     "id": "queue_humanized_3in1_7_morning_1791681309113_c1nh",
-    "text": "おはようございます！というと皆と仲良くなれると聞きました！☀️\n\n土曜日の朝！休日ってついついダラダラしがちですが、朝イチで30秒だけ声を出しておくと脳がシャキッと目覚めますよ！\n\n#英語学習 #TOEIC #英会話 #ShadowLog",
+    "text": "おはようございます！というと皆と仲良くなれると聞きました！☀️\n\n土曜日の朝！休日ってついついダラダラしがちですが、朝イチで1分だけ声を出しておくと脳がシャキッと目覚めますよ！\n\n#英語学習 #TOEIC #英会話 #ShadowLog",
     "scheduledAt": "2026-10-17T06:30:00+09:00",
     "status": "pending"
   },
@@ -151,7 +158,7 @@
   },
   {
     "id": "queue_humanized_3in1_7_night_1791681309113_heja",
-    "text": "【先着20名初期VIPモニター枠 カウントダウン】\n\n全Pro機能が無制限使い放題になる初期VIPモニター枠、少しずつ枠が埋まってきています！\n\n30秒AI診断を受けると診断結果画面からエントリーできます。残枠表示をチェックしてみてね👇\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #VIPモニター #ShadowLog",
+    "text": "【先着20名初期VIPモニター枠 カウントダウン】\n\n全Pro機能が無制限使い放題になる初期VIPモニター枠、少しずつ枠が埋まってきています！\n\n1min AI診断を受けると診断結果画面からエントリーできます。残枠表示をチェックしてみてね👇\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #VIPモニター #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-17T20:00:00+09:00",
     "status": "pending"
@@ -170,7 +177,7 @@
   },
   {
     "id": "queue_humanized_3in1_8_night_1791681309113_fc0c",
-    "text": "明日からまた新しい1週間が始まりますね！\n\n「今週こそ英語学習習慣化するぞ！」という意気込み、応援してます🔥\nまずは今夜の30秒で現在の発声速度と推定TOEICスコアをスタート地点として記録しておきませんか？\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #ShadowLog",
+    "text": "明日からまた新しい1週間が始まりますね！\n\n「今週こそ英語学習習慣化するぞ！」という意気込み、応援してます🔥\nまずは今夜の1分で現在の発声速度と推定TOEICスコアをスタート地点として記録しておきませんか？\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-18T20:00:00+09:00",
     "status": "pending"
@@ -189,14 +196,14 @@
   },
   {
     "id": "queue_humanized_3in1_9_night_1791681309113_o366",
-    "text": "月曜夜のお疲れ様です！\n\n「リスニング力伸ばしたいけどシャドーイングって正しくできてるか不安…」という方へ。\nWhisper AIがあなたの発音を可視化してくれるので、ひとりでも安心して練習できます！\n\nまずは30秒無料診断からどうぞ👇\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #シャドーイング #ShadowLog",
+    "text": "月曜夜のお疲れ様です！\n\n「リスニング力伸ばしたいけどシャドーイングって正しくできてるか不安…」という方へ。\nWhisper AIがあなたの発音を可視化してくれるので、ひとりでも安心して練習できます！\n\nまずは1min無料診断からどうぞ👇\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #シャドーイング #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-19T20:00:00+09:00",
     "status": "pending"
   },
   {
     "id": "queue_humanized_3in1_10_morning_1791681309113_bfox",
-    "text": "おはようございます！というと皆と仲良くなれると聞きました！☀️\n\n火曜日！朝の30秒で英語脳を呼び覚ましましょう！\n\n今日も一歩ずつ前進です🔥\n\n#英語学習 #TOEIC #英会話 #ShadowLog",
+    "text": "おはようございます！というと皆と仲良くなれると聞きました！☀️\n\n火曜日！朝の1分で英語脳を呼び覚ましましょう！\n\n今日も一歩ずつ前進です🔥\n\n#英語学習 #TOEIC #英会話 #ShadowLog",
     "scheduledAt": "2026-10-20T06:30:00+09:00",
     "status": "pending"
   },
@@ -208,7 +215,7 @@
   },
   {
     "id": "queue_humanized_3in1_10_night_1791681309113_frvp",
-    "text": "【残りわずか】先着20名初期VIPモニター！\n\n全Pro機能無制限使い放題のVIPモニター枠、まもなく終了となります。\n気になる方は30秒AI診断後のエントリー画面からお早めに応募してくださいね！\n\n無料30秒AI診断はこちら👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #VIPモニター #ShadowLog",
+    "text": "【残りわずか】先着20名初期VIPモニター！\n\n全Pro機能無制限使い放題のVIPモニター枠、まもなく終了となります。\n気になる方は1min AI診断後のエントリー画面からお早めに応募してくださいね！\n\n無料1min AI診断はこちら👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #VIPモニター #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-20T20:00:00+09:00",
     "status": "pending"
@@ -227,7 +234,7 @@
   },
   {
     "id": "queue_humanized_3in1_11_night_1791681309113_2bpo",
-    "text": "個人開発でShadowLogを作ってから、色んな英語学習者さんと繋がれて本当に嬉しいです…！\n\nこれからもみんなが楽しく声を出せるアプリを目指して改善していきます！\n\nまずは30秒診断で遊んでみてね👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #個人開発 #ShadowLog",
+    "text": "個人開発でShadowLogを作ってから、色んな英語学習者さんと繋がれて本当に嬉しいです…！\n\nこれからもみんなが楽しく声を出せるアプリを目指して改善していきます！\n\nまずは1min診断で遊んでみてね👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #個人開発 #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-21T20:00:00+09:00",
     "status": "pending"
@@ -246,7 +253,7 @@
   },
   {
     "id": "queue_humanized_3in1_12_night_1791681309113_3pva",
-    "text": "【いよいよラスト枠！】初期VIPモニター募集\n\nPro機能無制限使い放題のVIPモニター枠、残りわずかです！\n30秒AI診断を受けると結果画面からワンタップで応募できます。お見逃しなく！\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #ShadowLog",
+    "text": "【いよいよラスト枠！】初期VIPモニター募集\n\nPro機能無制限使い放題のVIPモニター枠、残りわずかです！\n1min AI診断を受けると結果画面からワンタップで応募できます。お見逃しなく！\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-22T20:00:00+09:00",
     "status": "pending"
@@ -265,7 +272,7 @@
   },
   {
     "id": "queue_humanized_3in1_13_night_1791681309113_nayl",
-    "text": "1週間本当にお疲れ様でした！🍻\n\n週末の短時間学習に、現在の自分の英語力（WPM＆推定TOEICスコア）を30秒で記録しておきませんか？\n\n無料AI診断はこちら👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #ShadowLog",
+    "text": "1週間本当にお疲れ様でした！🍻\n\n週末の短時間学習に、現在の自分の英語力（WPM＆推定TOEICスコア）を1分で記録しておきませんか？\n\n無料AI診断はこちら👇\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-23T20:00:00+09:00",
     "status": "pending"
@@ -284,7 +291,7 @@
   },
   {
     "id": "queue_humanized_3in1_14_night_1791681309113_of0t",
-    "text": "声を出して英語力を伸ばすAIシャドーイングアプリ「ShadowLog」。\n\nこれからもみんなが楽しく、効果的に英語を学べる機能をどんどん作っていきます！\n\nまずは30秒無料AI診断であなたの実力を試してみてね🔥\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #シャドーイング #ShadowLog",
+    "text": "声を出して英語力を伸ばすAIシャドーイングアプリ「ShadowLog」。\n\nこれからもみんなが楽しく、効果的に英語を学べる機能をどんどん作っていきます！\n\nまずは1min無料AI診断であなたの実力を試してみてね🔥\n\nhttps://shadowlog.vercel.app/diagnosis\n\n#英語学習 #TOEIC #シャドーイング #ShadowLog",
     "imageUrl": "https://shadowlog.vercel.app/og-image.png",
     "scheduledAt": "2026-10-24T20:00:00+09:00",
     "status": "pending"
