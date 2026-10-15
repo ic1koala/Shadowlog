@@ -292,8 +292,8 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
       "children": [
         {
           "id": "g-plan-differentiation",
-          "title": "💡 新・3段階会員プラン設計 (無料 / 一般500円 / プロ1480円)",
-          "summary": "無料と一般(500円)の明確な差別化と、プロ(1480円)の1日1回プレミアムAI高精度レビュー",
+          "title": "💡 新・3段階会員プラン設計 (無料 / 一般500円 / プロ1,000円)",
+          "summary": "無料と一般(500円)の明確な差別化と、プロ(1,000円)の1日1回プレミアムAI高精度レビュー",
           "status": "idea",
           "priority": "high",
           "notes": "無料ユーザーは1日2問・週最大5問(月曜復活)＆問題バンク0円配信。2週目月曜に登録促進ポップアップ。一般は無制限＋クラウド永続。プロは長文＋AI高精度レビュー1日1回(検討中)。",
@@ -378,7 +378,7 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
                       "summary": "登録された職種・業界・商材をプロンプトに動的注入し、極めて実践的なビジネス例文を生成",
                       "status": "idea",
                       "priority": "high",
-                      "notes": "「化学系メーカー営業×半導体」なら納期調整、品質仕様交渉、顧客打合せ等の超リアルな英語を出題。"
+                      "notes": "【アイデア3採用・原価防御】アプリ起動時に裏で非同期事前生成（待機0.0秒）。日次上限（Base: 1日5問 / Pro: 1日15問）消化後は、原価0円の3,600問ストック問題バンクへシームレス移行。無制限練習と原価上限（Base: 最大26.1円/月、Pro: 最大78.3円/月、粗利率83〜95%）を両立。"
                     }
                   ]
                 },
@@ -410,11 +410,11 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
             },
             {
               "id": "plan-pro",
-              "title": "👑 プロユーザー (Pro ¥1,480/月)",
+              "title": "👑 プロユーザー (Pro ¥1,000/月)",
               "summary": "プロ長文機能(Passage) ＋ 【検討中】AI高精度レビューを「1日1回」受講可能",
               "status": "idea",
               "priority": "high",
-              "notes": "一般機能に加えて、スピーチ・プレゼン特化の長文練習と1日1回限定のプレミアムAI添削。",
+              "notes": "一般機能に加えて、スピーチ・プレゼン特化の長文練習（ペルソナ枠1日15問）と1日1回限定のプレミアムAI添削。【価格改定確定】コスト担当との協議により¥1,480→¥1,000/月に改定合意。一般(¥500)との差額¥500で上位転換率を最大化し、粗利率83.5〜95.6%を確保。",
               "children": [
                 {
                   "id": "pro-passage",
@@ -430,7 +430,7 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
                   "summary": "長文を読んで提出すると、AI(Azure音素/GPT)による精密な発音・抑揚添削が1日1回受けられる",
                   "status": "idea",
                   "priority": "high",
-                  "notes": "Azure AI Speechはまだテスト前のため一旦アイディア検討枠。1日1回チケット制でAI原価を確実に予測可能に保つ。"
+                  "notes": "Azure AI Speechは管理者PoC検証中。1日1回チケット制でAI原価を確実に予測可能に保つ。"
                 }
               ]
             }
@@ -447,10 +447,10 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
         {
           "id": "g-stripe-billing",
           "title": "🚀 Stripe決済 & 3段階チケット制",
-          "summary": "Guest(無料2問) / Basic(月500円/使い放題) / Pro(月1480円/使い放題)のインフラ完成",
+          "summary": "Guest(無料2問) / Basic(月500円/使い放題) / Pro(月1,000円/使い放題)のインフラ完成",
           "status": "completed",
           "priority": "high",
-          "notes": "月間固定費1,650円に対して、黒字化ハードルを極小化（有料会員5〜6名で回収）。"
+          "notes": "月間固定費1,650円に対して、黒字化ハードルを極小化（有料会員4〜5名で回収）。Pro価格を¥1,000/月へ改定対応完了（料金表示・特商法・Stripeエンドポイント更新済み）。"
         },
         {
           "id": "g-payment-methods",
@@ -471,7 +471,7 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
             {
               "id": "pay-paypay-quarterly",
               "title": "📱 PayPay決済 (3ヶ月まとめ払い)",
-              "summary": "3ヶ月ごとの一括支払い(一般: ¥1,500 / プロ: ¥4,440)。クレカ未保持層の取り込み",
+              "summary": "3ヶ月ごとの一括支払い(一般: ¥1,500 / プロ: ¥3,000)。クレカ未保持層の取り込み",
               "status": "idea",
               "priority": "high",
               "notes": "PayPayの決済特性に合わせ「3ヶ月まとめ」で前受。毎月の更新離脱(チャーン)を防ぎ、LTVを確実に確保する高収益設計。",
