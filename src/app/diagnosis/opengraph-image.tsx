@@ -1,3 +1,4 @@
+import React from "react";
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
@@ -95,7 +96,7 @@ export default async function Image() {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "14px",
+            gap: "12px",
             marginTop: "10px",
           }}
         >
@@ -103,7 +104,6 @@ export default async function Image() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "12px",
             }}
           >
             <span
@@ -112,7 +112,6 @@ export default async function Image() {
                 fontWeight: 700,
                 color: "#818CF8",
                 letterSpacing: "0.08em",
-                textTransform: "uppercase",
               }}
             >
               発話可視化 AIシャドーイング
@@ -121,6 +120,7 @@ export default async function Image() {
 
           <div
             style={{
+              display: "flex",
               fontSize: "56px",
               fontWeight: 900,
               lineHeight: 1.15,
@@ -133,6 +133,7 @@ export default async function Image() {
 
           <div
             style={{
+              display: "flex",
               fontSize: "36px",
               fontWeight: 800,
               lineHeight: 1.2,
@@ -145,15 +146,20 @@ export default async function Image() {
 
           <div
             style={{
+              display: "flex",
+              flexDirection: "column",
               fontSize: "22px",
               color: "#CBD5E1",
               marginTop: "6px",
               lineHeight: 1.4,
             }}
           >
-            「英語を話す機会がない」「独学だと正しいかわからない」社会人のための習慣化アプリ。
-            <br />
-            1日3分・登録不要で、ブラウザから今すぐ無料で体験いただけます。
+            <div style={{ display: "flex" }}>
+              「英語を話す機会がない」「独学だと正しいかわからない」社会人のための習慣化アプリ。
+            </div>
+            <div style={{ display: "flex" }}>
+              1日3分・登録不要で、ブラウザから今すぐ無料で体験いただけます。
+            </div>
           </div>
         </div>
 
@@ -225,19 +231,18 @@ export default async function Image() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "10px",
             }}
           >
-            <span
+            <div
               style={{
+                display: "flex",
                 fontSize: "30px",
                 fontWeight: 900,
-                letterSpacing: "-0.01em",
                 color: "#FFFFFF",
               }}
             >
               Shadow<span style={{ color: "#6366F1" }}>Log</span>
-            </span>
+            </div>
           </div>
         </div>
       </div>

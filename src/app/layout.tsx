@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     siteName: "ShadowLog",
     images: [
       {
-        url: "/opengraph-image",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "ShadowLog ベータ版配信中 | 11月から正式リリース開始！誰でもお試し頂けます。",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ShadowLog (シャドーログ) | ベータ版無料配信中",
     description: "誰でもお試し頂けます！11月から正式リリース開始！声に出して身につける新しい英語習慣。",
-    images: ["/opengraph-image"],
+    images: ["/og-image.png"],
   },
   icons: {
     icon: [
