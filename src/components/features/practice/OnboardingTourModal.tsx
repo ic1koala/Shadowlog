@@ -96,20 +96,30 @@ export function OnboardingTourModal({
 
     const targetElement = document.getElementById(currentStep.targetId);
     if (targetElement) {
-      const isBottomTarget =
-        currentStep.targetId === "tour-recording-bar" ||
-        currentStep.targetId === "tour-finish-section";
-      targetElement.scrollIntoView({
-        behavior: "smooth",
-        block: isBottomTarget ? "end" : "center",
-      });
+      if (currentStepIndex === 0) {
+        // Step 1: Ensure top of SentenceCard & audio player is smoothly scrolled into clear view
+        targetElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      } else {
+        const isBottomTarget =
+          currentStep.targetId === "tour-recording-bar" ||
+          currentStep.targetId === "tour-finish-section";
+        targetElement.scrollIntoView({
+          behavior: "smooth",
+          block: isBottomTarget ? "end" : "center",
+        });
+      }
     }
 
-    // Refresh rect across scroll animation intervals
+    // Refresh rect across scroll animation intervals (rAF + multi-step timeouts for mobile Safari)
     updateTargetRect();
-    const t1 = setTimeout(updateTargetRect, 80);
-    const t2 = setTimeout(updateTargetRect, 220);
-    const t3 = setTimeout(updateTargetRect, 450);
+    const rAf = requestAnimationFrame(updateTargetRect);
+    const t1 = setTimeout(updateTargetRect, 60);
+    const t2 = setTimeout(updateTargetRect, 180);
+    const t3 = setTimeout(updateTargetRect, 350);
+    const t4 = setTimeout(updateTargetRect, 600);
 
     const handleScrollOrResize = () => {
       updateTargetRect();
@@ -119,9 +129,11 @@ export function OnboardingTourModal({
     window.addEventListener("resize", handleScrollOrResize, { passive: true });
 
     return () => {
+      cancelAnimationFrame(rAf);
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearTimeout(t4);
       window.removeEventListener("scroll", handleScrollOrResize);
       window.removeEventListener("resize", handleScrollOrResize);
     };

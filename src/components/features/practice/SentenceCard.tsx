@@ -1125,8 +1125,113 @@ export function SentenceCard({
         </button>
       </div>
 
+      {/* Audio player & speed selector (Tour STEP 1 target: clearly visible at top of card) */}
+      <div
+        id="tour-audio-player"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 py-2.5 sm:py-3 border-y border-border/70"
+      >
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+          <button
+            type="button"
+            onClick={togglePlayAudio}
+            disabled={isRecording && recordingType !== "shadowing"}
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0 ${
+              isPlaying
+                ? "bg-emerald-700 text-white shadow-md ring-2 ring-emerald-500/40"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25 active:scale-95"
+            }`}
+            title={isRecording && recordingType !== "shadowing" ? "録音中はお手本音声の混入を防ぐため再生できません" : undefined}
+          >
+            {isPlaying ? <Pause className="w-4 h-4 shrink-0" /> : <Play className="w-4 h-4 shrink-0 fill-current" />}
+            <span>
+              {isPreparingAudio
+                ? "イヤホン接続確認中..."
+                : isPlaying
+                  ? "一時停止"
+                  : "フレーズ音声を聴く"}
+            </span>
+          </button>
+
+          {/* Speed Selector with dynamic WPM capsule indicators */}
+          <div className="flex items-center bg-muted/70 p-1 rounded-xl gap-1 shadow-inner shrink-0">
+            {([0.6, 1.0, 1.2] as const).map((spd) => {
+              const isSelected = playbackSpeed === spd;
+              const wpmVal = speedWpmMap[spd];
+              return (
+                <button
+                  key={spd}
+                  type="button"
+                  onClick={() => changeSpeed(spd)}
+                  className={`w-[48px] sm:w-[52px] h-[38px] sm:h-[40px] rounded-lg flex flex-col items-center justify-center transition-all duration-200 select-none ${
+                    isSelected
+                      ? "bg-blue-600 text-white shadow-xs font-bold ring-1 ring-blue-500/30 scale-102"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                  title={`再生速度 ${spd === 1.0 ? "1.0x" : `${spd}x`} (実効話速: 約${wpmVal} WPM)`}
+                  aria-label={`再生速度 ${spd === 1.0 ? "1.0x" : `${spd}x`} (約${wpmVal} WPM)`}
+                >
+                  <span className="text-xs font-bold leading-tight">
+                    {spd === 1.0 ? "1.0x" : `${spd}x`}
+                  </span>
+                  <span
+                    className={`text-[10px] leading-tight font-medium ${
+                      isSelected ? "text-blue-100" : "text-muted-foreground"
+                    }`}
+                  >
+                    ~{wpmVal}
+                  </span>
+                </button>
+              );
+            })}
+            <span className="text-[9px] font-bold text-muted-foreground/70 px-1 select-none hidden xs:inline uppercase tracking-tight">
+              WPM
+            </span>
+          </div>
+
+          {/* Volume Boost Button (counteracts Android/Bluetooth earphone ducking during shadowing; hidden on iOS) */}
+          {isBoostSupported && (
+            <button
+              type="button"
+              onClick={() => {
+                const nextBoost = !isVolumeBoosted;
+                toggleVolumeBoost();
+                if (nextBoost && audioRef.current) {
+                  ensureWebAudioBoost(audioRef.current);
+                }
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition min-h-[40px] shrink-0 cursor-pointer border ${
+                isVolumeBoosted
+                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 shadow-2xs"
+                  : "bg-muted/60 text-muted-foreground hover:text-foreground border-border/60"
+              }`}
+              title="Android＋ワイヤレスイヤホン（Galaxy Buds等）でのシャドーイング時に、お手本音声が小さくなる現象を防ぐ音量増幅モードです"
+              aria-pressed={isVolumeBoosted}
+            >
+              <Volume2
+                className={`w-3.5 h-3.5 shrink-0 ${
+                  isVolumeBoosted ? "text-amber-500" : "text-muted-foreground"
+                }`}
+              />
+              <span>{isVolumeBoosted ? "音量ブースト ON" : "音量ブースト"}</span>
+            </button>
+          )}
+        </div>
+
+        {flippedWordIndices.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setFlippedWordIndices(new Set())}
+            className="text-xs text-muted-foreground hover:text-foreground transition py-1 min-h-[36px] self-end sm:self-auto flex items-center gap-1 cursor-pointer"
+            title="すべての単語を英語表示に戻す"
+          >
+            <RotateCcw className="w-3 h-3" />
+            単語フリップを戻す ({flippedWordIndices.size})
+          </button>
+        )}
+      </div>
+
       {/* Tap hint moved to top above sentence card per user request */}
-      <p className="text-[11px] text-muted-foreground/90 flex items-center gap-1.5 -mt-1 pb-0.5">
+      <p className="text-[11px] text-muted-foreground/90 flex items-center gap-1.5 pt-0.5">
         <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
         <span>英単語をタップすると日本語の意味にフリップします（単語帳へ自動記録）</span>
       </p>
@@ -1204,110 +1309,6 @@ export function SentenceCard({
               {sentence.japanese}
             </p>
           </div>
-        )}
-      </div>
-
-      <div
-        id="tour-audio-player"
-        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-2 border-t border-border"
-      >
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
-          <button
-            type="button"
-            onClick={togglePlayAudio}
-            disabled={isRecording && recordingType !== "shadowing"}
-            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0 ${
-              isPlaying
-                ? "bg-emerald-700 text-white shadow-md ring-2 ring-emerald-500/40"
-                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25 active:scale-95"
-            }`}
-            title={isRecording && recordingType !== "shadowing" ? "録音中はお手本音声の混入を防ぐため再生できません" : undefined}
-          >
-            {isPlaying ? <Pause className="w-4 h-4 shrink-0" /> : <Play className="w-4 h-4 shrink-0 fill-current" />}
-            <span>
-              {isPreparingAudio
-                ? "イヤホン接続確認中..."
-                : isPlaying
-                  ? "一時停止"
-                  : "フレーズ音声を聴く"}
-            </span>
-          </button>
-
-          {/* Speed Selector with dynamic WPM capsule indicators */}
-          <div className="flex items-center bg-muted/70 p-1 rounded-xl gap-1 shadow-inner shrink-0">
-            {([0.6, 1.0, 1.2] as const).map((spd) => {
-              const isSelected = playbackSpeed === spd;
-              const wpmVal = speedWpmMap[spd];
-              return (
-                <button
-                  key={spd}
-                  type="button"
-                  onClick={() => changeSpeed(spd)}
-                  className={`w-[48px] sm:w-[52px] h-[38px] sm:h-[40px] rounded-lg flex flex-col items-center justify-center transition-all duration-200 select-none ${
-                    isSelected
-                      ? "bg-blue-600 text-white shadow-xs font-bold ring-1 ring-blue-500/30 scale-102"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                  title={`再生速度 ${spd === 1.0 ? "1.0x" : `${spd}x`} (実効話速: 約${wpmVal} WPM)`}
-                  aria-label={`再生速度 ${spd === 1.0 ? "1.0x" : `${spd}x`} (約${wpmVal} WPM)`}
-                >
-                  <span className="text-xs font-bold leading-tight">
-                    {spd === 1.0 ? "1.0x" : `${spd}x`}
-                  </span>
-                  <span
-                    className={`text-[10px] leading-tight font-medium ${
-                      isSelected ? "text-blue-100" : "text-muted-foreground"
-                    }`}
-                  >
-                    ~{wpmVal}
-                  </span>
-                </button>
-              );
-            })}
-            <span className="text-[9px] font-bold text-muted-foreground/70 px-1 select-none hidden xs:inline uppercase tracking-tight">
-              WPM
-            </span>
-          </div>
-
-          {/* Volume Boost Button (counteracts Android/Bluetooth earphone ducking during shadowing; hidden on iOS) */}
-          {isBoostSupported && (
-          <button
-            type="button"
-            onClick={() => {
-              const nextBoost = !isVolumeBoosted;
-              toggleVolumeBoost();
-              if (nextBoost && audioRef.current) {
-                ensureWebAudioBoost(audioRef.current);
-              }
-            }}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition min-h-[40px] shrink-0 cursor-pointer border ${
-              isVolumeBoosted
-                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 shadow-2xs"
-                : "bg-muted/60 text-muted-foreground hover:text-foreground border-border/60"
-            }`}
-            title="Android＋ワイヤレスイヤホン（Galaxy Buds等）でのシャドーイング時に、お手本音声が小さくなる現象を防ぐ音量増幅モードです"
-            aria-pressed={isVolumeBoosted}
-          >
-            <Volume2
-              className={`w-3.5 h-3.5 shrink-0 ${
-                isVolumeBoosted ? "text-amber-500" : "text-muted-foreground"
-              }`}
-            />
-            <span>{isVolumeBoosted ? "音量ブースト ON" : "音量ブースト"}</span>
-          </button>
-          )}
-        </div>
-
-        {flippedWordIndices.size > 0 && (
-          <button
-            type="button"
-            onClick={() => setFlippedWordIndices(new Set())}
-            className="text-xs text-muted-foreground hover:text-foreground transition py-1 min-h-[36px] self-end sm:self-auto flex items-center gap-1 cursor-pointer"
-            title="すべての単語を英語表示に戻す"
-          >
-            <RotateCcw className="w-3 h-3" />
-            単語フリップを戻す ({flippedWordIndices.size})
-          </button>
         )}
       </div>
     </div>
