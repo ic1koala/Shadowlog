@@ -1,4 +1,4 @@
-import { postToThreads, processQueue, enqueuePost, getQueue } from "../src/lib/threads/publisher";
+import { postToThreads, processQueue, enqueuePost, getQueue, saveQueue } from "../src/lib/threads/publisher";
 import dotenv from "dotenv";
 import path from "path";
 

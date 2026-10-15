@@ -1,7 +1,7 @@
 import { saveQueue, QueueItem } from "../src/lib/threads/publisher";
 import path from "path";
 
-const OGP_IMAGE_URL = "https://shadowlog.vercel.app/diagnosis/opengraph-image";
+const OGP_IMAGE_URL = "https://shadowlog.vercel.app/opengraph-image";
 const startDate = new Date("2026-10-11T00:00:00+09:00");
 
 // Helper to format ISO JST time string
