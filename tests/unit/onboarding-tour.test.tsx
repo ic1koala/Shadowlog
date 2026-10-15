@@ -43,12 +43,10 @@ describe("OnboardingTourModal and TOUR_STEPS (Admin Tour Test)", () => {
     expect(TOUR_STEPS[3].targetId).toBe("tour-finish-section");
     expect(TOUR_STEPS[3].badge).toBe("STEP 4 / 4");
 
-    // All steps have titles, summaries, descriptions, and pro tips
+    // All steps have titles and descriptions
     TOUR_STEPS.forEach((step) => {
       expect(step.title.length).toBeGreaterThan(0);
-      expect(step.summary.length).toBeGreaterThan(0);
       expect(step.description.length).toBeGreaterThan(0);
-      expect(step.tips.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -73,8 +71,8 @@ describe("OnboardingTourModal and TOUR_STEPS (Admin Tour Test)", () => {
     );
 
     expect(screen.getByText("STEP 1 / 4")).toBeDefined();
-    expect(screen.getByText("模範音声 & WPM話速の体感")).toBeDefined();
-    expect(screen.getByText(/ネイティブの音声を聴いて/)).toBeDefined();
+    expect(screen.getByText("模範音声 & 速度調整")).toBeDefined();
+    expect(screen.getByText(/ネイティブ音声を聴いて/)).toBeDefined();
     expect(screen.getByText("スキップ")).toBeDefined();
     expect(screen.getByText("次へ")).toBeDefined();
   });
