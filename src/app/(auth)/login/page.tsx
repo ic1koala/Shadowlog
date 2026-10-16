@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Sparkles, Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, UserPlus, LogIn, Crown } from "lucide-react";
+import { Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, UserPlus, LogIn, Crown } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import { migrateGuestDataToSupabase } from "@/lib/storage/sync-service";
 import { isInvitedVip, setInvitedVip } from "@/lib/auth/vip-checker";
@@ -182,14 +183,11 @@ function LoginContent() {
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-background">
       <div className="max-w-md w-full space-y-6 bg-card p-6 sm:p-10 rounded-3xl border border-border shadow-sm">
-        {/* Logo */}
+        {/* Official Brand Logo */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary text-primary-foreground shadow-sm mb-2">
-            <Sparkles className="w-6 h-6" />
+          <div className="flex justify-center mb-1">
+            <BrandLogo size="lg" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">
-            Shadow<span className="text-primary">Log</span>
-          </h2>
           <p className="text-xs text-muted-foreground">
             アカウント登録でゲスト時の練習ログをすべてクラウド同期！
           </p>

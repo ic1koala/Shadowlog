@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   Heart,
 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const metadata: Metadata = {
   title: "社会人が英語を口に出す「きっかけ」を作るために。ShadowLogを開発した理由 | ShadowLog公式ブログ",
@@ -71,12 +72,10 @@ export default function WhyIBuiltShadowlogBlogPage() {
             >
               <ChevronLeft className="w-5 h-5" />
             </Link>
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-500/20">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-lg text-white">
-                Shadow<span className="text-indigo-400">Log</span> <span className="text-xs text-slate-400 font-normal ml-1">STORY</span>
+            <Link href="/" className="flex items-center gap-2 group hover:opacity-90 transition">
+              <BrandLogo size="md" inverted priority />
+              <span className="text-xs text-slate-400 font-semibold ml-1 px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700">
+                STORY
               </span>
             </Link>
           </div>

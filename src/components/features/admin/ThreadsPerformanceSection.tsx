@@ -263,9 +263,13 @@ export function ThreadsPerformanceSection({
                 className="w-12 h-12 rounded-2xl border-2 border-primary/30 object-cover shadow-sm shrink-0"
               />
             ) : (
-              <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-                @
-              </div>
+              <Image
+                src="/icons/icon-512.png"
+                alt="ShadowLog Official"
+                width={48}
+                height={48}
+                className="w-12 h-12 rounded-2xl border-2 border-primary/30 object-cover shadow-sm shrink-0"
+              />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">

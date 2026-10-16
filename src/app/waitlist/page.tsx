@@ -12,6 +12,7 @@ import {
 import { InteractiveShadowingDemo } from "@/components/features/waitlist/InteractiveShadowingDemo";
 import { WaitlistForm } from "@/components/features/waitlist/WaitlistForm";
 import { VipRemainingBadge } from "@/components/features/waitlist/VipRemainingBadge";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const metadata: Metadata = {
   title: "ShadowLog - 気軽な価格で、生活に英語を発する機会を。",
@@ -30,13 +31,8 @@ export default function WaitlistPage() {
       {/* ── ナビゲーションバー ── */}
       <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b border-border/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/waitlist" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
-              <Headphones className="w-4 h-4" />
-            </div>
-            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-foreground">
-              ShadowLog
-            </span>
+          <Link href="/waitlist" className="group hover:opacity-90 transition">
+            <BrandLogo size="md" priority />
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">

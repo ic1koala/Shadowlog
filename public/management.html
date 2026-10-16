@@ -18,12 +18,10 @@
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 py-4 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-indigo-100">
-          S
-        </div>
+        <img src="/icons/icon-512.png" alt="ShadowLog" class="w-10 h-10 rounded-xl shadow-md object-cover shrink-0">
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-xl font-bold text-slate-900">ShadowLog Management</h1>
+            <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Shadow<span class="text-blue-600">Log</span> <span class="font-bold text-slate-700 text-base sm:text-xl">Management</span></h1>
             <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
               統括ダッシュボード
             </span>
@@ -644,11 +642,60 @@
         </div>
       </div>
 
-      <!-- Section 6: Governance & Update Rule -->
+      <!-- Section 7: Branding & Design System Guidelines -->
+      <div class="bg-white p-6 rounded-2xl border border-blue-200 shadow-sm space-y-4 bg-blue-50/10">
+        <div class="flex items-center gap-2">
+          <span class="text-blue-600 font-bold text-base">🎨</span>
+          <h3 class="text-sm font-bold text-slate-900">7. ブランディング・デザインシステム規定 (Brand Identity Guidelines) [FB-058]</h3>
+          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+            公式統一規格
+          </span>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          アプリ内外、広報の作成物、Threads、ロゴアニメーション等におけるブランドアイデンティティの統一規格です。
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-800 flex items-center gap-2">
+              <img src="/icons/icon-512.png" alt="Icon" class="w-5 h-5 rounded-md object-cover">
+              <span>公式ロゴマーク（シンボルアイコン）</span>
+            </div>
+            <p class="text-slate-600 leading-relaxed text-[11px]">
+              生データ: <code>public/icons/icon-512.png</code><br>
+              ロイヤルブルー角丸背景＋白い3本の音波アーク（発話波）＋右上の2つの4頂点スター。Sparklesや「S」文字ボックスでの代替は全面禁止。
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="text-sm">🔤</span>
+              <span>公式ロゴタイプ（ワードマーク）</span>
+            </div>
+            <p class="text-slate-600 leading-relaxed text-[11px]">
+              表記: <strong>Shadow<span class="text-blue-600">Log</span></strong>（CamelCase）<br>
+              フォント: Inter/SF Pro Display Bold（タイトカーニング）。「Shadow」はブラック/ホワイト、「Log」はプライマリブルー（#2563EB）。全大文字「SHADOWLOG」は禁止。
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-800 flex items-center gap-2">
+              <span class="text-sm">🎬</span>
+              <span>共通コンポーネント & アニメーション</span>
+            </div>
+            <p class="text-slate-600 leading-relaxed text-[11px]">
+              <code>BrandLogo.tsx</code> でヘッダー・ログイン等を統一。<br>
+              <code>LogoAnimationPlayer.tsx</code>（全5案）も公式ロゴマーク（音波＋スター）および公式ロゴタイプ演出に完全統一。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 8: Governance & Update Rule -->
       <div class="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm space-y-3 bg-amber-50/20">
         <div class="flex items-center gap-2">
           <span class="text-amber-600 font-bold text-base">⚠️</span>
-          <h3 class="text-sm font-bold text-amber-900">6. 仕様更新・管理ルール（恒久ルール）</h3>
+          <h3 class="text-sm font-bold text-amber-900">8. 仕様更新・管理ルール（恒久ルール）</h3>
         </div>
         <p class="text-xs text-amber-900/90 leading-relaxed">
           今後、料金プラン、チケット体系、AIパイプライン、データベース設計、利用制限等に変更が発生した場合は、

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, ArrowRight, BookOpen, Award, Layers } from "lucide-react";
+import { ArrowRight, BookOpen, Award, Layers } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const metadata: Metadata = {
   title: "ShadowLog 公式ブログ | 英語シャドーイング・WPM向上・AI英語学習ノウハウ",
@@ -52,12 +53,10 @@ export default function BlogIndexPage() {
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-500/20">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-lg text-white">
-              Shadow<span className="text-indigo-400">Log</span> <span className="text-xs text-slate-400 font-normal ml-1">BLOG</span>
+          <Link href="/" className="flex items-center gap-2 group hover:opacity-90 transition">
+            <BrandLogo size="md" inverted priority />
+            <span className="text-xs text-slate-400 font-semibold ml-1 px-1.5 py-0.5 rounded-md bg-slate-800 border border-slate-700">
+              BLOG
             </span>
           </Link>
 

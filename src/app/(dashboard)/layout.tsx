@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Mic, BarChart2, Settings, Sparkles, GraduationCap } from "lucide-react";
+import { Mic, BarChart2, Settings, GraduationCap } from "lucide-react";
 import { TicketBadge } from "@/components/features/subscription/TicketBadge";
 import { AnnouncementModal } from "@/components/features/announcements/AnnouncementModal";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { hasUnreadLaterAnnouncements } from "@/lib/storage/announcement-store";
 import {
   getReminderSettings,
@@ -81,13 +82,8 @@ export default function DashboardLayout({
       {/* Top Navbar — hidden on mobile, visible on sm+ */}
       <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background shadow-xs hidden sm:block">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-xs group-hover:scale-105 transition">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-foreground">
-              Shadow<span className="text-primary">Log</span>
-            </span>
+          <Link href="/" className="group hover:opacity-90 transition">
+            <BrandLogo size="md" priority />
           </Link>
 
           <div className="flex items-center gap-4">
@@ -131,13 +127,8 @@ export default function DashboardLayout({
         />
         {/* Mobile Header Bar */}
         <div className="px-4 h-14 flex items-center justify-between bg-background">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-base tracking-tight text-foreground">
-              Shadow<span className="text-primary">Log</span>
-            </span>
+          <Link href="/" className="group hover:opacity-90 transition">
+            <BrandLogo size="sm" priority />
           </Link>
           <TicketBadge />
         </div>

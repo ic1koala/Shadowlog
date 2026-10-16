@@ -36,6 +36,7 @@ import { ManagementDashboardSection } from "@/components/features/admin/Manageme
 import { ThreadsPerformanceSection } from "@/components/features/admin/ThreadsPerformanceSection";
 import { LogicTreeSection } from "@/components/features/admin/LogicTreeSection";
 import { LogoAnimationPreviewSection } from "@/components/features/admin/LogoAnimationPreviewSection";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 type AdminTab = "customers" | "compliance" | "management" | "threads" | "logic_tree" | "logo_animation";
 type PlanFilter = "all" | "free" | "base" | "pro";
@@ -387,9 +388,7 @@ export default function AdminCustomersPage() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-sm shrink-0">
-                <Sparkles className="w-5 h-5" />
-              </div>
+              <BrandLogo variant="icon" size="sm" priority />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-sm sm:text-lg tracking-tight truncate">

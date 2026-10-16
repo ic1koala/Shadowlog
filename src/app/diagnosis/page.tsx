@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { ToeicDiagnosisClient } from "@/components/features/assessment/ToeicDiagnosisClient";
 import { VipRemainingBadge } from "@/components/features/waitlist/VipRemainingBadge";
 
@@ -65,15 +66,10 @@ export default function PublicDiagnosisPage() {
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-15 flex items-center justify-between">
-          <Link href="/waitlist" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-base sm:text-lg tracking-tight text-foreground">
-              Shadow<span className="text-primary">Log</span>
-              <span className="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
-                AI実力診断
-              </span>
+          <Link href="/waitlist" className="flex items-center gap-2 group hover:opacity-90 transition">
+            <BrandLogo size="sm" priority />
+            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
+              AI実力診断
             </span>
           </Link>
 

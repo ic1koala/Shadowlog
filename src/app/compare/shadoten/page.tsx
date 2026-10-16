@@ -12,6 +12,7 @@ import {
   Zap,
   Award,
 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const metadata: Metadata = {
   title: "【2026年比較】シャドテン vs ShadowLog 徹底比較 | 料金・AI判定・即時性の違い",
@@ -68,13 +69,8 @@ export default function ShadotenComparisonPage() {
       {/* Header / Navbar */}
       <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-500/20">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-lg text-white">
-              Shadow<span className="text-indigo-400">Log</span>
-            </span>
+          <Link href="/" className="group hover:opacity-90 transition">
+            <BrandLogo size="md" inverted priority />
           </Link>
 
           <Link
