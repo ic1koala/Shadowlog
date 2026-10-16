@@ -24,7 +24,11 @@ export interface QueueItem {
 /**
  * Publishes a text/image post directly to Threads using Meta Threads API.
  */
-export async function postToThreads(text: string, imageUrl?: string): Promise<{ success: boolean; id?: string; error?: string }> {
+export async function postToThreads(
+  text: string,
+  imageUrl?: string,
+  replyToId?: string
+): Promise<{ success: boolean; id?: string; error?: string }> {
   const userId = getThreadsUserId();
   const accessToken = getThreadsAccessToken();
 
@@ -37,6 +41,10 @@ export async function postToThreads(text: string, imageUrl?: string): Promise<{ 
       text: text,
       access_token: accessToken,
     };
+
+    if (replyToId) {
+      params.reply_to_id = replyToId;
+    }
 
     if (imageUrl) {
       params.media_type = "IMAGE";
@@ -61,7 +69,7 @@ export async function postToThreads(text: string, imageUrl?: string): Promise<{ 
         console.warn(
           `[Threads Publisher] Image container failed (${createData.error?.message || "download error"}), retrying as text-only post...`
         );
-        return postToThreads(text);
+        return postToThreads(text, undefined, replyToId);
       }
       return {
         success: false,
