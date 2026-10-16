@@ -7,8 +7,9 @@ import {
   Maximize2,
   X,
   ExternalLink,
-  CheckCircle2,
   Trophy,
+  RefreshCw,
+  Info,
 } from "lucide-react";
 import {
   LogoAnimationPlayer,
@@ -16,25 +17,52 @@ import {
   LOGO_ANIMATION_PATTERNS,
 } from "@/components/features/onboarding/LogoAnimationPlayer";
 
+interface CandidateLikeStatus {
+  id: string;
+  index: number;
+  postId: string;
+  permalink: string;
+  likes: number;
+  views: number;
+}
+
+const CANDIDATE_PERMALINKS: Record<string, string> = {
+  sparkle_wave: "https://www.threads.com/@shadowlog_official/post/DejfvQXD0Y5",
+  particle_converge: "https://www.threads.com/@shadowlog_official/post/DejfxOCDzs8",
+  blur_focus: "https://www.threads.com/@shadowlog_official/post/Dejfy_wj2aX",
+  blueprint_trace: "https://www.threads.com/@shadowlog_official/post/Dejf0wxj8H2",
+  dimensional_rise: "https://www.threads.com/@shadowlog_official/post/Dejf2mjj2F5",
+};
+
 export function LogoVoteClient() {
   const [fullScreenPattern, setFullScreenPattern] = useState<LogoAnimationPattern | null>(null);
-  const [userVotedPattern, setUserVotedPattern] = useState<string | null>(null);
+  const [likesData, setLikesData] = useState<Record<string, { likes: number; views: number }>>({});
+  const [loadingLikes, setLoadingLikes] = useState(false);
+
+  const fetchLikes = async () => {
+    try {
+      setLoadingLikes(true);
+      const res = await fetch("/api/threads/logo-vote-likes");
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.candidates)) {
+        const map: Record<string, { likes: number; views: number }> = {};
+        data.candidates.forEach((c: CandidateLikeStatus) => {
+          map[c.id] = { likes: c.likes, views: c.views };
+        });
+        setLikesData(map);
+      }
+    } catch {
+      // Graceful fallback
+    } finally {
+      setLoadingLikes(false);
+    }
+  };
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("shadowlog_logo_voted_pattern");
-      if (stored) {
-        setUserVotedPattern(stored);
-      }
-    } catch {}
+    fetchLikes();
+    const interval = setInterval(fetchLikes, 30000);
+    return () => clearInterval(interval);
   }, []);
-
-  const handleVote = (id: string) => {
-    try {
-      localStorage.setItem("shadowlog_logo_voted_pattern", id);
-      setUserVotedPattern(id);
-    } catch {}
-  };
 
   return (
     <div className="space-y-10">
@@ -54,28 +82,30 @@ export function LogoVoteClient() {
 
         <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto">
           技術相談役が「何もない無（暗闇）からロゴが出現する」5つのオープニングアニメーションを作成してくれました。
-          アプリ起動画面に採用するお気に入りの演出を、ぜひ投票で教えてください！
+          アプリ起動画面に採用する演出を、Threadsの「いいね」投票で決定します！
         </p>
 
-        {/* Threads Callout Box */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-pink-950/40 via-purple-950/30 to-slate-900 border border-pink-500/30 text-center space-y-2 max-w-xl mx-auto shadow-lg">
-          <div className="flex items-center justify-center gap-2 text-pink-300 font-bold text-sm">
-            <Heart className="w-4 h-4 text-pink-400 fill-pink-400" />
-            <span>Threads連動「いいね」投票を実施中！</span>
+        {/* Essential Explanation: How voting works */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-pink-500/40 text-left space-y-3 max-w-2xl mx-auto shadow-xl">
+          <div className="flex items-center gap-2 text-pink-300 font-bold text-sm sm:text-base">
+            <Info className="w-4 h-4 text-pink-400 shrink-0" />
+            <span>Threads「いいね」投票のやり方</span>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            Threadsのツリー（返信）にお気に入りの番号が並んでいます。お好きな候補の返信に【いいね❤️】を押すと公式投票として集計されます！
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Threadsのセキュリティ仕様上、外部WebサイトからThreadsアカウントを自動操作することはできません。
+            各候補の下にある<strong className="text-pink-300 font-bold">「❤️ Threadsでこの候補に投票する」</strong>ボタンを押すと該当の返信ポストが直接開きますので、そこで<strong className="text-pink-300 font-bold">ハート（いいね）</strong>を押して投票をお願いします！
           </p>
-          <div className="pt-1">
-            <a
-              href="https://www.threads.com/@shadowlog_official"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs transition shadow-md shadow-pink-500/20"
+          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+            <span>集計されたいいね数はこのページにも定期反映されます</span>
+            <button
+              type="button"
+              onClick={fetchLikes}
+              disabled={loadingLikes}
+              className="inline-flex items-center gap-1 text-slate-300 hover:text-white transition cursor-pointer"
             >
-              <span>Threadsの投票スレッドを開く</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+              <RefreshCw className={`w-3 h-3 ${loadingLikes ? "animate-spin" : ""}`} />
+              <span>最新の得票数を更新</span>
+            </button>
           </div>
         </div>
       </div>
@@ -83,18 +113,18 @@ export function LogoVoteClient() {
       {/* 5 Animation Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {LOGO_ANIMATION_PATTERNS.map((pattern, index) => {
-          const isVoted = userVotedPattern === pattern.id;
+          const stats = likesData[pattern.id] || { likes: 0, views: 0 };
+          const threadUrl =
+            CANDIDATE_PERMALINKS[pattern.id] ||
+            "https://www.threads.com/@shadowlog_official/post/DejftLwj1rL";
+
           return (
             <div
               key={pattern.id}
-              className={`rounded-2xl bg-slate-900/80 border transition-all duration-300 flex flex-col overflow-hidden shadow-xl ${
-                isVoted
-                  ? "border-pink-500 ring-2 ring-pink-500/30 shadow-pink-500/10"
-                  : "border-slate-800 hover:border-slate-700"
-              }`}
+              className="rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all duration-300 flex flex-col overflow-hidden shadow-xl"
             >
               {/* Animation Header Tag */}
-              <div className="px-4 py-3 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/50">
+              <div className="px-4 py-3 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/60">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center">
                     {index + 1}
@@ -105,9 +135,11 @@ export function LogoVoteClient() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {pattern.durationSec}s
-                  </span>
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-[11px] font-bold">
+                    <Heart className="w-3 h-3 fill-pink-400 text-pink-400" />
+                    <span>{stats.likes} いいね</span>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => setFullScreenPattern(pattern.id)}
@@ -135,48 +167,30 @@ export function LogoVoteClient() {
                     {pattern.nameJa}
                   </h3>
                   <p className="text-xs text-blue-400 font-medium">
-                    {pattern.name}
+                    {pattern.name} ({pattern.durationSec}秒)
                   </p>
                   <p className="text-xs text-slate-300 leading-relaxed">
                     {pattern.description}
                   </p>
                 </div>
 
-                <div className="space-y-2.5 pt-2 border-t border-slate-800/60">
+                <div className="space-y-3 pt-3 border-t border-slate-800/70">
                   <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
                     <Trophy className="w-3 h-3 text-amber-400 shrink-0" />
-                    <span>おすすめ: {pattern.recommendedFor}</span>
+                    <span>{pattern.recommendedFor}</span>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleVote(pattern.id)}
-                      className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition ${
-                        isVoted
-                          ? "bg-pink-600 text-white shadow-md shadow-pink-500/20"
-                          : "bg-slate-800 hover:bg-slate-700 text-slate-200"
-                      }`}
-                    >
-                      <Heart
-                        className={`w-3.5 h-3.5 ${
-                          isVoted ? "fill-white text-white" : "text-pink-400"
-                        }`}
-                      />
-                      <span>{isVoted ? "Web投票済み！" : "Webで1票投票"}</span>
-                    </button>
-
-                    <a
-                      href="https://www.threads.com/@shadowlog_official"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="py-2.5 px-3 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 text-pink-300 border border-pink-500/30 text-xs font-bold transition flex items-center gap-1"
-                      title="Threadsでいいね投票"
-                    >
-                      <span>Threads投票</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
+                  {/* Direct Link Button to Vote on Threads */}
+                  <a
+                    href={threadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-pink-600/25 cursor-pointer active:scale-[0.98]"
+                  >
+                    <Heart className="w-4 h-4 fill-white text-white" />
+                    <span>Threadsでこの候補に投票する</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  </a>
                 </div>
               </div>
             </div>
@@ -190,7 +204,7 @@ export function LogoVoteClient() {
           <button
             type="button"
             onClick={() => setFullScreenPattern(null)}
-            className="absolute top-6 right-6 p-3 rounded-full bg-slate-800 text-slate-200 hover:text-white hover:bg-slate-700 transition"
+            className="absolute top-6 right-6 p-3 rounded-full bg-slate-800 text-slate-200 hover:text-white hover:bg-slate-700 transition cursor-pointer"
           >
             <X className="w-6 h-6" />
           </button>
