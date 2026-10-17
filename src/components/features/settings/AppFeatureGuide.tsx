@@ -5,16 +5,12 @@ import {
   HelpCircle,
   Headphones,
   Mic,
-  RotateCcw,
   Sparkles,
   BookOpen,
   TrendingUp,
   Bell,
   Layers,
-  ChevronRight,
   ChevronDown,
-  X,
-  CheckCircle2,
   Lightbulb,
 } from "lucide-react";
 

@@ -12,11 +12,6 @@ async function isAuthorizedCronOrAdmin(req: NextRequest): Promise<boolean> {
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
     return true;
   }
-  // Vercel Cron sends x-vercel-cron header or User-Agent: vercel-cron
-  const vercelCronHeader = req.headers.get("x-vercel-cron") || req.headers.get("user-agent");
-  if (vercelCronHeader && (vercelCronHeader.includes("vercel-cron") || req.headers.has("x-vercel-cron"))) {
-    return true;
-  }
 
   try {
     const supabase = await createServerClient();
@@ -30,9 +25,12 @@ async function isAuthorizedCronOrAdmin(req: NextRequest): Promise<boolean> {
     // ignore
   }
 
-  // Allow localhost / internal environment calls
-  const host = req.headers.get("host");
-  if (host?.includes("localhost") || host?.includes("127.0.0.1")) {
+  // Allow localhost / internal environment calls in development
+  const host = req.headers.get("host") || "";
+  if (
+    process.env.NODE_ENV === "development" &&
+    (host.includes("localhost") || host.includes("127.0.0.1"))
+  ) {
     return true;
   }
 

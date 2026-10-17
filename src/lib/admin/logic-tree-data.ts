@@ -455,10 +455,10 @@ export const LOGIC_TREE_DATA: LogicTreeNode = {
         {
           "id": "g-stripe-billing",
           "title": "🚀 Stripe決済 & 3段階チケット制",
-          "summary": "Guest(無料2問) / Basic(月500円/使い放題) / Pro(現行1,480円・新1,000円改定対応予定)のインフラ完成",
+          "summary": "Guest(無料2問) / Basic(月500円/使い放題) / Pro(月1,000円)のインフラ完成",
           "status": "completed",
           "priority": "high",
-          "notes": "月間固定費1,650円に対して、黒字化ハードルを極小化（有料会員4〜5名で回収）。Pro価格を¥1,000/月へ改定する場合、Stripeの新Price作成・価格ID差し替え・料金表示/特商法ページの更新が必要（現行実装は¥1,480）。"
+          "notes": "月間固定費1,650円に対して、黒字化ハードルを極小化（有料会員4〜5名で回収）。Pro価格は¥1,000/月でStripe決済・料金表示・特商法ページに統一実装済み。"
         },
         {
           "id": "g-payment-methods",

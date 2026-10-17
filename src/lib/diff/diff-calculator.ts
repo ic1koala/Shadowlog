@@ -1,4 +1,4 @@
-import { DiffResult, DiffToken } from "@/types";
+import { DiffResult } from "@/types";
 
 /**
  * Normalizes a word for comparison: converts to lowercase and strips punctuation.

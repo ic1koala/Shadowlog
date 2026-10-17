@@ -8,7 +8,6 @@ import {
   Award,
   ChevronRight,
   ChevronLeft,
-  X,
 } from "lucide-react";
 
 export interface TourStep {
@@ -29,7 +28,7 @@ export const TOUR_STEPS: TourStep[] = [
     title: "模範音声 & 速度調整",
     icon: Volume2,
     description:
-      "「フレーズ音声を聴く」でネイティブの発音とリズムを確認できます。右側の [0.8x / 1.0x / 1.2x] ボタンで自分に合った話速（WPM）に調整可能です。まずは標準速度で耳を慣らし、全体のイントネーションを掴みましょう。",
+      "「フレーズ音声を聴く」でネイティブの発音とリズムを確認できます。右側の [0.6x / 1.0x / 1.2x] ボタンで自分に合った話速（WPM）に調整可能です。まずは標準速度で耳を慣らし、全体のイントネーションを掴みましょう。",
     preferredPlacement: "bottom",
   },
   {
@@ -208,7 +207,7 @@ export function OnboardingTourModal({
         width: `${bubbleWidth}px`,
       };
     } else {
-      const bottom = Math.max(16, vHeight - targetRect.top + 12);
+      const bottom = Math.min(vHeight - 210, Math.max(16, vHeight - targetRect.top + 12));
       bubbleStyle = {
         position: "fixed",
         left: `${computedLeft}px`,

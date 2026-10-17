@@ -274,10 +274,10 @@ export function getWeakWords(): {
 } {
   const plan = getPlanType();
   const all = loadAllWeakWords();
-  const isPro = plan === "pro";
+  const isGuest = plan === "guest";
 
-  const isLimited = !isPro && all.length > GUEST_MAX_WEAK_WORDS;
-  const words = isPro ? all : all.slice(0, GUEST_MAX_WEAK_WORDS);
+  const isLimited = isGuest && all.length > GUEST_MAX_WEAK_WORDS;
+  const words = isGuest ? all.slice(0, GUEST_MAX_WEAK_WORDS) : all;
 
   return {
     words,
@@ -302,13 +302,13 @@ export function getStoredSessions(): {
 } {
   const plan = getPlanType();
   const all = loadAllSessions();
-  const isPro = plan === "pro";
+  const isGuest = plan === "guest";
 
   const clearedCount = all.filter((s) => s.isCleared).length;
   const needsReviewCount = all.filter((s) => !s.isCleared).length;
 
-  const isLimited = !isPro && all.length > GUEST_MAX_SESSIONS;
-  const sessions = isPro ? all : all.slice(0, GUEST_MAX_SESSIONS);
+  const isLimited = isGuest && all.length > GUEST_MAX_SESSIONS;
+  const sessions = isGuest ? all.slice(0, GUEST_MAX_SESSIONS) : all;
 
   return {
     sessions,

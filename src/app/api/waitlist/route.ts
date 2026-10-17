@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 interface WaitlistSubscriber {
   id: string;
@@ -23,7 +24,6 @@ function isSupabaseConfigured(): boolean {
     "";
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "";
@@ -41,7 +41,6 @@ function getSupabaseAdmin() {
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "placeholder-key";
@@ -67,6 +66,21 @@ const FROM_EMAIL =
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, {
+      keyPrefix: "api:waitlist-post",
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "登録リクエスト回数の上限に達しました。しばらく時間をおいてから再試行してください。" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     let body: { email?: string; metadata?: Record<string, unknown> } = {};
     try {
       body = await req.json();

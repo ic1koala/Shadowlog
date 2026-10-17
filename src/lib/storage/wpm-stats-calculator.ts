@@ -28,6 +28,24 @@ export function getWpmRating(wpm: number): string {
 }
 
 /**
+ * 日付またはISO文字列をJST (Asia/Tokyo, UTC+9) の YYYY-MM-DD キーに変換
+ */
+function toJstDateKey(input: Date | string): string {
+  if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    return input;
+  }
+  const date = typeof input === "string" ? new Date(input) : input;
+  if (isNaN(date.getTime())) {
+    return typeof input === "string" ? input.slice(0, 10) : "";
+  }
+  const jstTime = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  const year = jstTime.getUTCFullYear();
+  const month = String(jstTime.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(jstTime.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * 過去セッション履歴から直近3日間の平均WPMと直近7日間の日別推移を算出
  */
 export function calculateWpmStats(sessions: PracticeSession[]): WpmStatsResult {
@@ -47,13 +65,12 @@ export function calculateWpmStats(sessions: PracticeSession[]): WpmStatsResult {
     };
   }
 
-  // 1. 直近7日間の日付キーを生成 (今日から過去7日分)
+  // 1. 直近7日間の日付キーを生成 (今日から過去7日分、JST基準)
   const now = new Date();
   const dateKeys: string[] = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const key = toJstDateKey(d); // YYYY-MM-DD (JST)
     dateKeys.push(key);
   }
 
@@ -64,7 +81,7 @@ export function calculateWpmStats(sessions: PracticeSession[]): WpmStatsResult {
   });
 
   validSessions.forEach((s) => {
-    const sessionDate = s.createdAt ? s.createdAt.slice(0, 10) : "";
+    const sessionDate = s.createdAt ? toJstDateKey(s.createdAt) : "";
     if (sessionDate && groupedByDate[sessionDate]) {
       groupedByDate[sessionDate].push(s.wpm!);
     }
@@ -139,9 +156,8 @@ function generateEmptyDailyTrend(days: number): DailyWpmPoint[] {
   const now = new Date();
   const list: DailyWpmPoint[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const key = toJstDateKey(d);
     const [, month, day] = key.split("-");
     list.push({
       date: key,

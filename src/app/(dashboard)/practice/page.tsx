@@ -50,7 +50,6 @@ import {
   Crown,
   Sparkles,
   Square,
-  CheckCircle2,
   Send,
 } from "lucide-react";
 
@@ -1026,7 +1025,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                     </button>
                   ) : (
                     <Link
-                      href="/settings#section-custom-words"
+                      href="/settings?section=learning#section-custom-words"
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold text-[11px] sm:text-xs transition"
                     >
                       <span>✨ カスタム設定</span>
@@ -1076,7 +1075,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                   </span>
                 </div>
                 <Link
-                  href="/settings#section-custom-words"
+                  href="/settings?section=learning#section-custom-words"
                   className="text-primary hover:underline font-bold text-[11px] shrink-0"
                 >
                   単語変更 ↗
@@ -1169,8 +1168,15 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       )}
 
       {/* Next Sentence & Finish Session Buttons */}
-      {sentence && diffResult && (
-        <div id="tour-finish-section" className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2">
+      {sentence && (diffResult || showAdminTour) && (
+        <div
+          id="tour-finish-section"
+          className={`flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2 ${
+            !diffResult && showAdminTour
+              ? "p-3 rounded-2xl border border-dashed border-emerald-500/40 bg-emerald-500/5"
+              : ""
+          }`}
+        >
           <button
             type="button"
             onClick={() => setShowFinishModal(true)}

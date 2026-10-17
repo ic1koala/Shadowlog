@@ -116,9 +116,11 @@ export function checkAndApplyVipInviteFromUrl(searchString?: string): boolean {
  * to Free Member Beta Testing (20 tickets) rather than automatic VIP.
  */
 export function isCampaignVip(
-  _registeredAt?: string | Date | null,
-  _now: Date = new Date()
+  registeredAt?: string | Date | null,
+  now?: Date
 ): boolean {
+  void registeredAt;
+  void now;
   return false;
 }
 
@@ -132,9 +134,7 @@ export type VipType = "whitelist" | "invite" | "campaign" | null;
  */
 export function getVipType({
   email,
-  registeredAt,
   isInvited,
-  now = new Date(),
 }: {
   email?: string | null;
   registeredAt?: string | Date | null;

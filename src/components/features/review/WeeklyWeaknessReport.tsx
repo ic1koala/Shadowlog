@@ -17,7 +17,7 @@ import {
 interface WeeklyWeaknessReportProps {
   sessions: StoredSession[];
   weakWords: WeakWord[];
-  totalSessionCount: number;
+  totalSessionCount?: number;
   clearedCount: number;
 }
 
@@ -30,7 +30,6 @@ const WEAK_FORM_WORDS = new Set([
 export function WeeklyWeaknessReport({
   sessions,
   weakWords,
-  totalSessionCount,
   clearedCount,
 }: WeeklyWeaknessReportProps) {
   // Compute current week label (e.g. 2026年10月 第2週) and date range

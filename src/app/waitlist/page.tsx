@@ -7,7 +7,6 @@ import {
   TrendingUp,
   Coffee,
   ArrowRight,
-  Headphones,
 } from "lucide-react";
 import { InteractiveShadowingDemo } from "@/components/features/waitlist/InteractiveShadowingDemo";
 import { WaitlistForm } from "@/components/features/waitlist/WaitlistForm";
@@ -264,7 +263,7 @@ export default function WaitlistPage() {
                   <ul className="space-y-2 text-xs text-muted-foreground pt-2">
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      <span>登録時 チケット3枚プレゼント</span>
+                      <span>累計20回分（ゲスト5回＋無料登録15回）＆ Pro体験2回</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />

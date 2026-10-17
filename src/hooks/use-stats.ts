@@ -44,6 +44,7 @@ export function useStats() {
                   matchedWordCount?: number;
                   accuracyScore?: number;
                   wpm?: number;
+                  diff?: import("@/types").DiffResult;
                   createdAt?: string;
                 }) => ({
                   id: s.id,
@@ -53,6 +54,7 @@ export function useStats() {
                   matchedWordCount: s.matchedWordCount || 0,
                   accuracyScore: s.accuracyScore || 0,
                   wpm: typeof s.wpm === "number" ? s.wpm : undefined,
+                  diff: s.diff,
                   createdAt: s.createdAt || new Date().toISOString(),
                 }));
             }

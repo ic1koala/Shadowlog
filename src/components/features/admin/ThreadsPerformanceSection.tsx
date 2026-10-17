@@ -22,13 +22,9 @@ import {
   X,
   Flame,
   Image as ImageIcon,
-  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  ThreadsPerformanceResponse,
-  ThreadsPostInsight,
-} from "@/app/api/admin/threads-performance/route";
+import { ThreadsPerformanceResponse } from "@/app/api/admin/threads-performance/route";
 
 interface ThreadsPerformanceSectionProps {
   onRefreshParent?: () => void;

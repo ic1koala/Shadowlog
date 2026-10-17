@@ -2,12 +2,10 @@ import { UserPlanType } from "@/types";
 import {
   getVipType,
   VipType,
-  isVipEmail,
   isInvitedVip,
   setInvitedVip,
   checkAndApplyVipInviteFromUrl,
   KEY_INVITED_VIP,
-  CAMPAIGN_REGISTRATION_DEADLINE,
 } from "@/lib/auth/vip-checker";
 import { getPlanType, setPlanType } from "@/lib/storage/user-learning-store";
 

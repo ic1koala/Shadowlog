@@ -97,7 +97,7 @@ export function LogoAnimationPlayer({
   showControls = true,
   fullScreenMode = false,
 }: LogoAnimationPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [, setIsPlaying] = useState(autoPlay);
   const [animationKey, setAnimationKey] = useState(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 

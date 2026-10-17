@@ -249,10 +249,25 @@ export async function syncSessionsFromSupabase(): Promise<StoredSession[]> {
       coachFeedback: row.coach_feedback || undefined,
     }));
 
-    // Merge deduplicated by sentence_id/id
+    // Merge deduplicated by sentence_id/id, preserving existing local fields
     const map = new Map<string, StoredSession>();
     for (const s of local) map.set(s.id, s);
-    for (const s of dbSessions) map.set(s.id, s);
+    for (const s of dbSessions) {
+      const existing = map.get(s.id);
+      if (existing) {
+        map.set(s.id, {
+          ...s,
+          industry: existing.industry ?? s.industry,
+          level: existing.level ?? s.level,
+          mode: existing.mode ?? s.mode,
+          retryCount: existing.retryCount ?? s.retryCount,
+          diff: s.diff || existing.diff,
+          azureAssessment: existing.azureAssessment ?? s.azureAssessment,
+        });
+      } else {
+        map.set(s.id, s);
+      }
+    }
 
     const merged = Array.from(map.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

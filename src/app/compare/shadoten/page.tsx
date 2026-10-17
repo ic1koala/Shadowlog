@@ -17,7 +17,7 @@ import { BrandLogo } from "@/components/ui/BrandLogo";
 export const metadata: Metadata = {
   title: "【2026年比較】シャドテン vs ShadowLog 徹底比較 | 料金・AI判定・即時性の違い",
   description:
-    "月額21,780円のシャドテンと月額1,480円のShadowLogを徹底比較。プロ添削とAIリアルタイムDiff判定の違い、WPM自動計測機能、無料体験の始め方まで分かりやすく解説。",
+    "月額21,780円のシャドテンと月額1,000円のShadowLogを徹底比較。プロ添削とAIリアルタイムDiff判定の違い、WPM自動計測機能、無料体験の始め方まで分かりやすく解説。",
   keywords: [
     "シャドテン",
     "シャドテン 比較",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "【2026年比較】シャドテン vs ShadowLog 徹底比較",
-    description: "月額21,780円 vs 月額1,480円！プロ人手添削とAI即時可視化の違いを徹底検証。",
+    description: "月額21,780円 vs 月額1,000円！プロ人手添削とAI即時可視化の違いを徹底検証。",
     type: "article",
   },
 };
@@ -44,7 +44,7 @@ export default function ShadotenComparisonPage() {
         name: "シャドテンとShadowLogの最大の違いは何ですか？",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "シャドテンはプロ講師による人手添削（数時間〜24時間後のフィードバック・月額21,780円）、ShadowLogはWhisper AIによる即時発音判定・単語レベルDiff可視化（リアルタイムフィードバック・月額500円〜1,480円）という違いがあります。",
+          text: "シャドテンはプロ講師による人手添削（数時間〜24時間後のフィードバック・月額21,780円）、ShadowLogはWhisper AIによる即時発音判定・単語レベルDiff可視化（リアルタイムフィードバック・月額500円〜1,000円）という違いがあります。",
         },
       },
       {
@@ -138,7 +138,7 @@ export default function ShadotenComparisonPage() {
                     <span className="text-[11px] text-slate-500">（年間 約26.1万円）</span>
                   </td>
                   <td className="py-4 px-4 text-center bg-indigo-950/40 border-x border-indigo-500/30">
-                    <span className="text-lg font-black text-emerald-400">月額 500円 / 1,480円</span>
+                    <span className="text-lg font-black text-emerald-400">月額 500円 / 1,000円</span>
                     <br />
                     <span className="text-xs font-bold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full inline-block mt-1">
                       シャドテンの約1/15の低価格
@@ -255,7 +255,7 @@ export default function ShadotenComparisonPage() {
             <ul className="space-y-2.5 text-xs sm:text-sm text-slate-200">
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>月額500円〜1,480円でコスパ良く</strong>毎日練習したい方</span>
+                <span><strong>月額500円〜1,000円でコスパ良く</strong>毎日練習したい方</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />

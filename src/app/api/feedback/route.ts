@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 // Lazy initialization helpers
 function getResendClient() {
@@ -20,7 +21,6 @@ function getSupabaseAdmin() {
     "https://placeholder-project.supabase.co";
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "placeholder-key";
@@ -30,6 +30,7 @@ function getSupabaseAdmin() {
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || "shadowlog.app@gmail.com";
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "ShadowLog Support <onboarding@resend.dev>";
 const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_CONTENT_LENGTH = 3000;
 const ALLOWED_IMAGE_MIMES = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"]);
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -42,6 +43,21 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, {
+      keyPrefix: "api:feedback",
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "送信回数の上限に達しました。しばらく時間をおいてから再試行してください。" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     const resend = getResendClient();
 
@@ -52,6 +68,13 @@ export async function POST(req: NextRequest) {
     if (!category || !email || !content) {
       return NextResponse.json(
         { error: "カテゴリ、メールアドレス、内容は必須です。" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof content !== "string" || content.length > MAX_CONTENT_LENGTH) {
+      return NextResponse.json(
+        { error: `内容は${MAX_CONTENT_LENGTH}文字以内で入力してください。` },
         { status: 400 }
       );
     }

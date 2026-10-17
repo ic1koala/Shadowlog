@@ -41,6 +41,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { convertBlobToWav } from "@/lib/audio/wav-converter";
 
 const MAX_QUESTIONS = 5;
 
@@ -122,7 +123,7 @@ export function ToeicDiagnosisClient({
     (recMode: "repeating" | "shadowing" = "repeating") => {
       setRecordingModeUsed(recMode);
       if (recMode === "shadowing" && typeof window !== "undefined") {
-        window.dispatchEvent(new Event("shadowlog:play-model-audio"));
+        window.dispatchEvent(new Event("shadowlog:prepare-model-audio"));
       }
       recorderControlsRef.current?.start?.(recMode);
     },
@@ -133,6 +134,9 @@ export function ToeicDiagnosisClient({
     if (shadowingAutoStopTimerRef.current) {
       clearTimeout(shadowingAutoStopTimerRef.current);
       shadowingAutoStopTimerRef.current = null;
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("shadowlog:stop-model-audio"));
     }
     recorderControlsRef.current?.stop?.();
   }, []);
@@ -183,13 +187,21 @@ export function ToeicDiagnosisClient({
 
     try {
       const formData = new FormData();
-      const mimeType = audioBlob.type || "audio/webm";
-      const ext = mimeType.includes("mp4")
-        ? "mp4"
-        : mimeType.includes("aac")
-          ? "aac"
-          : "webm";
-      formData.append("audio", audioBlob, `recording.${ext}`);
+      let blobToSend = audioBlob;
+      let ext = "webm";
+      try {
+        blobToSend = await convertBlobToWav(audioBlob);
+        ext = "wav";
+      } catch (convErr) {
+        console.warn("WAV conversion fallback:", convErr);
+        const mimeType = audioBlob.type || "audio/webm";
+        ext = mimeType.includes("mp4")
+          ? "mp4"
+          : mimeType.includes("aac")
+            ? "aac"
+            : "webm";
+      }
+      formData.append("audio", blobToSend, `recording.${ext}`);
       formData.append("originalText", sentence.english);
       formData.append("durationSeconds", String(durationSeconds));
 
@@ -215,7 +227,7 @@ export function ToeicDiagnosisClient({
     }
   };
 
-  // Proceed to next question or finish 3-step test
+  // Proceed to next question or finish 5-step test
   const handleNext = () => {
     if (!diffResult || !currentQuestion || !sentence) return;
 
@@ -226,7 +238,8 @@ export function ToeicDiagnosisClient({
 
     const wpmFollowRate = calculateWPMFollowRate(
       userWPM,
-      currentQuestion.assessmentLevel
+      currentQuestion.assessmentLevel,
+      diffResult.accuracyScore
     );
     const compositeScore = calculateCompositeScore(
       diffResult.accuracyScore,
@@ -256,7 +269,6 @@ export function ToeicDiagnosisClient({
     const newAnswers = [...answers, answer];
     setAnswers(newAnswers);
 
-    // 3-Step adaptive routing (stops at 3 questions)
     const nextQ = getNextQuestion(newAnswers, MAX_QUESTIONS);
 
     if (!nextQ) {
@@ -264,6 +276,7 @@ export function ToeicDiagnosisClient({
       setResult(assessmentResult);
 
       try {
+        const nowIso = new Date().toISOString();
         localStorage.setItem(
           "shadowlog_level",
           assessmentResult.levelInfo.difficultyLevel
@@ -272,11 +285,12 @@ export function ToeicDiagnosisClient({
           "shadowlog_assessment_level",
           assessmentResult.recommendedLevel
         );
+        localStorage.setItem("shadowlog_assessment_date", nowIso);
         localStorage.setItem(
           "shadowlog_assessment_result",
           JSON.stringify({
             ...assessmentResult,
-            completedAt: new Date().toISOString(),
+            completedAt: nowIso,
           })
         );
       } catch {
@@ -295,6 +309,11 @@ export function ToeicDiagnosisClient({
     setTranscription("");
     setCurrentQuestion(getInitialQuestion());
   };
+
+  const floatingBarBottomClass =
+    mode === "settings"
+      ? "bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem)] sm:bottom-6"
+      : "bottom-4 sm:bottom-6";
 
   // ── Result Screen (5問完了後の高精度TOEIC診断カルテ) ──
   if (isComplete && result) {
@@ -523,64 +542,68 @@ export function ToeicDiagnosisClient({
           </div>
         </div>
 
-        {/* 4. Bottom Funnel Section: LP Introduction & 20-User Limited VIP Invitation */}
-        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-indigo-500/40 shadow-2xl space-y-6">
-          <div className="text-center space-y-3">
-            <VipRemainingBadge variant="compact" />
+        {/* 4. Bottom Funnel Section */}
+        {mode === "public" ? (
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-indigo-500/40 shadow-2xl space-y-6">
+            <div className="text-center space-y-3">
+              <VipRemainingBadge variant="compact" />
 
-            <h2 className="text-xl sm:text-2xl font-black leading-snug pt-1">
-              診断された弱点を、毎日3分の声出しで克服しませんか？
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg mx-auto">
-              『ShadowLog』は、あなたのレベル（{result.levelInfo.label}）と職種に合わせた英文を毎日生成し、AIが1単語単位で発音とWPMを可視化するシャドーイング習慣化アプリです。
+              <h2 className="text-xl sm:text-2xl font-black leading-snug pt-1">
+                診断された弱点を、毎日3分の声出しで克服しませんか？
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg mx-auto">
+                『ShadowLog』は、あなたのレベル（{result.levelInfo.label}）と職種に合わせた英文を毎日生成し、AIが1単語単位で発音とWPMを可視化するシャドーイング習慣化アプリです。
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Link
+                href="/waitlist"
+                className="w-full py-4 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30"
+              >
+                <Sparkles className="w-5 h-5 text-amber-300 shrink-0" />
+                <span>ShadowLogがどんなアプリか詳しく見る（紹介LP・特典へ）</span>
+                <ArrowRight className="w-5 h-5 shrink-0" />
+              </Link>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <Link
+                  href="/signup?vip=1"
+                  className="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-md"
+                >
+                  <Crown className="w-4 h-4 shrink-0" />
+                  <span>先着20名VIP枠で今すぐ始める</span>
+                </Link>
+
+                <Link
+                  href="/compare/shadoten"
+                  className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition flex items-center justify-center gap-1.5"
+                >
+                  <span>他社サービスとの比較を見る</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-card rounded-3xl p-6 border border-border shadow-sm text-center space-y-3">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              診断結果（推奨レベル: <strong className="text-foreground">{result.levelInfo.label}</strong>）を学習設定に反映しました。
             </p>
-          </div>
-
-          <div className="space-y-3">
-            <Link
-              href="/waitlist"
-              className="w-full py-4 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30"
+            <button
+              onClick={() => router.push("/practice")}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-primary text-primary-foreground font-black text-sm hover:bg-primary/90 transition shadow-md cursor-pointer"
             >
-              <Sparkles className="w-5 h-5 text-amber-300 shrink-0" />
-              <span>ShadowLogがどんなアプリか詳しく見る（紹介LP・特典へ）</span>
-              <ArrowRight className="w-5 h-5 shrink-0" />
-            </Link>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <Link
-                href="/signup?vip=1"
-                className="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-md"
-              >
-                <Crown className="w-4 h-4 shrink-0" />
-                <span>先着20名VIP枠で今すぐ始める</span>
-              </Link>
-
-              <Link
-                href="/compare/shadoten"
-                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition flex items-center justify-center gap-1.5"
-              >
-                <span>他社サービスとの比較を見る</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+              <span>練習画面へ進む</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
-
-          {mode === "settings" && (
-            <div className="pt-2 border-t border-slate-800 text-center">
-              <button
-                onClick={() => router.push("/practice")}
-                className="text-xs font-bold text-indigo-300 hover:text-white underline underline-offset-4 cursor-pointer"
-              >
-                現在のアカウントでそのまま練習画面へ進む →
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     );
   }
 
-  // ── Question Screen (3-Step Test in Progress) ──
+  // ── Question Screen (5-Step Test in Progress) ──
   const currentQNum = currentQuestion?.questionNumber || 1;
   const currentLevel = currentQuestion?.assessmentLevel || "B1";
   const levelInfo = ASSESSMENT_LEVELS[currentLevel];
@@ -700,35 +723,37 @@ export function ToeicDiagnosisClient({
         </div>
       )}
 
-      {/* ── Page Bottom LP Introduction Banner (Always visible at bottom of /diagnosis) ── */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-xl space-y-4 mt-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-300">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>AI英語シャドーイング習慣化アプリ『ShadowLog』</span>
+      {/* ── Page Bottom LP Introduction Banner (Only in public /diagnosis mode) ── */}
+      {mode === "public" && (
+        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-xl space-y-4 mt-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-300">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>AI英語シャドーイング習慣化アプリ『ShadowLog』</span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white">
+                毎日3分、自分の声で英語を話すきっかけを作ろう。
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                1単語単位のリアルタイムAI発音判定・3D単語翻訳・WPM自動計測。現在、先着20名限定でPro機能使い放題のVIPモニター枠を開放中！
+              </p>
             </div>
-            <h3 className="text-base sm:text-lg font-black text-white">
-              毎日3分、自分の声で英語を話すきっかけを作ろう。
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              1単語単位のリアルタイムAI発音判定・3D単語翻訳・WPM自動計測。現在、先着20名限定でPro機能使い放題のVIPモニター枠を開放中！
-            </p>
-          </div>
 
-          <Link
-            href="/waitlist"
-            className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs sm:text-sm shrink-0 transition shadow-lg shadow-indigo-600/30"
-          >
-            <span>どんなアプリか詳しく見る（紹介LPへ）</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+            <Link
+              href="/waitlist"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs sm:text-sm shrink-0 transition shadow-lg shadow-indigo-600/30"
+            >
+              <span>どんなアプリか詳しく見る（紹介LPへ）</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Floating Recording Bar (Fixed at bottom of screen) ── */}
       {sentence && !diffResult && !floatHasBlob && (
-        <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4">
+        <div className={`fixed ${floatingBarBottomClass} left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md sm:max-w-lg px-4`}>
           <div className="pointer-events-auto flex flex-col gap-2 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full">
             <div className="flex items-center justify-between gap-2">
               {floatIsRecording ? (
@@ -743,7 +768,7 @@ export function ToeicDiagnosisClient({
               ) : (
                 <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  録音モードを選択して発話スタート（STEP {currentQNum}/3）
+                  録音モードを選択して発話スタート（STEP {currentQNum}/{MAX_QUESTIONS}）
                 </span>
               )}
             </div>
@@ -803,7 +828,7 @@ export function ToeicDiagnosisClient({
 
       {/* ── Floating Pre-Evaluation Bar (Recorded, awaiting evaluation or retry) ── */}
       {sentence && !diffResult && floatHasBlob && (
-        <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
+        <div className={`fixed ${floatingBarBottomClass} left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4`}>
           <div className="pointer-events-auto flex items-center justify-between gap-2.5 p-3 sm:px-5 sm:py-3.5 rounded-2xl bg-card/95 backdrop-blur-xl border border-primary/25 shadow-2xl shadow-primary/20 ring-1 ring-white/20 w-full">
             <button
               type="button"
@@ -836,7 +861,7 @@ export function ToeicDiagnosisClient({
 
       {/* ── Floating Next Step Bar (After evaluation is ready) ── */}
       {sentence && diffResult && !isTranscribing && (
-        <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4">
+        <div className={`fixed ${floatingBarBottomClass} left-0 right-0 mx-auto flex justify-center z-50 pointer-events-none w-full max-w-md px-4`}>
           <div className="pointer-events-auto flex items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-card/95 backdrop-blur-xl border border-amber-500/30 shadow-2xl shadow-amber-500/20 ring-1 ring-white/20 w-full">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />

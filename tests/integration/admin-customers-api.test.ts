@@ -228,7 +228,7 @@ describe("GET /api/admin/customers Integration Tests", () => {
           // base-safe: 10 sessions across 1 day -> 10/day (10 < 25 -> safe)
           // base-warn: 30 sessions across 1 day -> 30/day (25 <= 30 < 40 -> warning)
           // base-danger: 45 sessions across 1 day -> 45/day (45 >= 40 -> danger)
-          // pro-safe: 60 sessions across 1 day -> 60/day (60 < 73.5 -> safe, limit 147)
+          // pro-safe: 40 sessions across 1 day -> 40/day (40 < 50 -> safe, limit 100)
           const sessionsList: Array<{ id: string; user_id: string; created_at: string }> = [];
 
           for (let i = 0; i < 10; i++) {
@@ -240,7 +240,7 @@ describe("GET /api/admin/customers Integration Tests", () => {
           for (let i = 0; i < 45; i++) {
             sessionsList.push({ id: `s-bd-${i}`, user_id: "user-base-danger", created_at: "2026-09-20T10:00:00Z" });
           }
-          for (let i = 0; i < 60; i++) {
+          for (let i = 0; i < 40; i++) {
             sessionsList.push({ id: `s-ps-${i}`, user_id: "user-pro-safe", created_at: "2026-09-20T10:00:00Z" });
           }
 
@@ -287,14 +287,14 @@ describe("GET /api/admin/customers Integration Tests", () => {
     expect(baseDanger.daily_average_practice).toBe(45);
     expect(baseDanger.cost_risk_status).toBe("danger");
 
-    expect(proSafe.breakeven_daily_limit).toBe(147);
-    expect(proSafe.daily_average_practice).toBe(60);
+    expect(proSafe.breakeven_daily_limit).toBe(100);
+    expect(proSafe.daily_average_practice).toBe(40);
     expect(proSafe.cost_risk_status).toBe("safe");
 
     // KPI verification
     expect(json.kpi.warningAccountCount).toBe(2); // base-warn and base-danger
-    expect(json.kpi.topUserDailyCount).toBe(60); // pro-safe has 60
-    // Overall daily average: (10 + 30 + 45 + 60) / 4 = 145 / 4 = 36.25 -> 36.3
-    expect(json.kpi.overallDailyAverage).toBe(36.3);
+    expect(json.kpi.topUserDailyCount).toBe(45); // base-danger has 45
+    // Overall daily average: (10 + 30 + 45 + 40) / 4 = 125 / 4 = 31.25 -> 31.3
+    expect(json.kpi.overallDailyAverage).toBe(31.3);
   });
 });

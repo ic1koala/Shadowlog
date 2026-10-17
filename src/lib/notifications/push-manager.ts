@@ -432,8 +432,8 @@ export async function sendTestNotification(): Promise<boolean> {
       }
       await reg.showNotification(title, {
         body,
-        icon: "/icons/icon-192x192.png",
-        badge: "/icons/icon-192x192.png",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
         tag: "shadowlog-test-notification",
         data: { url: "/practice" },
       });
@@ -446,7 +446,7 @@ export async function sendTestNotification(): Promise<boolean> {
   try {
     new Notification(title, {
       body,
-      icon: "/icons/icon-192x192.png",
+      icon: "/icons/icon-192.png",
       tag: "shadowlog-test-notification",
     });
     return true;
@@ -505,8 +505,8 @@ export async function triggerDailyReminderNotification(
     if (reg) {
       await reg.showNotification(title, {
         body,
-        icon: "/icons/icon-192x192.png",
-        badge: "/icons/icon-192x192.png",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
         tag,
         data: { url: "/practice" },
       });
@@ -519,7 +519,7 @@ export async function triggerDailyReminderNotification(
   try {
     new Notification(title, {
       body,
-      icon: "/icons/icon-192x192.png",
+      icon: "/icons/icon-192.png",
       tag,
     });
     return true;

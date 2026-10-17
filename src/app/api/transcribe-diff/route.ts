@@ -10,6 +10,8 @@ import { calculateWPM } from "@/lib/diff/wpm-calculator";
 import { CoachFeedback, TranscribeDiffResponse, PracticeMode, WPMInfo } from "@/types";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
 import { evaluatePronunciationWithAzure } from "@/lib/ai/azure-speech";
+import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10MB max audio upload size
 const MAX_TEXT_LENGTH = 2000;
@@ -160,6 +162,26 @@ export async function POST(req: NextRequest) {
 
     // ── Engine Branch: Azure AI Speech Pronunciation Assessment (Admin PoC) ──
     if (engine === "azure") {
+      const hasSupabaseConfig = Boolean(
+        process.env.NEXT_PUBLIC_SUPABASE_URL &&
+          !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")
+      );
+      if (process.env.NODE_ENV === "production" && hasSupabaseConfig) {
+        try {
+          const supabase = await createSupabaseServerClient();
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (!user?.email || !isAdminEmail(user.email)) {
+            engine = "whisper";
+          }
+        } catch {
+          engine = "whisper";
+        }
+      }
+    }
+
+    if (engine === "azure") {
       try {
         const azureAssessment = await evaluatePronunciationWithAzure({
           audioBuffer,
@@ -229,7 +251,7 @@ export async function POST(req: NextRequest) {
         response_format: "verbose_json",
         timestamp_granularities: ["word"],
         prompt:
-          "Verbatim transcription of English speech. Do not auto-correct grammar, omissions, or mispronunciations.",
+          "Verbatim transcription of English speech, using natural contractions like I'm, you're, don't, can't, it's, we're. Do not auto-correct grammar, omissions, or mispronunciations.",
       });
 
       transcriptionText = transcription.text.trim();

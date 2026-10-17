@@ -1,8 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe/stripe-server";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
+
+function resolveSafeOrigin(rawOrigin: string | null): string {
+  const defaultOrigin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  if (!rawOrigin) return defaultOrigin;
+  try {
+    const parsed = new URL(rawOrigin);
+    if (
+      parsed.origin === process.env.NEXT_PUBLIC_APP_URL ||
+      parsed.hostname === "localhost" ||
+      parsed.hostname === "127.0.0.1" ||
+      parsed.hostname.endsWith(".vercel.app") ||
+      parsed.hostname.includes("shadowlog")
+    ) {
+      return parsed.origin;
+    }
+  } catch {
+    // ignore invalid URL
+  }
+  return defaultOrigin;
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, {
+      keyPrefix: "api:stripe-checkout",
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "リクエスト回数の上限に達しました。しばらく時間をおいてから再試行してください。" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const { plan = "pro", email } = body as { plan?: "base" | "pro"; email?: string };
 
@@ -17,7 +53,7 @@ export async function POST(req: NextRequest) {
       ? "短文シャドーイング（無制限）＆弱点カルテ"
       : "長文スピーチモード（60〜90語）＆業界別生成＆無制限練習";
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = resolveSafeOrigin(req.headers.get("origin"));
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],

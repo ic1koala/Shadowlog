@@ -47,6 +47,7 @@ import {
   getStoredNickname,
 } from "@/lib/storage/sync-service";
 import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
+import { clearAllLearningData } from "@/lib/storage/user-learning-store";
 import { FeedbackForm } from "@/components/features/settings/FeedbackForm";
 import { PlanComparisonSection } from "@/components/features/settings/PlanComparisonSection";
 import { AnnouncementHistorySection } from "@/components/features/announcements/AnnouncementHistorySection";
@@ -105,12 +106,20 @@ export default function SettingsPage() {
   // Plan State
   const [ticketStatus, setTicketStatus] = useState<TicketStatus | null>(null);
 
-  // Read URL query parameter on mount if present (e.g., /settings?section=reminder)
+  // Read URL query parameter or hash on mount if present (e.g., /settings?section=learning#section-custom-words)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const sectionParam = params.get("section") as SettingSectionKey | null;
-      if (sectionParam) {
+      if (window.location.hash === "#section-custom-words") {
+        setActiveSection("learning");
+        setTimeout(() => {
+          const el = document.getElementById("section-custom-words");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 120);
+      } else if (sectionParam) {
         setActiveSection(sectionParam);
       }
     }
@@ -281,6 +290,7 @@ export default function SettingsPage() {
       )
     ) {
       try {
+        clearAllLearningData();
         localStorage.removeItem("shadowlog_stats");
         localStorage.removeItem("shadowlog_sessions");
         localStorage.removeItem("shadowlog_words");
@@ -289,6 +299,8 @@ export default function SettingsPage() {
         localStorage.removeItem("shadowlog_industry");
         localStorage.removeItem("shadowlog_assessment_result");
         localStorage.removeItem("shadowlog_assessment_date");
+        localStorage.removeItem("shadowlog_assessment_level");
+        window.dispatchEvent(new Event("shadowlog:session-update"));
 
         fetch("/api/stats", { method: "DELETE" }).catch(() => {});
 
@@ -1086,20 +1098,22 @@ export default function SettingsPage() {
               </div>
 
               {/* Previous Result */}
-              {assessmentResult && assessmentDate && (
+              {assessmentResult && (
                 <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-2.5">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5" />
                       前回の判定結果
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {new Date(assessmentDate).toLocaleDateString("ja-JP", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
+                    {assessmentDate && (
+                      <p className="text-[11px] text-muted-foreground">
+                        {new Date(assessmentDate).toLocaleDateString("ja-JP", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     {assessmentResult.levelInfo ? (
@@ -1235,7 +1249,7 @@ export default function SettingsPage() {
                 </Link>
 
                 <a
-                  href="https://www.threads.net"
+                  href="https://www.threads.net/@shadowlog_official"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-4 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition flex items-center justify-between group"

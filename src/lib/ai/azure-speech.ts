@@ -14,7 +14,7 @@ export interface EvaluatePronunciationOptions {
 /**
  * Detects appropriate Azure Speech REST Content-Type by inspecting magic bytes or MIME type.
  */
-function resolveAzureContentType(buffer: Buffer, mimeType?: string): string {
+export function resolveAzureContentType(buffer: Buffer, mimeType?: string): string {
   // 1. Inspect magic bytes for definitive format detection
   if (buffer.length >= 4) {
     // RIFF....WAVE
@@ -44,6 +44,16 @@ function resolveAzureContentType(buffer: Buffer, mimeType?: string): string {
     ) {
       return "audio/webm; codecs=opus";
     }
+    // MP4 / M4A container ('ftyp' at bytes 4..7)
+    if (
+      buffer.length >= 8 &&
+      buffer[4] === 0x66 &&
+      buffer[5] === 0x74 &&
+      buffer[6] === 0x79 &&
+      buffer[7] === 0x70
+    ) {
+      return "audio/mp4";
+    }
   }
 
   // 2. MIME type string fallback
@@ -52,7 +62,7 @@ function resolveAzureContentType(buffer: Buffer, mimeType?: string): string {
   if (mime.includes("ogg") || mime.includes("opus")) return "audio/ogg; codecs=opus";
   if (mime.includes("webm")) return "audio/webm; codecs=opus";
   if (mime.includes("mp4") || mime.includes("m4a") || mime.includes("aac")) {
-    return "audio/webm; codecs=opus";
+    return "audio/mp4";
   }
 
   return "audio/webm; codecs=opus";

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   getWeakWords,
@@ -10,7 +9,6 @@ import {
   deleteWeakWord,
   deleteStoredSession,
   getPlanType,
-  setPlanType,
   GUEST_MAX_WEAK_WORDS,
   GUEST_MAX_SESSIONS,
 } from "@/lib/storage/user-learning-store";
@@ -36,6 +34,7 @@ import {
 } from "lucide-react";
 import { playWordAudio, initSpeechVoices } from "@/lib/audio/word-speaker";
 import { WeeklyWeaknessReport } from "@/components/features/review/WeeklyWeaknessReport";
+import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -62,13 +61,11 @@ export default function ReviewPage() {
 
   const [playingWordId, setPlayingWordId] = useState<string | null>(null);
 
-  // Pro modal state
-  const [showProModal, setShowProModal] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     initSpeechVoices();
     // Detect initial offline state and listen for changes
     setIsOffline(!navigator.onLine);
@@ -203,15 +200,6 @@ export default function ReviewPage() {
     router.push(`/practice?retryText=${text}&retryJa=${ja}&industry=${ind}&level=${lvl}&mode=${mode}`);
   };
 
-  // Toggle plan for demonstration / testing
-  const handleTogglePlan = () => {
-    const nextPlan = plan === "pro" ? "guest" : "pro";
-    setPlanType(nextPlan);
-    setPlan(nextPlan);
-    setShowProModal(false);
-    loadData();
-  };
-
   // Filtered weak words
   const filteredWords = weakWords.filter((w) => {
     if (wordFilter === "active") return !w.mastered && w.type !== "looked_up";
@@ -248,9 +236,17 @@ export default function ReviewPage() {
               <Crown className="w-3.5 h-3.5 fill-amber-500" />
               Pro 会員（無制限利用中）
             </span>
+          ) : plan === "base" ? (
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/25 transition shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              ベーシックプラン利用中 → Proにアップグレード
+            </button>
           ) : (
             <button
-              onClick={() => setShowProModal(true)}
+              onClick={() => setShowUpgradeModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -578,7 +574,7 @@ export default function ReviewPage() {
                 </p>
               </div>
               <button
-                onClick={() => setShowProModal(true)}
+                onClick={() => setShowUpgradeModal(true)}
                 className="shrink-0 px-5 py-2.5 bg-white text-primary font-bold rounded-xl text-xs hover:bg-white/90 transition shadow-sm"
               >
                 Pro プランを見る
@@ -791,7 +787,7 @@ export default function ReviewPage() {
                 </p>
               </div>
               <button
-                onClick={() => setShowProModal(true)}
+                onClick={() => setShowUpgradeModal(true)}
                 className="shrink-0 px-5 py-2.5 bg-white text-primary font-bold rounded-xl text-xs hover:bg-white/90 transition shadow-sm"
               >
                 Pro プランを見る
@@ -806,66 +802,15 @@ export default function ReviewPage() {
         <WeeklyWeaknessReport
           sessions={sessions}
           weakWords={weakWords}
-          totalSessionCount={totalSessionCount}
           clearedCount={clearedCount}
         />
       )}
 
-      {/* Pro Modal */}
-      {showProModal && mounted && createPortal(
-        <div
-          onClick={() => setShowProModal(false)}
-          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in-50"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-card w-full max-w-md rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-border shadow-2xl space-y-5 relative my-auto max-h-[90vh] overflow-y-auto"
-          >
-            <div className="text-center space-y-2">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500">
-                <Crown className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg sm:text-xl font-extrabold text-foreground">
-                ShadowLog Pro にアップグレード
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                体験版の制限を解除し、つまずき単語帳やAIコーチの復習ログを無制限に活用しましょう。
-              </p>
-            </div>
-
-            <div className="space-y-2.5 text-xs text-foreground bg-muted/30 p-4 rounded-2xl border border-border">
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>つまずき単語帳の無制限蓄積・復習</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>過去の全セッション＆AIコーチ指導を読み返し</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>PCとスマホのクラウド完全同期</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <button
-                onClick={handleTogglePlan}
-                className="w-full py-3.5 bg-primary text-primary-foreground font-bold rounded-xl text-sm shadow-md hover:bg-primary/90 transition"
-              >
-                Pro プランを有効化する（デモ切り替え）
-              </button>
-              <button
-                onClick={() => setShowProModal(false)}
-                className="w-full py-2.5 text-xs text-muted-foreground hover:text-foreground transition"
-              >
-                今は体験版のまま続ける
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+      />
     </div>
   );
 }

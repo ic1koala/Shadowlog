@@ -5,7 +5,6 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Sparkles,
   ChevronDown,
   Gauge,
   Award,

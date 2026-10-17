@@ -49,7 +49,7 @@ export function calculateUserStats(
     const stored = session as { diff?: { tokens?: Array<{ status: string; word: string }> } };
     if (stored.diff?.tokens && Array.isArray(stored.diff.tokens)) {
       for (const token of stored.diff.tokens) {
-        if (token.status === "correct" && token.word) {
+        if (token.status === "match" && token.word) {
           const clean = normalizeWord(token.word);
           if (clean) uniqueWordsSet.add(clean);
         }

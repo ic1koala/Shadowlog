@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   Check,
   Crown,
-  Zap,
   ArrowRight,
-  Loader2,
   Sparkles,
   Lock,
 } from "lucide-react";
@@ -16,46 +13,13 @@ import { UserPlanType } from "@/types";
 interface PlanComparisonSectionProps {
   currentPlan: UserPlanType;
   isRegistered: boolean;
-  userEmail: string | null;
+  userEmail?: string | null;
 }
 
 export function PlanComparisonSection({
   currentPlan,
   isRegistered,
-  userEmail,
 }: PlanComparisonSectionProps) {
-  const [loadingPlan, setLoadingPlan] = useState<"base" | "pro" | null>(null);
-
-  const handleStripeCheckout = async (plan: "base" | "pro") => {
-    setLoadingPlan(plan);
-    try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan,
-          email: userEmail,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        throw new Error(data.error || "決済セッションの作成に失敗しました");
-      }
-
-      window.location.href = data.url;
-    } catch (err: unknown) {
-      console.error(err);
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Stripe決済の起動に失敗しました。時間をおいてお試しください。"
-      );
-    } finally {
-      setLoadingPlan(null);
-    }
-  };
-
   return (
     <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border/80 shadow-xs space-y-6">
       <div className="space-y-1.5">

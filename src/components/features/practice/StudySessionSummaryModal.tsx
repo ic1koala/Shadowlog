@@ -7,8 +7,6 @@ import {
   Flame,
   Clock,
   Share2,
-  Check,
-  GraduationCap,
   ArrowRight,
   X,
   MessageSquareQuote,

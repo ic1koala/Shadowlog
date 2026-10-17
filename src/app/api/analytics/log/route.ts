@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/auth/admin-checker";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 interface DailyMetrics {
   date: string; // YYYY-MM-DD
@@ -8,6 +11,8 @@ interface DailyMetrics {
   paths: Record<string, number>;
   userTypes: Record<string, number>;
 }
+
+const MAX_VISITORS_PER_DAY = 5000;
 
 // In-memory analytics store for serverless resilience and fallback
 const analyticsStore = new Map<string, DailyMetrics>();
@@ -20,7 +25,6 @@ function isSupabaseConfigured(): boolean {
     "";
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "";
@@ -36,7 +40,6 @@ function getSupabaseAdmin() {
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "placeholder-key";
@@ -76,6 +79,21 @@ function getOrCreateDailyMetrics(dateKey: string): DailyMetrics {
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = checkRateLimit(req, {
+      keyPrefix: "api:analytics-post",
+      limit: 60,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     let body: { path?: string; referrer?: string; userType?: string; visitorId?: string } = {};
     try {
       body = await req.json();
@@ -83,20 +101,27 @@ export async function POST(req: NextRequest) {
       // ignore JSON parse error, allow beacon text
     }
 
-    const path = typeof body.path === "string" ? body.path.split("?")[0] : "/";
-    const userType = typeof body.userType === "string" ? body.userType : "guest";
+    const rawPath = typeof body.path === "string" ? body.path.split("?")[0] || "/" : "/";
+    const path = rawPath.length <= 200 ? rawPath : rawPath.slice(0, 200);
+    const userType = typeof body.userType === "string" && body.userType.length <= 32 ? body.userType : "guest";
 
     // Derive visitor identifier from client-generated visitorId, or ip/user-agent
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const userAgent = req.headers.get("user-agent") || "";
-    const visitorKey = body.visitorId || `${ip}_${userAgent.slice(0, 30)}`;
+    const safeVisitorId =
+      typeof body.visitorId === "string" && body.visitorId.length <= 64
+        ? body.visitorId
+        : "";
+    const visitorKey = safeVisitorId || `${ip}_${userAgent.slice(0, 30)}`;
 
     const today = getTodayKey();
 
     // 1. Always record into in-memory store for fallback & serverless resilience
     const metrics = getOrCreateDailyMetrics(today);
     metrics.pv += 1;
-    metrics.uuSet.add(visitorKey);
+    if (metrics.uuSet.size < MAX_VISITORS_PER_DAY) {
+      metrics.uuSet.add(visitorKey);
+    }
     metrics.paths[path] = (metrics.paths[path] || 0) + 1;
     metrics.userTypes[userType] = (metrics.userTypes[userType] || 0) + 1;
 
@@ -112,9 +137,12 @@ export async function POST(req: NextRequest) {
 
         if (!fetchErr && existing) {
           const currentVisitors: string[] = Array.isArray(existing.visitors)
-            ? [...existing.visitors]
+            ? existing.visitors.slice(0, MAX_VISITORS_PER_DAY)
             : [];
-          if (!currentVisitors.includes(visitorKey)) {
+          if (
+            currentVisitors.length < MAX_VISITORS_PER_DAY &&
+            !currentVisitors.includes(visitorKey)
+          ) {
             currentVisitors.push(visitorKey);
           }
 
@@ -170,7 +198,7 @@ export async function POST(req: NextRequest) {
                 date: today,
                 pv: metrics.pv,
                 uu_count: metrics.uuSet.size,
-                visitors: Array.from(metrics.uuSet),
+                visitors: Array.from(metrics.uuSet).slice(0, MAX_VISITORS_PER_DAY),
                 paths: metrics.paths,
                 user_types: metrics.userTypes,
                 updated_at: new Date().toISOString(),
@@ -194,6 +222,21 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
+    // Require admin authentication in production when Supabase is configured
+    if (process.env.NODE_ENV === "production" && isSupabaseConfigured()) {
+      try {
+        const supabase = await createSupabaseServerClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user?.email || !isAdminEmail(user.email)) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+      } catch {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     const today = getTodayKey();
 
     // 1. Attempt to fetch from Supabase daily_analytics if configured

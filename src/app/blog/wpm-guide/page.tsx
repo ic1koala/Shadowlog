@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  Sparkles,
   ArrowRight,
   Clock,
   BookOpen,
@@ -289,7 +288,7 @@ export default function ChunkWpmGuideBlogPage() {
           </h2>
           <div className="text-slate-300 leading-relaxed space-y-4 text-sm sm:text-base">
             <p>
-              シャドーイング専門サービスの中には、月額2万円を超えるプロ人手添削サービス（シャドテンなど）もありますが、「毎日AIで反復練習し、WPM数値を即座に伸ばしたい」方にはShadowLog（月額1,480円〜）が圧倒的コスパを発揮します。
+              シャドーイング専門サービスの中には、月額2万円を超えるプロ人手添削サービス（シャドテンなど）もありますが、「毎日AIで反復練習し、WPM数値を即座に伸ばしたい」方にはShadowLog（月額500円〜（Pro 1,000円））が圧倒的コスパを発揮します。
             </p>
             <p>
               詳しい比較データについては、当サイトの徹底比較ページも合わせてご参照ください。

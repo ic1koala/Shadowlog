@@ -154,7 +154,7 @@ export default function BlogIndexPage() {
             他社サービスとの違いをお探しですか？
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
-            シャドテン（月額21,780円）とShadowLog（月額1,480円）の料金・即時AI判定・WPM計測機能の徹底比較ガイドをご用意しています。
+            シャドテン（月額21,780円）とShadowLog（月額500円〜（Pro 1,000円））の料金・即時AI判定・WPM計測機能の徹底比較ガイドをご用意しています。
           </p>
           <Link
             href="/compare/shadoten"

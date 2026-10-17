@@ -9,9 +9,11 @@ const buckets = new Map<string, RateLimitBucket>();
 
 export interface RateLimitOptions {
   /** Unique namespace for the endpoint (e.g., "tts", "transcribe-diff") */
-  namespace: string;
+  namespace?: string;
+  keyPrefix?: string;
   /** Maximum number of requests allowed within windowMs */
-  maxRequests: number;
+  maxRequests?: number;
+  limit?: number;
   /** Window duration in milliseconds (default: 60_000 = 1 minute) */
   windowMs?: number;
 }
@@ -43,7 +45,7 @@ export function checkRateLimit(
   maxRequestsArg?: number,
   windowMsArg?: number
 ): RateLimitResult {
-  const options: RateLimitOptions =
+  const rawOptions: RateLimitOptions =
     typeof optionsOrNamespace === "string"
       ? {
           namespace: optionsOrNamespace,
@@ -52,18 +54,21 @@ export function checkRateLimit(
         }
       : optionsOrNamespace;
 
+  const namespace = rawOptions.namespace || rawOptions.keyPrefix || "default";
+  const maxRequests = rawOptions.maxRequests ?? rawOptions.limit ?? 20;
+  const windowMs = rawOptions.windowMs ?? 60_000;
+
   if (process.env.NODE_ENV === "test") {
     return {
       allowed: true,
-      remaining: options.maxRequests,
+      remaining: maxRequests,
       retryAfterSeconds: 0,
     };
   }
 
-  const windowMs = options.windowMs ?? 60_000;
   const now = Date.now();
   const ip = getClientIp(req);
-  const key = `${options.namespace}:${ip}`;
+  const key = `${namespace}:${ip}`;
 
   // Periodic cleanup of expired buckets to prevent unbounded memory growth
   if (buckets.size > 2000) {
@@ -82,12 +87,12 @@ export function checkRateLimit(
     });
     return {
       allowed: true,
-      remaining: Math.max(0, options.maxRequests - 1),
+      remaining: Math.max(0, maxRequests - 1),
       retryAfterSeconds: 0,
     };
   }
 
-  if (existing.count >= options.maxRequests) {
+  if (existing.count >= maxRequests) {
     const retryAfterSeconds = Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
     return {
       allowed: false,
@@ -99,7 +104,7 @@ export function checkRateLimit(
   existing.count += 1;
   return {
     allowed: true,
-    remaining: Math.max(0, options.maxRequests - existing.count),
+    remaining: Math.max(0, maxRequests - existing.count),
     retryAfterSeconds: 0,
   };
 }

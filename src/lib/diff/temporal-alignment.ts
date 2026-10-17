@@ -213,8 +213,8 @@ export function calculateTemporalDiff(
         }
       }
 
-      const current = score[i]![j];
-      if (current === score[i - 1]![j - 1]! + alignScore) {
+      const current = score[i]![j]!;
+      if (Math.abs(current - (score[i - 1]![j - 1]! + alignScore)) < 1e-9) {
         alignedPairs.unshift({ origIndex: i - 1, spokenIndex: j - 1 });
         i--;
         j--;
@@ -222,7 +222,10 @@ export function calculateTemporalDiff(
       }
     }
 
-    if (i > 0 && (j === 0 || score[i]![j] === score[i - 1]![j]! + GAP_PENALTY)) {
+    if (
+      i > 0 &&
+      (j === 0 || Math.abs(score[i]![j]! - (score[i - 1]![j]! + GAP_PENALTY)) < 1e-9)
+    ) {
       alignedPairs.unshift({ origIndex: i - 1, spokenIndex: null });
       i--;
     } else {
@@ -235,7 +238,6 @@ export function calculateTemporalDiff(
   const tokens: DiffToken[] = [];
   let matchedWordCount = 0;
   let totalMatchCredit = 0;
-  let swallowedWordCount = 0;
 
   for (const pair of alignedPairs) {
     if (pair.origIndex !== null && pair.spokenIndex !== null) {
@@ -247,10 +249,6 @@ export function calculateTemporalDiff(
       const dur = spokenDurations[pair.spokenIndex];
       const isSwallowed =
         dur !== undefined && dur < MIN_ARTICULATION_DURATION_SEC;
-
-      if (isSwallowed) {
-        swallowedWordCount++;
-      }
 
       // Threshold: 0.82 for close match
       if (sim === 1.0 && !isSwallowed) {

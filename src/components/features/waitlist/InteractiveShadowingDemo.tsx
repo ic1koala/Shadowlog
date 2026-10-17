@@ -143,7 +143,7 @@ export function InteractiveShadowingDemo() {
                   <Mic className="w-4 h-4 text-rose-500 relative" />
                 </div>
                 <span className="font-semibold text-foreground">
-                  ② あなたの発足を音声AIが解析中...
+                  ② あなたの発話を音声AIが解析中...
                 </span>
               </>
             )}

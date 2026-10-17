@@ -138,6 +138,7 @@ export function AnnouncementModal() {
           {/* Cover Image Carousel */}
           {images.length > 0 && (
             <div className="relative w-full h-36 sm:h-48 bg-black/5 overflow-hidden shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={images[currentImageIdx]}
                 alt="Cover Image"

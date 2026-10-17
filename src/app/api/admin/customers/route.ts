@@ -15,7 +15,6 @@ function getSupabaseAdmin() {
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
@@ -233,7 +232,7 @@ export async function GET(req: NextRequest) {
       let cost_risk_status: "safe" | "warning" | "danger" | "free" = "free";
 
       if (plan === "pro") {
-        breakeven_daily_limit = 147;
+        breakeven_daily_limit = 100;
         const ratio = daily_average_practice / breakeven_daily_limit;
         if (ratio >= 0.8) {
           cost_risk_status = "danger";
@@ -281,7 +280,7 @@ export async function GET(req: NextRequest) {
       });
       const planVal: "free" | "base" | "pro" =
         p.plan === "pro" || p.plan === "base" ? p.plan : "free";
-      const effectivePlan = isAdminEmail(p.email) ? "pro" : planVal;
+      const effectivePlan = isAdminEmail(p.email) || Boolean(vipType) ? "pro" : planVal;
       const metrics = calculateUsageAndRisk(
         effectivePlan,
         s?.count ?? 0,
