@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  Sparkles,
   Lock,
   ArrowRight,
   CheckCircle2,
@@ -12,10 +11,8 @@ import {
   Zap,
   Flame,
   Crown,
-  ChevronRight,
   Mic,
   Award,
-  Layers,
   HelpCircle,
 } from "lucide-react";
 import {

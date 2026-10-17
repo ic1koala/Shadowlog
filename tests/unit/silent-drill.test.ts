@@ -14,19 +14,27 @@ describe("Silent Drill Store & Logic (Silent Mode)", () => {
   });
 
   describe("splitSentenceInto3To4Chunks", () => {
-    it("should split comma-separated sentences into 2 to 4 chunks", () => {
+    it("should split standard comma-separated sentences into around 5 chunks without losing words", () => {
       const sentence = "Although the revenue increased sharply, we decided not to expand the team until next quarter.";
       const chunks = splitSentenceInto3To4Chunks(sentence);
-      expect(chunks.length).toBeGreaterThanOrEqual(2);
-      expect(chunks.length).toBeLessThanOrEqual(4);
+      expect(chunks.length).toBe(5);
       expect(chunks.join(" ").replace(/\s+/g, " ").trim()).toEqual(sentence.replace(/\s+/g, " ").trim());
     });
 
-    it("should split plain sentence into 2 to 4 chunks without losing words", () => {
+    it("should split two-sentence passages into 5 to 6 chunks and respect sentence boundary", () => {
+      const sentence = "We need to finalize the quarterly budget by Friday. Please send your department's estimates as soon as possible.";
+      const chunks = splitSentenceInto3To4Chunks(sentence);
+      expect(chunks.length).toBeGreaterThanOrEqual(5);
+      expect(chunks.length).toBeLessThanOrEqual(6);
+      expect(chunks.some((c) => c.endsWith("Friday."))).toBe(true);
+      expect(chunks.join(" ").replace(/\s+/g, " ").trim()).toEqual(sentence.replace(/\s+/g, " ").trim());
+    });
+
+    it("should split plain sentence into 4 to 5 chunks without losing words", () => {
       const sentence = "Our engineering team worked overnight to restore all user services.";
       const chunks = splitSentenceInto3To4Chunks(sentence);
-      expect(chunks.length).toBeGreaterThanOrEqual(2);
-      expect(chunks.length).toBeLessThanOrEqual(4);
+      expect(chunks.length).toBeGreaterThanOrEqual(4);
+      expect(chunks.length).toBeLessThanOrEqual(5);
       expect(chunks.join(" ").replace(/\s+/g, " ").trim()).toEqual(sentence.replace(/\s+/g, " ").trim());
     });
   });
