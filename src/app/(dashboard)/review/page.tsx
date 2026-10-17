@@ -35,6 +35,7 @@ import {
 import { playWordAudio, initSpeechVoices } from "@/lib/audio/word-speaker";
 import { WeeklyWeaknessReport } from "@/components/features/review/WeeklyWeaknessReport";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
+import { SilentDrillSection } from "@/components/features/review/SilentDrillSection";
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -220,12 +221,15 @@ export default function ReviewPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold mb-1.5 border border-blue-500/20">
+            <span>🤫 Silent Mode（声出し不要）</span>
+          </div>
           <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
-            個人学習カルテ・復習
+            <BookOpen className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
+            スキマ特訓 & 個人カルテ
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            過去につまずいた単語やAIコーチの指導を復習し、確実に定着させましょう。
+            電車やスキマ時間に弱点チャンクパズルを解き、今夜のシャドーイング（Active）に備えましょう。
           </p>
         </div>
 
@@ -234,27 +238,30 @@ export default function ReviewPage() {
           {plan === "pro" ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-xs">
               <Crown className="w-3.5 h-3.5 fill-amber-500" />
-              Pro 会員（無制限利用中）
+              Pro 会員（特訓無制限）
             </span>
           ) : plan === "base" ? (
-            <button
-              onClick={() => setShowUpgradeModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/25 transition shadow-xs"
-            >
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shadow-xs">
               <Sparkles className="w-3.5 h-3.5" />
-              ベーシックプラン利用中 → Proにアップグレード
-            </button>
+              Base 会員（特訓無制限）
+            </span>
           ) : (
             <button
               onClick={() => setShowUpgradeModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition shadow-xs cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              体験版（制限あり）→ Proにアップグレード
+              無料版（特訓10問/日）→ アップグレード
             </button>
           )}
         </div>
       </div>
+
+      {/* Hero: Silent Drill (チャンク並び替え消音ドリル) */}
+      <SilentDrillSection
+        plan={plan}
+        onOpenUpgradeModal={() => setShowUpgradeModal(true)}
+      />
 
       {/* Offline indicator */}
       {isOffline && (

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Mic, BarChart2, Settings, GraduationCap } from "lucide-react";
+import { Mic, BarChart2, Settings, BookOpen } from "lucide-react";
 import { TicketBadge } from "@/components/features/subscription/TicketBadge";
 import { AnnouncementModal } from "@/components/features/announcements/AnnouncementModal";
 import { BrandLogo } from "@/components/ui/BrandLogo";
@@ -70,7 +70,7 @@ export default function DashboardLayout({
   const navItems = [
     { href: "/", label: "ダッシュボード", icon: BarChart2 },
     { href: "/practice", label: "練習", icon: Mic },
-    { href: "/review", label: "復習カルテ", icon: GraduationCap },
+    { href: "/review", label: "スキマ特訓", icon: BookOpen },
     { href: "/settings", label: "設定", icon: Settings, isSettings: true },
   ];
 
