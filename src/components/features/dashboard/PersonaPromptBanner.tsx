@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Sparkles, ArrowRight, X, Crown, Target } from "lucide-react";
+import { ArrowRight, X, Crown, Target } from "lucide-react";
 import { getTicketStatus } from "@/lib/storage/ticket-store";
 import { isPersonaEligible, getPersonaProfile } from "@/lib/storage/persona-store";
 

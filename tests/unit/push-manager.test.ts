@@ -212,4 +212,17 @@ describe("Web Push Habit Reminder Manager (FB-033)", () => {
     );
     expect(silentSaved.smartSkipIfPracticed).toBe(false);
   });
+
+  it("exports DEFAULT_VAPID_PUBLIC_KEY and converts base64 VAPID key to Uint8Array", async () => {
+    const { DEFAULT_VAPID_PUBLIC_KEY, urlBase64ToUint8Array } = await import(
+      "@/lib/notifications/push-manager"
+    );
+    expect(DEFAULT_VAPID_PUBLIC_KEY).toBeTruthy();
+    expect(typeof DEFAULT_VAPID_PUBLIC_KEY).toBe("string");
+
+    const arr = urlBase64ToUint8Array(DEFAULT_VAPID_PUBLIC_KEY);
+    expect(arr).toBeInstanceOf(Uint8Array);
+    expect(arr.length).toBeGreaterThan(0);
+  });
 });
+

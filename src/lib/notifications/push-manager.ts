@@ -36,6 +36,30 @@ export const REMINDER_TIME_PRESETS: ReadonlyArray<{
   { time: "22:30", label: "22:30", badge: "🦉 就寝前" },
 ];
 
+export const DEFAULT_VAPID_PUBLIC_KEY =
+  "BEdsH-HZbW2h4My47195BFDagQnu4_jzY76ngEgW7ijMINPT5kGoLaTWsqYoUWvJTBGpZNTFBAquYuLcCv1l0zE";
+
+/**
+ * Converts a base64 string to a Uint8Array for PushManager applicationServerKey.
+ */
+export function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
+  const rawData =
+    typeof window !== "undefined"
+      ? window.atob(base64)
+      : Buffer.from(base64, "base64").toString("binary");
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 /**
  * Validates "HH:MM" 24-hour time string.
  */
@@ -418,6 +442,37 @@ export async function sendTestNotification(): Promise<boolean> {
   const body =
     "通知設定はバッチリです！今日も1文だけ声に出してみましょう🎧";
 
+  // Try real server-to-device Web Push test first if subscription is active
+  try {
+    const reg = await registerServiceWorker();
+    if (reg && reg.pushManager) {
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        const subJson = sub.toJSON();
+        if (subJson.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
+          const testRes = await fetch("/api/push/test", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subscription: {
+                endpoint: subJson.endpoint,
+                keys: subJson.keys,
+              },
+              title,
+              body,
+            }),
+          });
+          if (testRes.ok) {
+            const data = await testRes.json();
+            if (data.ok) return true;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Server push test fallback to local:", err);
+  }
+
   try {
     const reg = await registerServiceWorker();
     if (reg) {
@@ -541,11 +596,20 @@ export async function subscribeToPushServer(
     let keys: { p256dh?: string; auth?: string } = {};
 
     const reg = await registerServiceWorker();
-    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const vapidPublicKey =
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || DEFAULT_VAPID_PUBLIC_KEY;
 
     if (reg && reg.pushManager) {
       try {
-        const existingSub = await reg.pushManager.getSubscription();
+        let existingSub = await reg.pushManager.getSubscription();
+        if (!existingSub && vapidPublicKey) {
+          existingSub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              vapidPublicKey
+            ) as unknown as BufferSource,
+          });
+        }
         if (existingSub) {
           const json = existingSub.toJSON();
           endpoint = json.endpoint || endpoint;
@@ -553,20 +617,9 @@ export async function subscribeToPushServer(
             p256dh: json.keys?.p256dh,
             auth: json.keys?.auth,
           };
-        } else if (vapidPublicKey) {
-          const sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: vapidPublicKey,
-          });
-          const json = sub.toJSON();
-          endpoint = json.endpoint || endpoint;
-          keys = {
-            p256dh: json.keys?.p256dh,
-            auth: json.keys?.auth,
-          };
         }
-      } catch {
-        // Proceed with schedule sync even if VAPID pushManager subscription is not configured yet
+      } catch (subErr) {
+        console.warn("PushManager subscribe error (falling back):", subErr);
       }
     }
 

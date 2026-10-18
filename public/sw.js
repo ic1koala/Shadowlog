@@ -33,8 +33,8 @@ self.addEventListener("push", (event) => {
 
   const options = {
     body: payload.body,
-    icon: "/icons/icon-192x192.png",
-    badge: "/icons/icon-192x192.png",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
     tag: payload.tag || "shadowlog-daily-reminder",
     renotify: true,
     data: {
@@ -73,8 +73,8 @@ self.addEventListener("message", (event) => {
     event.waitUntil(
       self.registration.showNotification(title, {
         body,
-        icon: "/icons/icon-192x192.png",
-        badge: "/icons/icon-192x192.png",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
         tag,
         renotify: true,
         data: { url },

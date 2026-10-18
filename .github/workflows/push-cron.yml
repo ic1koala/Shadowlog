@@ -1,0 +1,29 @@
+name: Push Reminder Automated Cron
+
+on:
+  schedule:
+    # Runs every 30 minutes in UTC (covers 08:00, 12:30, 20:00, 21:00, 22:30 JST)
+    - cron: "0,30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  trigger-push-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Web Push Reminder Cron Endpoint
+        env:
+          APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'https://shadowlog.app' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET || 'shadowlog_push_cron_secret_2026' }}
+        run: |
+          echo "Triggering Web Push cron at $APP_URL/api/push/cron..."
+          STATUS_CODE=$(curl -s -o /tmp/cron_response.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/push/cron")
+          echo "Response HTTP Status: $STATUS_CODE"
+          cat /tmp/cron_response.json || true
+          echo ""
+          if [ "$STATUS_CODE" -ge 200 ] && [ "$STATUS_CODE" -lt 400 ]; then
+            echo "Cron triggered successfully."
+          else
+            echo "Warning: Response code $STATUS_CODE"
+          fi
