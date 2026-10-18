@@ -95,6 +95,42 @@ describe("Silent Drill Store & Logic (Silent Mode)", () => {
       const expectedIndices = Array.from({ length: firstQ.chunks.length }, (_, i) => i);
       expect(indices).toEqual(expectedIndices);
     });
+
+    it("should never re-display questions that have been cleared", () => {
+      const initialQuestions = generateSilentDrillQuestions(5);
+      const targetSentence = initialQuestions[0].originalSentence;
+
+      recordSilentDrillCompletion(targetSentence);
+
+      const nextQuestions = generateSilentDrillQuestions(50);
+      expect(nextQuestions.some((q) => q.originalSentence === targetSentence)).toBe(false);
+    });
+
+    it("should fall back to persona-tailored questions when starter stock is cleared", () => {
+      localStorage.setItem(
+        "shadowlog_user_persona",
+        JSON.stringify({
+          enabled: true,
+          jobRole: "海外営業",
+          industryField: "半導体",
+          targetScenario: "価格交渉",
+          customTone: "polite",
+        })
+      );
+
+      // Clear all initial starter stock
+      const allStarters = generateSilentDrillQuestions(60);
+      for (const q of allStarters) {
+        if (q.sourceType !== "persona") {
+          recordSilentDrillCompletion(q.originalSentence);
+        }
+      }
+
+      const personaFallback = generateSilentDrillQuestions(5);
+      expect(personaFallback.length).toBeGreaterThan(0);
+      expect(personaFallback.every((q) => q.sourceType === "persona")).toBe(true);
+      expect(personaFallback[0].weakFocus).toContain("海外営業");
+    });
   });
 
   describe("Unlock Progress", () => {

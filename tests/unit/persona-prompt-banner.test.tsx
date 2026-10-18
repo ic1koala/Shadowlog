@@ -4,6 +4,20 @@ import { PersonaPromptBanner } from "@/components/features/dashboard/PersonaProm
 import * as personaStore from "@/lib/storage/persona-store";
 import * as ticketStore from "@/lib/storage/ticket-store";
 
+const mockTicketStatus = (plan: "free" | "pro"): ticketStore.TicketStatus => ({
+  isVip: plan === "pro",
+  isRegistered: true,
+  plan,
+  availableTickets: plan === "pro" ? Infinity : 20,
+  usedTickets: 0,
+  totalTickets: plan === "pro" ? Infinity : 20,
+  availableProTrials: plan === "pro" ? Infinity : 2,
+  usedProTrials: 0,
+  totalProTrials: plan === "pro" ? Infinity : 2,
+  canPracticeShort: true,
+  canPracticePro: plan === "pro",
+});
+
 describe("PersonaPromptBanner", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -12,14 +26,7 @@ describe("PersonaPromptBanner", () => {
   });
 
   it("does not render for free/guest users", () => {
-    vi.spyOn(ticketStore, "getTicketStatus").mockReturnValue({
-      plan: "free",
-      usedCount: 0,
-      maxLimit: 20,
-      remainingCount: 20,
-      canPracticeShort: true,
-      canPracticePro: false,
-    });
+    vi.spyOn(ticketStore, "getTicketStatus").mockReturnValue(mockTicketStatus("free"));
     vi.spyOn(personaStore, "isPersonaEligible").mockReturnValue(false);
 
     const { container } = render(<PersonaPromptBanner />);
@@ -27,14 +34,7 @@ describe("PersonaPromptBanner", () => {
   });
 
   it("renders for VIP/Pro users who have not configured persona yet", () => {
-    vi.spyOn(ticketStore, "getTicketStatus").mockReturnValue({
-      plan: "pro",
-      usedCount: 5,
-      maxLimit: 9999,
-      remainingCount: 9999,
-      canPracticeShort: true,
-      canPracticePro: true,
-    });
+    vi.spyOn(ticketStore, "getTicketStatus").mockReturnValue(mockTicketStatus("pro"));
     vi.spyOn(personaStore, "isPersonaEligible").mockReturnValue(true);
     vi.spyOn(personaStore, "getPersonaProfile").mockReturnValue(null);
 
@@ -44,14 +44,7 @@ describe("PersonaPromptBanner", () => {
   });
 
   it("does not render if VIP user already configured persona", () => {
-    vi.spyOn(ticketStore, "getTicketStatus").mockReturnValue({
-      plan: "pro",
-      usedCount: 5,
-      maxLimit: 9999,
-      remainingCount: 9999,
-      canPracticeShort: true,
-      canPracticePro: true,
-    });
+    vi.spyOn(ticketStore, "getTicketStatus").mockReturnValue(mockTicketStatus("pro"));
     vi.spyOn(personaStore, "isPersonaEligible").mockReturnValue(true);
     vi.spyOn(personaStore, "getPersonaProfile").mockReturnValue({
       enabled: true,
@@ -65,14 +58,7 @@ describe("PersonaPromptBanner", () => {
   });
 
   it("hides when dismiss button is clicked", () => {
-    vi.spyOn(ticketStore, "getTicketStatus").mockReturnValue({
-      plan: "pro",
-      usedCount: 0,
-      maxLimit: 9999,
-      remainingCount: 9999,
-      canPracticeShort: true,
-      canPracticePro: true,
-    });
+    vi.spyOn(ticketStore, "getTicketStatus").mockReturnValue(mockTicketStatus("pro"));
     vi.spyOn(personaStore, "isPersonaEligible").mockReturnValue(true);
     vi.spyOn(personaStore, "getPersonaProfile").mockReturnValue(null);
 

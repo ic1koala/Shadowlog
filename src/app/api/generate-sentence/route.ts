@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       excludeIds?: string[];
       preferBank?: boolean;
       persona?: UserPersonaProfile | null;
+      skipAudio?: boolean;
     } = {};
     try {
       body = await req.json();
@@ -83,12 +84,13 @@ export async function POST(req: NextRequest) {
       ? body.excludeIds.filter((id): id is string => typeof id === "string")
       : [];
     const preferBank = Boolean(body.preferBank);
+    const skipAudio = Boolean(body.skipAudio);
 
     const persona = body.persona && typeof body.persona === "object" ? body.persona : undefined;
     const isPersonaActive = Boolean(
       persona &&
       persona.enabled !== false &&
-      (persona.jobRole?.trim() || persona.industryField?.trim() || persona.targetScenario?.trim())
+      (persona.jobRole?.trim() || persona.industryField?.trim() || persona.targetScenario?.trim() || persona.interestedTopics?.trim())
     );
 
     // 1. If the sentence bank slot has reached 300 (or preferBank is requested) and neither customWords nor persona are active, serve from the bank
@@ -138,19 +140,21 @@ export async function POST(req: NextRequest) {
         throw new Error("OpenAI returned an empty English sentence");
       }
 
-      // Generate model audio using TTS-1
+      // Generate model audio using TTS-1 (skip when requested by Silent Drill)
       let audioBase64: string | undefined;
-      try {
-        const mp3 = await openai.audio.speech.create({
-          model: "tts-1",
-          voice: "alloy",
-          input: english,
-          speed: level === "beginner" ? 0.9 : 1.0,
-        });
-        const buffer = Buffer.from(await mp3.arrayBuffer());
-        audioBase64 = buffer.toString("base64");
-      } catch (ttsError) {
-        console.warn("TTS generation failed or skipped:", ttsError);
+      if (!skipAudio) {
+        try {
+          const mp3 = await openai.audio.speech.create({
+            model: "tts-1",
+            voice: "alloy",
+            input: english,
+            speed: level === "beginner" ? 0.9 : 1.0,
+          });
+          const buffer = Buffer.from(await mp3.arrayBuffer());
+          audioBase64 = buffer.toString("base64");
+        } catch (ttsError) {
+          console.warn("TTS generation failed or skipped:", ttsError);
+        }
       }
 
       const responsePayload: SentenceResponse = {

@@ -1,5 +1,7 @@
 import { getStoredSessions, getWeakWords, getPlanType } from "@/lib/storage/user-learning-store";
+import { getPersonaProfile, UserPersonaProfile } from "@/lib/storage/persona-store";
 import { getChunkSlashIndices } from "@/lib/diff/chunk-splitter";
+import { STARTER_SENTENCES } from "@/lib/practice/starter-sentences";
 import { UserPlanType, StoredSession, WeakWord } from "@/types";
 
 export interface SilentDrillChunk {
@@ -12,7 +14,7 @@ export interface SilentDrillQuestion {
   id: string;
   originalSentence: string;
   japanese: string;
-  sourceType: "weak_session" | "weak_word" | "starter";
+  sourceType: "weak_session" | "weak_word" | "starter" | "persona";
   chunks: string[];
   shuffledChunks: SilentDrillChunk[];
   weakFocus?: string;
@@ -34,9 +36,108 @@ export interface SilentDrillQuota {
   canPlay: boolean;
 }
 
+interface StoredPersonaDrillItem {
+  sentence: string;
+  japanese: string;
+  weakFocus: string;
+  createdAt: string;
+}
+
 const SILENT_DRILL_USAGE_KEY = "shadowlog_silent_drill_daily_usage";
+const SILENT_DRILL_CLEARED_KEY = "shadowlog_silent_drill_cleared_sentences";
+const SILENT_DRILL_PERSONA_STOCK_KEY = "shadowlog_silent_drill_persona_stock";
 const UNLOCK_REQUIRED_SESSIONS = 3;
 export const FREE_USER_DAILY_LIMIT = 10;
+
+/**
+ * 文字列正規化（クリア済み判定用）
+ */
+function normalizeSentenceKey(sentence: string): string {
+  return sentence.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/**
+ * クリア済み（正解済み）の英文セットを取得
+ */
+export function getClearedSilentDrillSentences(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(SILENT_DRILL_CLEARED_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(
+      parsed
+        .filter((s): s is string => typeof s === "string")
+        .map(normalizeSentenceKey)
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * クリアした問題の英文を記録（以後再表示しない）
+ */
+export function markSilentDrillSentenceCleared(sentence: string): void {
+  if (typeof window === "undefined" || !sentence?.trim()) return;
+  try {
+    const current = getClearedSilentDrillSentences();
+    current.add(normalizeSentenceKey(sentence));
+    // 最大1000件まで保持
+    const list = Array.from(current).slice(-1000);
+    localStorage.setItem(SILENT_DRILL_CLEARED_KEY, JSON.stringify(list));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+/**
+ * ペルソナ生成ストックの取得
+ */
+function getPersonaDrillStock(): StoredPersonaDrillItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(SILENT_DRILL_PERSONA_STOCK_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is StoredPersonaDrillItem =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof item.sentence === "string" &&
+        typeof item.japanese === "string"
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * ペルソナ生成ストックへの保存
+ */
+export function savePersonaDrillStock(items: StoredPersonaDrillItem[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = getPersonaDrillStock();
+    const seen = new Set(existing.map((e) => normalizeSentenceKey(e.sentence)));
+    const merged = [...existing];
+    for (const item of items) {
+      const key = normalizeSentenceKey(item.sentence);
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        merged.push(item);
+      }
+    }
+    localStorage.setItem(
+      SILENT_DRILL_PERSONA_STOCK_KEY,
+      JSON.stringify(merged.slice(-100))
+    );
+  } catch {
+    // ignore
+  }
+}
 
 /**
  * 累計シャドーイングセッション数に基づきアンロック状況を判定
@@ -127,11 +228,15 @@ export function getSilentDrillDailyQuota(plan?: UserPlanType): SilentDrillQuota 
 }
 
 /**
- * Silent Drill 1問クリア時のカウントを記録
+ * Silent Drill 1問クリア時のカウントとクリア済み文を記録
  */
-export function recordSilentDrillCompletion(): SilentDrillQuota {
+export function recordSilentDrillCompletion(clearedSentence?: string): SilentDrillQuota {
   if (typeof window === "undefined") {
     return getSilentDrillDailyQuota();
+  }
+
+  if (clearedSentence) {
+    markSilentDrillSentenceCleared(clearedSentence);
   }
 
   try {
@@ -463,9 +568,6 @@ function findBestInternalSplitIndex(chunkWords: string[]): number {
 
 /**
  * 英文を文長に応じて約5個（短文は3〜4個、標準〜2文構成は5〜6個）の自然な意味チャンクに分解
- * - 句読点（カンマ・ピリオド等）やスラッシュ区切り規則（getChunkSlashIndices）を最優先で尊重し、
- *   2文が1チャンクに結合されるのを防ぐ
- * - チャンク数が少ない場合は長いチャンクを意味の境界でさらに細分化する
  */
 export function splitSentenceInto3To4Chunks(sentence: string): string[] {
   const clean = sentence.trim();
@@ -508,7 +610,6 @@ export function splitSentenceInto3To4Chunks(sentence: string): string[] {
       }
     }
 
-    // 分割対象の最大チャンクが2語以下ならこれ以上無理に割らない
     if (longestIdx === -1 || maxLen < 3) {
       break;
     }
@@ -532,7 +633,6 @@ export function splitSentenceInto3To4Chunks(sentence: string): string[] {
       const crossesComma = /[,;:—]["'”’)]*$/.test(leftLastWord);
       const combinedLen = wordChunks[i].length + wordChunks[i + 1].length;
 
-      // 文末ピリオド跨ぎは極力回避し、カンマ跨ぎも優先度を下げる
       const penalty = crossesSentenceEnd ? 1000 : crossesComma ? 20 : 0;
       const mergeScore = combinedLen + penalty;
 
@@ -562,95 +662,356 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
- * 今解くべき Silent Drill の問題セットを生成
- * - 過去の自分のセッション（特に正答率80%未満またはミストークのある文）を優先
- * - 弱点単語が含まれる文を優先
- * - 足りない分は高品質スターターバンクから補充
+ * チャンク配列からシャッフル済み選択肢を構築（必ず正解順と異なる並びにする）
+ */
+function buildShuffledChunks(chunks: string[], prefix: string): SilentDrillChunk[] {
+  const indexedChunks: SilentDrillChunk[] = chunks.map((text, idx) => ({
+    id: `${prefix}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+    text,
+    correctIndex: idx,
+  }));
+
+  let shuffled = shuffleArray(indexedChunks);
+  if (shuffled.every((c, i) => c.correctIndex === i) && shuffled.length > 1) {
+    shuffled = [shuffled[1], shuffled[0], ...shuffled.slice(2)];
+  }
+  return shuffled;
+}
+
+/**
+ * ペルソナ設定に基づき動的にバリエーション豊かな英文候補を生成（オフライン/ストック枯渇時対応）
+ */
+function synthesizePersonaDrillCandidates(
+  persona: UserPersonaProfile | null,
+  clearedSet: Set<string>,
+  usedSet: Set<string>
+): StoredPersonaDrillItem[] {
+  const roleLabel = persona?.jobRole?.trim() || "ビジネスプロフェッショナル";
+  const fieldLabel = persona?.industryField?.trim() || "グローバル事業";
+  const scenarioLabel = persona?.targetScenario?.trim() || "プロジェクト推進";
+  const focusLabel = `ペルソナ特化: ${roleLabel} × ${fieldLabel}（${scenarioLabel}）`;
+
+  const templates: { sentence: string; japanese: string }[] = [
+    {
+      sentence: "Before we finalize the quarterly roadmap, let us align with all stakeholders to confirm our delivery schedule.",
+      japanese: `【${roleLabel}】四半期ロードマップを確定する前に、全関係者と連携して納品スケジュールを確認しましょう。`,
+    },
+    {
+      sentence: "In order to improve operational efficiency across the team, we decided to automate our weekly reporting process.",
+      japanese: `【${fieldLabel}】チーム全体の業務効率を高めるため、私たちは週次レポート作成プロセスの自動化を決定しました。`,
+    },
+    {
+      sentence: "Although the initial requirements changed yesterday, our team adjusted the implementation plan to meet the client deadline.",
+      japanese: `【${scenarioLabel}】昨日当初の要件が変更されたものの、私たちのチームはクライアントの納期に間に合うよう実装計画を調整しました。`,
+    },
+    {
+      sentence: "Once the quality assurance review is completed, we will share the updated proposal with our international partners.",
+      japanese: `【${roleLabel}】品質保証レビューが完了次第、最新の提案書を海外パートナーへ共有いたします。`,
+    },
+    {
+      sentence: "To address the feedback from our key customers, we should prioritize system reliability during the next sprint.",
+      japanese: `【${fieldLabel}】主要顧客からのフィードバックに対応するため、次回のスプリントではシステムの信頼性を最優先すべきです。`,
+    },
+    {
+      sentence: "If any unexpected technical issues arise during deployment, please notify the project lead immediately via chat.",
+      japanese: `【${scenarioLabel}】デプロイ中に予期せぬ技術的課題が発生した場合は、直ちにチャットでプロジェクトリーダーへ連絡してください。`,
+    },
+    {
+      sentence: "By analyzing the latest user engagement metrics, we identified three major opportunities to reduce customer churn.",
+      japanese: `【${roleLabel}】最新のユーザーエンゲージメント指標を分析した結果、解約率を下げる3つの大きな機会を特定しました。`,
+    },
+    {
+      sentence: "While our current budget remains tight this quarter, investing in cloud security will protect our long-term growth.",
+      japanese: `【${fieldLabel}】今四半期の予算は依然として厳しいものの、クラウドセキュリティへの投資は長期的な成長を守ることになります。`,
+    },
+    {
+      sentence: "After reviewing the contract terms with our legal counsel, we proposed a flexible pricing structure for the client.",
+      japanese: `【${scenarioLabel}】法務担当と契約条件を精査した後、私たちはクライアント向けに柔軟な価格体系を提案しました。`,
+    },
+    {
+      sentence: "Since cross-functional collaboration is essential for this launch, let us hold a brief sync meeting every morning.",
+      japanese: `【${roleLabel}】今回のローンチには部門横断の連携が不可欠なため、毎朝短い進捗確認ミーティングを実施しましょう。`,
+    },
+    {
+      sentence: "Even though the market conditions are shifting rapidly, our core strategy continues to deliver steady revenue growth.",
+      japanese: `【${fieldLabel}】市場環境が急速に変化しているにもかかわらず、当社の中核戦略は着実な収益成長をもたらし続けています。`,
+    },
+    {
+      sentence: "Please review the attached specification document carefully so that we can resolve all open questions before Friday.",
+      japanese: `【${scenarioLabel}】金曜日までにすべての未解決事項を解消できるよう、添付の仕様書を事前にご確認ください。`,
+    },
+  ];
+
+  const randomized = shuffleArray(templates);
+  const results: StoredPersonaDrillItem[] = [];
+
+  for (const tpl of randomized) {
+    const key = normalizeSentenceKey(tpl.sentence);
+    if (clearedSet.has(key) || usedSet.has(key)) continue;
+    results.push({
+      sentence: tpl.sentence,
+      japanese: tpl.japanese,
+      weakFocus: focusLabel,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  return results;
+}
+
+/**
+ * ストックがなくなった際にペルソナ設定の内容で新しいSilent Drill問題を非同期生成（OpenAI API + フォールバック）
+ */
+export async function generatePersonaSilentDrillQuestions(
+  count: number = 5
+): Promise<SilentDrillQuestion[]> {
+  const persona = getPersonaProfile();
+  const clearedSet = getClearedSilentDrillSentences();
+  const weakWords = getWeakWords()?.words.map((w) => w.word).slice(0, 5) || [];
+  const defaultIndustry =
+    typeof window !== "undefined"
+      ? localStorage.getItem("shadowlog_default_industry") || "business"
+      : "business";
+  const defaultLevel =
+    typeof window !== "undefined"
+      ? localStorage.getItem("shadowlog_default_level") || "intermediate"
+      : "intermediate";
+
+  const effectivePersona: UserPersonaProfile =
+    persona &&
+    (persona.jobRole?.trim() ||
+      persona.industryField?.trim() ||
+      persona.targetScenario?.trim() ||
+      persona.interestedTopics?.trim())
+      ? { ...persona, enabled: true }
+      : {
+          enabled: true,
+          jobRole: "ビジネスパーソン",
+          industryField: defaultIndustry,
+          targetScenario: "実務ミーティング・進捗報告",
+          customTone: "polite",
+        };
+
+  const roleLabel = effectivePersona.jobRole || "ビジネス";
+  const fieldLabel = effectivePersona.industryField || defaultIndustry;
+  const focusLabel = `✨ ペルソナ特化生成: ${roleLabel} × ${fieldLabel}`;
+
+  const newItems: StoredPersonaDrillItem[] = [];
+  const usedKeys = new Set<string>();
+
+  // API経由で最大2問リアルタイム生成を試行（skipAudio: true で高速生成）
+  if (typeof window !== "undefined" && typeof fetch === "function") {
+    const apiCalls = Math.min(count, 2);
+    for (let i = 0; i < apiCalls; i++) {
+      try {
+        const res = await fetch("/api/generate-sentence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            industry: defaultIndustry,
+            level: defaultLevel,
+            mode: "sentence",
+            weakWords,
+            persona: effectivePersona,
+            skipAudio: true,
+          }),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { english?: string; japanese?: string };
+          if (data.english && data.japanese) {
+            const key = normalizeSentenceKey(data.english);
+            if (!clearedSet.has(key) && !usedKeys.has(key)) {
+              usedKeys.add(key);
+              newItems.push({
+                sentence: data.english.trim(),
+                japanese: data.japanese.trim(),
+                weakFocus: focusLabel,
+                createdAt: new Date().toISOString(),
+              });
+            }
+          }
+        }
+      } catch {
+        // API失敗時は下のペルソナ合成テンプレートで補充
+      }
+    }
+  }
+
+  // 残りの枠をペルソナ合成候補からランダム補充
+  if (newItems.length < count) {
+    const synthesized = synthesizePersonaDrillCandidates(
+      effectivePersona,
+      clearedSet,
+      usedKeys
+    );
+    for (const item of synthesized) {
+      if (newItems.length >= count) break;
+      usedKeys.add(normalizeSentenceKey(item.sentence));
+      newItems.push(item);
+    }
+  }
+
+  if (newItems.length > 0) {
+    savePersonaDrillStock(newItems);
+  }
+
+  return newItems.map((item, idx) => {
+    const chunks = splitSentenceInto3To4Chunks(item.sentence);
+    return {
+      id: `persona-q-${Date.now()}-${idx}`,
+      originalSentence: item.sentence,
+      japanese: item.japanese,
+      sourceType: "persona" as const,
+      chunks,
+      shuffledChunks: buildShuffledChunks(chunks, `persona-chunk-${idx}`),
+      weakFocus: item.weakFocus,
+    };
+  });
+}
+
+/**
+ * 今解くべき Silent Drill の問題セットをランダム生成
+ * - クリア済み（正解済み）の文は一切再表示しない
+ * - 毎回順番と内容がランダムになるようシャッフル
+ * - 既存ストックがなくなった場合はペルソナ設定の内容から自動生成して出題
  */
 export function generateSilentDrillQuestions(limit: number = 10): SilentDrillQuestion[] {
   const questions: SilentDrillQuestion[] = [];
+  const clearedSet = getClearedSilentDrillSentences();
+  const usedSentences = new Set<string>();
+
   const sessions: StoredSession[] =
     typeof window !== "undefined" ? getStoredSessions()?.sessions || [] : [];
   const weakWords: WeakWord[] =
     typeof window !== "undefined" ? getWeakWords()?.words || [] : [];
   const weakWordSet = new Set(weakWords.map((w) => w.word.toLowerCase()));
 
-  const usedSentences = new Set<string>();
+  // 1. 過去のセッションから未クリアの弱点文をランダム抽出
+  const candidateSessions = shuffleArray(
+    sessions.filter(
+      (s) =>
+        !clearedSet.has(normalizeSentenceKey(s.sentence)) &&
+        (s.accuracyScore < 92 || s.sentence.split(/\s+/).length >= 7)
+    )
+  ).sort((a, b) => {
+    const aHasWeak = a.sentence
+      .toLowerCase()
+      .split(/\W+/)
+      .some((w) => weakWordSet.has(w));
+    const bHasWeak = b.sentence
+      .toLowerCase()
+      .split(/\W+/)
+      .some((w) => weakWordSet.has(w));
+    if (aHasWeak !== bHasWeak) return aHasWeak ? -1 : 1;
+    return 0; // ランダム順序を維持
+  });
 
-  // 1. 過去のセッションから弱点文をピックアップ（弱点単語を含む文やスコアが低い文を優先）
-  const weakSessions = sessions
-    .filter((s) => s.accuracyScore < 90 || s.sentence.split(" ").length >= 8)
-    .sort((a, b) => {
-      const aHasWeak = a.sentence
-        .toLowerCase()
-        .split(/\W+/)
-        .some((w) => weakWordSet.has(w));
-      const bHasWeak = b.sentence
-        .toLowerCase()
-        .split(/\W+/)
-        .some((w) => weakWordSet.has(w));
-      if (aHasWeak !== bHasWeak) return aHasWeak ? -1 : 1;
-      return a.accuracyScore - b.accuracyScore;
-    });
-
-  for (const session of weakSessions) {
+  for (const session of candidateSessions) {
     if (questions.length >= limit) break;
-    if (usedSentences.has(session.sentence)) continue;
+    const normKey = normalizeSentenceKey(session.sentence);
+    if (!normKey || usedSentences.has(normKey)) continue;
 
     const chunks = splitSentenceInto3To4Chunks(session.sentence);
     if (chunks.length < 2) continue;
 
-    const indexedChunks: SilentDrillChunk[] = chunks.map((text, idx) => ({
-      id: `chunk-${idx}-${Math.random().toString(36).substring(2, 7)}`,
-      text,
-      correctIndex: idx,
-    }));
-
-    // 必ず正解の順番と異なるようにシャッフル
-    let shuffled = shuffleArray(indexedChunks);
-    if (shuffled.every((c, i) => c.correctIndex === i) && shuffled.length > 1) {
-      shuffled = [shuffled[1], shuffled[0], ...shuffled.slice(2)];
-    }
-
     questions.push({
-      id: `session-q-${session.id}`,
+      id: `session-q-${session.id}-${Math.random().toString(36).substring(2, 6)}`,
       originalSentence: session.sentence,
       japanese: session.japanese || "あなたの過去のシャドーイング練習文",
       sourceType: "weak_session",
       chunks,
-      shuffledChunks: shuffled,
+      shuffledChunks: buildShuffledChunks(chunks, "chunk"),
       weakFocus: `前回のシャドーイング正確度: ${Math.round(session.accuracyScore)}%`,
     });
-    usedSentences.add(session.sentence);
+    usedSentences.add(normKey);
   }
 
-  // 2. スターターバンクから補充
-  for (const starter of STARTER_DRILL_BANK) {
+  // 2. 保存済みのペルソナ生成ストック（未クリア分）をランダム抽出
+  const personaStock = shuffleArray(getPersonaDrillStock());
+  for (const item of personaStock) {
     if (questions.length >= limit) break;
-    if (usedSentences.has(starter.sentence)) continue;
+    const normKey = normalizeSentenceKey(item.sentence);
+    if (!normKey || clearedSet.has(normKey) || usedSentences.has(normKey)) continue;
 
-    const indexedChunks: SilentDrillChunk[] = starter.chunks.map((text, idx) => ({
-      id: `starter-chunk-${idx}-${Math.random().toString(36).substring(2, 7)}`,
-      text,
-      correctIndex: idx,
-    }));
-
-    let shuffled = shuffleArray(indexedChunks);
-    if (shuffled.every((c, i) => c.correctIndex === i) && shuffled.length > 1) {
-      shuffled = [shuffled[1], shuffled[0], ...shuffled.slice(2)];
-    }
+    const chunks = splitSentenceInto3To4Chunks(item.sentence);
+    if (chunks.length < 2) continue;
 
     questions.push({
-      id: `starter-q-${questions.length + 1}`,
+      id: `persona-stock-${Math.random().toString(36).substring(2, 8)}`,
+      originalSentence: item.sentence,
+      japanese: item.japanese,
+      sourceType: "persona",
+      chunks,
+      shuffledChunks: buildShuffledChunks(chunks, "persona-stock"),
+      weakFocus: item.weakFocus,
+    });
+    usedSentences.add(normKey);
+  }
+
+  // 3. スターターバンク（STARTER_DRILL_BANK + STARTER_SENTENCES 全44問）から未クリア分をランダム抽出
+  const combinedStarters = shuffleArray([
+    ...STARTER_DRILL_BANK.map((s) => ({
+      sentence: s.sentence,
+      japanese: s.japanese,
+      chunks: s.chunks,
+      weakFocus: s.weakFocus,
+    })),
+    ...STARTER_SENTENCES.map((s) => ({
+      sentence: s.english,
+      japanese: s.japanese,
+      chunks: splitSentenceInto3To4Chunks(s.english),
+      weakFocus: `実践チャンク特訓（${s.industry.toUpperCase()} / ${s.level}）`,
+    })),
+  ]);
+
+  for (const starter of combinedStarters) {
+    if (questions.length >= limit) break;
+    const normKey = normalizeSentenceKey(starter.sentence);
+    if (!normKey || clearedSet.has(normKey) || usedSentences.has(normKey)) continue;
+    if (starter.chunks.length < 2) continue;
+
+    questions.push({
+      id: `starter-q-${Math.random().toString(36).substring(2, 8)}`,
       originalSentence: starter.sentence,
       japanese: starter.japanese,
       sourceType: "starter",
       chunks: starter.chunks,
-      shuffledChunks: shuffled,
+      shuffledChunks: buildShuffledChunks(starter.chunks, "starter-chunk"),
       weakFocus: starter.weakFocus,
     });
-    usedSentences.add(starter.sentence);
+    usedSentences.add(normKey);
   }
 
-  return questions;
+  // 4. すべての既存ストックをクリアし終えた場合、ペルソナ設定の内容から即座に新規生成して補充
+  if (questions.length < limit) {
+    const persona = typeof window !== "undefined" ? getPersonaProfile() : null;
+    const fallbackPersonaItems = synthesizePersonaDrillCandidates(
+      persona,
+      clearedSet,
+      usedSentences
+    );
+
+    for (const item of fallbackPersonaItems) {
+      if (questions.length >= limit) break;
+      const normKey = normalizeSentenceKey(item.sentence);
+      if (!normKey || usedSentences.has(normKey)) continue;
+
+      const chunks = splitSentenceInto3To4Chunks(item.sentence);
+      if (chunks.length < 2) continue;
+
+      questions.push({
+        id: `persona-gen-${Math.random().toString(36).substring(2, 8)}`,
+        originalSentence: item.sentence,
+        japanese: item.japanese,
+        sourceType: "persona",
+        chunks,
+        shuffledChunks: buildShuffledChunks(chunks, "persona-gen"),
+        weakFocus: item.weakFocus,
+      });
+      usedSentences.add(normKey);
+    }
+  }
+
+  // 出題順序自体も毎回シャッフルして返す
+  return shuffleArray(questions);
 }

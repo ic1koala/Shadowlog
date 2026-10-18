@@ -24,6 +24,7 @@ import {
   getSilentDrillDailyQuota,
   recordSilentDrillCompletion,
   generateSilentDrillQuestions,
+  generatePersonaSilentDrillQuestions,
   FREE_USER_DAILY_LIMIT,
 } from "@/lib/storage/silent-drill-store";
 import { UserPlanType } from "@/types";
@@ -54,6 +55,22 @@ export function SilentDrillSection({ plan, onOpenUpgradeModal }: SilentDrillSect
   const [status, setStatus] = useState<"answering" | "correct" | "wrong">("answering");
   const [streakCount, setStreakCount] = useState(0);
   const [isReady, setIsReady] = useState(false);
+  const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
+
+  const replenishWithPersonaQuestions = useCallback(async () => {
+    setIsGeneratingPersona(true);
+    try {
+      const freshPersonaQuestions = await generatePersonaSilentDrillQuestions(5);
+      if (freshPersonaQuestions.length > 0) {
+        setQuestions(freshPersonaQuestions);
+        setCurrentIndex(0);
+        setSelectedChunks([]);
+        setStatus("answering");
+      }
+    } finally {
+      setIsGeneratingPersona(false);
+    }
+  }, []);
 
   const initData = useCallback(() => {
     const unlock = getSilentDrillUnlockProgress();
@@ -67,9 +84,16 @@ export function SilentDrillSection({ plan, onOpenUpgradeModal }: SilentDrillSect
       setCurrentIndex(0);
       setSelectedChunks([]);
       setStatus("answering");
+
+      // ストックが枯渇した場合や残り少ない場合はペルソナ設定から新規生成
+      if (generated.length === 0) {
+        void replenishWithPersonaQuestions();
+      } else if (generated.every((q) => q.sourceType === "persona")) {
+        void generatePersonaSilentDrillQuestions(3);
+      }
     }
     setIsReady(true);
-  }, [plan]);
+  }, [plan, replenishWithPersonaQuestions]);
 
   useEffect(() => {
     initData();
@@ -92,7 +116,8 @@ export function SilentDrillSection({ plan, onOpenUpgradeModal }: SilentDrillSect
       if (isAllCorrect) {
         setStatus("correct");
         setStreakCount((prev) => prev + 1);
-        const newQuota = recordSilentDrillCompletion();
+        // クリアした文を記録し、二度と再出題されないようにする
+        const newQuota = recordSilentDrillCompletion(currentQ.originalSentence);
         setQuota(newQuota);
       } else {
         setStatus("wrong");
@@ -120,16 +145,31 @@ export function SilentDrillSection({ plan, onOpenUpgradeModal }: SilentDrillSect
       setCurrentIndex((prev) => prev + 1);
       setSelectedChunks([]);
       setStatus("answering");
+    } else if (quota.canPlay) {
+      // 未クリアストックから再抽選、ストックがなければペルソナ設定から生成
+      const nextBatch = generateSilentDrillQuestions(10);
+      if (nextBatch.length > 0) {
+        setQuestions(nextBatch);
+        setCurrentIndex(0);
+        setSelectedChunks([]);
+        setStatus("answering");
+        if (nextBatch.every((q) => q.sourceType === "persona")) {
+          void generatePersonaSilentDrillQuestions(3);
+        }
+      } else {
+        void replenishWithPersonaQuestions();
+      }
     } else {
-      // 10問完了または上限到達時はリフレッシュ
       initData();
     }
   };
 
-  if (!isReady) {
+  if (!isReady || isGeneratingPersona) {
     return (
       <div className="p-8 rounded-2xl bg-card border border-border flex items-center justify-center text-muted-foreground text-xs animate-pulse">
-        特訓データを読み込み中...
+        {isGeneratingPersona
+          ? "✨ ペルソナ設定に基づき新しい特訓問題を生成中..."
+          : "特訓データを読み込み中..."}
       </div>
     );
   }
@@ -310,6 +350,11 @@ export function SilentDrillSection({ plan, onOpenUpgradeModal }: SilentDrillSect
             {currentQ.sourceType === "weak_session" && (
               <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-md">
                 🎯 過去のあなたの弱点文
+              </span>
+            )}
+            {currentQ.sourceType === "persona" && (
+              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                ✨ ペルソナ設定から自動生成
               </span>
             )}
           </div>
