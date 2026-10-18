@@ -7,6 +7,7 @@ import { StreakBadge } from "@/components/features/dashboard/StreakBadge";
 import { ActivityHeatmap } from "@/components/features/dashboard/ActivityHeatmap";
 import { GreetingBanner } from "@/components/features/dashboard/GreetingBanner";
 import { GuestSignupBanner } from "@/components/features/dashboard/GuestSignupBanner";
+import { PersonaPromptBanner } from "@/components/features/dashboard/PersonaPromptBanner";
 import { ActivityWpmCard } from "@/components/features/dashboard/ActivityWpmCard";
 import { Mic, ArrowRight, History, Sparkles, AlertCircle, GraduationCap } from "lucide-react";
 
@@ -46,6 +47,9 @@ export default function DashboardPage() {
     <div className="space-y-4 sm:space-y-6 pb-4 sm:pb-12 max-w-4xl mx-auto">
       {/* 1. 挨拶メッセージ（既存のものを維持） */}
       <GreetingBanner />
+
+      {/* VIPユーザー向けペルソナ設定促進バナー（未設定のBase/Pro/VIPのみ表示） */}
+      <PersonaPromptBanner />
 
       {/* ゲスト向け無料登録CTA（未登録時のみ表示） */}
       <GuestSignupBanner />
