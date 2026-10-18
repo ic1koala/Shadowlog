@@ -1,4 +1,5 @@
 import { DifficultyLevel, Industry, DiffResult, CoachFeedback, WPMInfo, normalizeIndustry } from "@/types";
+import { UserPersonaProfile } from "@/lib/storage/persona-store";
 
 export interface PromptTemplate {
   systemPrompt: string;
@@ -244,13 +245,20 @@ export function getSentenceGenerationPrompt(
   topic?: string,
   weakWords?: string[],
   referenceDate?: Date,
-  customWords?: string[]
+  customWords?: string[],
+  persona?: UserPersonaProfile | null
 ): PromptTemplate {
   const cleanCustomWords = Array.isArray(customWords)
     ? customWords.map((w) => w.trim()).filter((w) => w.length > 0).slice(0, 3)
     : [];
   const hasCustomWords = cleanCustomWords.length > 0;
   const customWordList = hasCustomWords ? cleanCustomWords.join(", ") : null;
+
+  const isPersonaActive = Boolean(
+    persona &&
+    persona.enabled !== false &&
+    (persona.jobRole?.trim() || persona.industryField?.trim() || persona.targetScenario?.trim())
+  );
 
   const spec = TOEIC_LEVEL_SPECS[level];
 
@@ -303,6 +311,21 @@ ${
 - Keep the tone warm, casual, and grounded in daily life. NEVER use dramatic speeches, executive posturing, or corporate jargon.`
     : `- This is for practical professional communication ("${normInd}" domain). Write in clear, natural spoken English suitable for real workplace meetings or discussions.`
 }
+${
+  isPersonaActive
+    ? `
+USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE (CRITICAL):
+- Target Learner Profile:
+  - Professional Role: ${persona!.jobRole || "Professional"}
+  - Specialized Field/Industry: ${persona!.industryField || normInd}
+  - Realistic Communication Scenario: ${persona!.targetScenario || "Workplace situation"}
+  ${persona!.interestedTopics ? `- Specific Topics/Interests: ${persona!.interestedTopics}` : ""}
+  - Preferred Communication Tone: ${persona!.customTone || "natural professional"}
+- Realism Requirement: Tailor the phrase directly to someone working in this role (${persona!.jobRole}) and industry (${persona!.industryField}).
+- If terms in the persona are written in Japanese (e.g., "海外営業", "半導体", "商談・契約交渉"), translate and contextualize them into natural, idiomatic international business English.
+- The sentence must remain within the ${spec.name} vocabulary rules.`
+    : ""
+}
 
 Season & Trend Awareness (Optional & Subtle):
 - Seasonal Context Rules:
@@ -338,11 +361,19 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
 
   const userPrompt = `Generate a unique shadowing practice sentence with the following specifications:
 - Industry/Domain: ${normInd}
-- Context/Situation: ${topic ? topic : randomSituation}
+- Context/Situation: ${topic ? topic : isPersonaActive && persona!.targetScenario ? persona!.targetScenario : randomSituation}
 - Seasonal Timing & Cycle (Optional - omit if unnatural): ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
 - Modern Trend Angle (Optional reference): ${seasonal.trendingTopic}
 - Difficulty Level: ${level} (${levelGuidelines[level]})
 - Variation Seed: ${randomSeed}${
+    isPersonaActive
+      ? `\n- Target User Persona:
+  - Role: ${persona!.jobRole || "Professional"}
+  - Specialty/Industry: ${persona!.industryField || normInd}
+  - Target Scenario: ${persona!.targetScenario || "Workplace communication"}
+  ${persona!.interestedTopics ? `- Focus Themes: ${persona!.interestedTopics}` : ""}`
+      : ""
+  }${
     hasCustomWords
       ? `\n- Required Custom Words (translate to natural English if Japanese): ${customWordList}`
       : hasWeakWords
@@ -375,7 +406,8 @@ export function getPassageGenerationPrompt(
   industry: Industry,
   level: DifficultyLevel,
   topic?: string,
-  referenceDate?: Date
+  referenceDate?: Date,
+  persona?: UserPersonaProfile | null
 ): PromptTemplate {
   const normInd = normalizeIndustry(industry);
   const isDaily = normInd === "daily";
@@ -384,6 +416,12 @@ export function getPassageGenerationPrompt(
   const randomSeed = Math.random().toString(36).substring(2, 8);
   const seasonal = getSeasonalTrendContext(normInd, referenceDate);
   const spec = TOEIC_LEVEL_SPECS[level];
+
+  const isPersonaActive = Boolean(
+    persona &&
+    persona.enabled !== false &&
+    (persona.jobRole?.trim() || persona.industryField?.trim() || persona.targetScenario?.trim())
+  );
 
   const personaIntro = isDaily
     ? `You are a native English speaker sharing a natural, engaging, and authentic story or recommendation with a friend or colleague.
@@ -404,6 +442,21 @@ TOEIC Score & Vocabulary Ceiling Calibration (STRICT):
 - Prohibited Vocabulary / Syntax: ${spec.forbiddenRules}
 - Required Grammar / Structure: ${spec.structureRules}
 - Self-Verification Check: Before returning the passage, verify that every sentence conforms to the TOEIC ${spec.toeicScore} level. Replace any overly dense or uncharacteristic words with natural, level-appropriate equivalents.
+${
+  isPersonaActive
+    ? `
+USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE (CRITICAL):
+- Target Learner Profile:
+  - Professional Role: ${persona!.jobRole || "Professional"}
+  - Specialized Field/Industry: ${persona!.industryField || normInd}
+  - Realistic Communication Scenario: ${persona!.targetScenario || "Workplace presentation or team discussion"}
+  ${persona!.interestedTopics ? `- Specific Topics/Interests: ${persona!.interestedTopics}` : ""}
+  - Preferred Communication Tone: ${persona!.customTone || "executive professional"}
+- Realism Requirement: Tailor the entire speech/presentation paragraph directly to someone in this role (${persona!.jobRole}) and industry (${persona!.industryField}).
+- If terms in the persona are written in Japanese (e.g., "海外営業", "半導体", "商談・契約交渉"), translate and contextualize them into natural, idiomatic international business English.
+- The entire passage must strictly conform to ${spec.name} vocabulary rules.`
+    : ""
+}
 
 Season & Trend Awareness (Optional & Subtle):
 - Seasonal Context Rules:
@@ -427,12 +480,20 @@ Do NOT include markdown fences, extra commentary, or additional fields.`;
 
   const userPrompt = `Generate an authentic spoken English passage with the following specifications:
 - Industry/Domain: ${normInd}
-- Scenario/Topic: ${topic ? topic : randomSituation}
+- Scenario/Topic: ${topic ? topic : isPersonaActive && persona!.targetScenario ? persona!.targetScenario : randomSituation}
 - Seasonal Timing & Cycle (Optional - omit if unnatural): ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
 - Modern Trend Angle (Optional reference): ${seasonal.trendingTopic}
 - Difficulty Level: ${level} (${spec.name}, ~${spec.toeicScore} pts)
 - Target Word Count: 60 to 90 words (3 to 5 clear, rhythmic sentences)
-- Variation Seed: ${randomSeed}
+- Variation Seed: ${randomSeed}${
+    isPersonaActive
+      ? `\n- Target User Persona:
+  - Role: ${persona!.jobRole || "Professional"}
+  - Specialty/Industry: ${persona!.industryField || normInd}
+  - Target Scenario: ${persona!.targetScenario || "Workplace communication"}
+  ${persona!.interestedTopics ? `- Focus Themes: ${persona!.interestedTopics}` : ""}`
+      : ""
+  }
 
 Requirements & Vocabulary Ceiling:
 - Strictly adhere to ${spec.name} (~${spec.toeicScore} pts):

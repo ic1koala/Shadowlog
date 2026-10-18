@@ -12,6 +12,7 @@ import {
   getPassageGenerationPrompt,
   getFallbackPassage,
 } from "@/lib/ai/prompts";
+import type { UserPersonaProfile } from "@/lib/storage/persona-store";
 import { countWords } from "@/lib/diff/diff-calculator";
 import {
   isSlotFull,
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       customWords?: string[];
       excludeIds?: string[];
       preferBank?: boolean;
+      persona?: UserPersonaProfile | null;
     } = {};
     try {
       body = await req.json();
@@ -82,9 +84,16 @@ export async function POST(req: NextRequest) {
       : [];
     const preferBank = Boolean(body.preferBank);
 
-    // 1. If the sentence bank slot has reached 300 (or preferBank is requested) and no customWords are specified, serve from the bank
-    const slotFull = !hasCustomWords && (await isSlotFull(industry, level, mode));
-    if (!hasCustomWords && (slotFull || preferBank)) {
+    const persona = body.persona && typeof body.persona === "object" ? body.persona : undefined;
+    const isPersonaActive = Boolean(
+      persona &&
+      persona.enabled !== false &&
+      (persona.jobRole?.trim() || persona.industryField?.trim() || persona.targetScenario?.trim())
+    );
+
+    // 1. If the sentence bank slot has reached 300 (or preferBank is requested) and neither customWords nor persona are active, serve from the bank
+    const slotFull = !hasCustomWords && !isPersonaActive && (await isSlotFull(industry, level, mode));
+    if (!hasCustomWords && !isPersonaActive && (slotFull || preferBank)) {
       const banked = await pickFromSentenceBank({
         industry,
         level,
@@ -97,13 +106,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Otherwise generate a new sentence via OpenAI and store it in the sentence bank
+    // 2. Otherwise generate a new sentence via OpenAI and store it in the sentence bank (unless customWords or persona is active)
     try {
       const openai = getOpenAIClient();
       const { systemPrompt, userPrompt } =
         mode === "passage"
-          ? getPassageGenerationPrompt(industry, level, topic)
-          : getSentenceGenerationPrompt(industry, level, topic, weakWords, undefined, customWords);
+          ? getPassageGenerationPrompt(industry, level, topic, undefined, persona)
+          : getSentenceGenerationPrompt(industry, level, topic, weakWords, undefined, customWords, persona);
 
       // Generate sentence text with GPT-4o-mini
       const completion = await openai.chat.completions.create({
@@ -155,8 +164,8 @@ export async function POST(req: NextRequest) {
         mode,
       };
 
-      // Save newly generated sentence to the shared bank only when not a personalized custom-word generation
-      if (!hasCustomWords) {
+      // Save newly generated sentence to the shared bank only when not a personalized custom-word or persona generation
+      if (!hasCustomWords && !isPersonaActive) {
         const savedRecord = await saveToSentenceBank(responsePayload);
         if (savedRecord) {
           responsePayload.id = savedRecord.id;
@@ -167,8 +176,8 @@ export async function POST(req: NextRequest) {
     } catch (openaiErr) {
       console.warn("OpenAI API call failed, checking sentence bank or fallback:", openaiErr);
 
-      // Try sentence bank before static fallback (unless customWords were specifically requested)
-      if (!hasCustomWords) {
+      // Try sentence bank before static fallback (unless customWords or persona were specifically requested)
+      if (!hasCustomWords && !isPersonaActive) {
         const banked = await pickFromSentenceBank({
           industry,
           level,
@@ -196,6 +205,22 @@ export async function POST(req: NextRequest) {
           fallbackText = `Our team decided to focus on ${w1 || "efficiency"}${w2 ? ` and improve ${w2}` : ""} before the next milestone.${w3 ? ` This approach will help us resolve ${w3} smoothly.` : ""}`;
         }
         fallbackJa = `マイ単語（${joinedEn}）を取り入れた実践トレーニング用のカスタム英文です。`;
+      } else if (isPersonaActive) {
+        const role = persona?.jobRole || "Professional";
+        const scenario = persona?.targetScenario || "workplace discussion";
+        if (mode === "passage") {
+          fallbackText = `As a ${role}, I want to clarify our project milestones and next steps with the global team. We have addressed the primary challenges in our recent meetings, and our key deliverables are on schedule. Moving forward, maintaining close cross-functional communication will be essential for our success.`;
+          fallbackJa = `【ペルソナ特化】${role}としてのグローバル協業を想定した実践的なスピーチ文です。`;
+        } else if (level === "beginner") {
+          fallbackText = `Could we review the latest schedule for our upcoming client meeting?`;
+          fallbackJa = `【ペルソナ特化】クライアント会議の最新日程を確認させていただけますか？`;
+        } else if (level === "advanced") {
+          fallbackText = `In light of our strategic priorities for ${scenario}, we should align key stakeholders on the updated timeline before committing additional resources.`;
+          fallbackJa = `【ペルソナ特化】重要関係者とスケジュールを擦り合わせ、リソース配分を最適化しましょう。`;
+        } else {
+          fallbackText = `Let us coordinate with the team to ensure our deliverables for ${scenario} meet all requirements.`;
+          fallbackJa = `【ペルソナ特化】チームと連携し、要件を満たした成果物を期日通りに準備しましょう。`;
+        }
       } else if (mode === "passage") {
         const passage = getFallbackPassage(industry, level);
         fallbackText = passage.english;

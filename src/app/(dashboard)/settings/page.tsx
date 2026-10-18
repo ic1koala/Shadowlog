@@ -18,6 +18,7 @@ import {
   RotateCcw,
   Trash2,
   User,
+  UserCheck,
   Mail,
   Lock,
   Loader2,
@@ -54,12 +55,15 @@ import { AnnouncementHistorySection } from "@/components/features/announcements/
 import { ReminderSettingsSection } from "@/components/features/settings/ReminderSettingsSection";
 import { CustomWordsSection } from "@/components/features/settings/CustomWordsSection";
 import { AppFeatureGuide } from "@/components/features/settings/AppFeatureGuide";
+import { PersonaSettingsSection } from "@/components/features/settings/PersonaSettingsSection";
+import { isPersonaEligible } from "@/lib/storage/persona-store";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 export type SettingSectionKey =
   | "account"
   | "reminder"
   | "learning"
+  | "persona"
   | "assessment"
   | "mic"
   | "guide"
@@ -392,6 +396,17 @@ export default function SettingsPage() {
       group: "main",
       badge: industries.find((i) => i.key === industry)?.label.split(" ")[0] || industry,
       keywords: ["学習", "業種", "ドメイン", "難易度", "レベル", "マイ単語", "カスタム", "単語登録"],
+    },
+    {
+      id: "persona",
+      label: "ペルソナ設定",
+      sublabel: isPersonaEligible(ticketStatus?.plan)
+        ? "職種 × 専門業界 × 場面に完全特化"
+        : "職種・業界特化出題（Base / Pro専用）",
+      icon: UserCheck,
+      group: "main",
+      badge: isPersonaEligible(ticketStatus?.plan) ? "Base/Pro" : "🔒 Base/Pro",
+      keywords: ["ペルソナ", "職種", "業界", "シチュエーション", "パーソナライズ", "仕事", "専門", "場面", "カスタム"],
     },
     {
       id: "assessment",
@@ -1072,6 +1087,45 @@ export default function SettingsPage() {
                   isLoggedIn={isLoggedIn}
                 />
               </div>
+
+              {/* Persona Navigation Banner */}
+              <div className="pt-2 border-t border-border/60">
+                <button
+                  type="button"
+                  onClick={() => openSection("persona")}
+                  className="w-full p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-500/30 hover:border-indigo-500/50 flex items-center justify-between text-left transition group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-foreground">
+                          🎯 ペルソナ設定（職種 × 業界 × シチュエーション特化）
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30">
+                          Base / Pro専用
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        海外営業・エンジニア・PdM等の実務シーンに完全特化した英文をAI生成
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition shrink-0" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION: ペルソナ設定 */}
+          {activeSection === "persona" && (
+            <div className="space-y-3">
+              <PersonaSettingsSection
+                userPlan={ticketStatus?.plan}
+                onNavigateToPlans={() => openSection("plans")}
+              />
             </div>
           )}
 

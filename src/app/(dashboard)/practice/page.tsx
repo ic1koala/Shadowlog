@@ -37,6 +37,11 @@ import {
   consumeCustomGenerationQuota,
   CustomGenerationQuota,
 } from "@/lib/storage/custom-words-store";
+import {
+  isPersonaEligible,
+  getPersonaProfile,
+  UserPersonaProfile,
+} from "@/lib/storage/persona-store";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
 import { StudySessionSummaryModal } from "@/components/features/practice/StudySessionSummaryModal";
 import { OnboardingTourModal } from "@/components/features/practice/OnboardingTourModal";
@@ -62,6 +67,7 @@ export default function PracticePage() {
   const [ticketStatus, setTicketStatus] = useState<TicketStatus | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
+  const [activePersona, setActivePersona] = useState<UserPersonaProfile | null>(null);
 
   const isAdmin = isAdminEmail(userEmail);
   const [showAdminTour, setShowAdminTour] = useState(false);
@@ -122,12 +128,24 @@ export default function PracticePage() {
     setRegisteredCustomWords(getCustomWords());
     setCustomQuota(getCustomGenerationQuota());
 
+    // Persona sync: only Base/Pro users get persona settings
+    const syncPersona = () => {
+      const currentPlan = getTicketStatus().plan;
+      if (isPersonaEligible(currentPlan)) {
+        setActivePersona(getPersonaProfile());
+      } else {
+        setActivePersona(null);
+      }
+    };
+    syncPersona();
+
     const handleCustomWordsSync = () => {
       setRegisteredCustomWords(getCustomWords());
       setCustomQuota(getCustomGenerationQuota());
     };
     window.addEventListener("shadowlog:custom-words-update", handleCustomWordsSync);
     window.addEventListener("shadowlog:ticket-update", handleCustomWordsSync);
+    window.addEventListener("shadowlog:persona-update", syncPersona);
 
     // Recover unsynced local sessions to Supabase and confirm authenticated email on mount
     if (typeof window !== "undefined") {
@@ -165,6 +183,7 @@ export default function PracticePage() {
         const updatedStatus = getTicketStatus();
         setTicketStatus(updatedStatus);
         setCustomQuota(getCustomGenerationQuota());
+        syncPersona();
         window.dispatchEvent(new Event("shadowlog:ticket-update"));
 
         // Clean up URL parameters so refresh doesn't trigger repeatedly
@@ -176,6 +195,7 @@ export default function PracticePage() {
     return () => {
       window.removeEventListener("shadowlog:custom-words-update", handleCustomWordsSync);
       window.removeEventListener("shadowlog:ticket-update", handleCustomWordsSync);
+      window.removeEventListener("shadowlog:persona-update", syncPersona);
     };
   }, []);
 
@@ -219,6 +239,9 @@ export default function PracticePage() {
         return;
       }
 
+      const currentPlan = getTicketStatus().plan;
+      const personaToSend = isPersonaEligible(currentPlan) ? getPersonaProfile() : null;
+
       const pId = ++prefetchRequestIdRef.current;
       try {
         const res = await fetch("/api/generate-sentence", {
@@ -230,6 +253,7 @@ export default function PracticePage() {
             mode: targetMode,
             weakWords: targetMode === "sentence" ? activeWeakWords : [],
             excludeIds: Array.from(seenSentenceIdsRef.current),
+            persona: personaToSend && personaToSend.enabled !== false ? personaToSend : undefined,
           }),
         });
 
@@ -270,6 +294,13 @@ export default function PracticePage() {
       // Check ticket limits before generating
       const currentStatus = getTicketStatus();
       setTicketStatus(currentStatus);
+
+      const personaToSend = isPersonaEligible(currentStatus.plan) ? getPersonaProfile() : null;
+      if (isPersonaEligible(currentStatus.plan)) {
+        setActivePersona(personaToSend);
+      } else {
+        setActivePersona(null);
+      }
 
       if (targetMode === "sentence" && !currentStatus.canPracticeShort) {
         setShowProModal(true);
@@ -333,6 +364,7 @@ export default function PracticePage() {
             weakWords: !isCustomGeneration && targetMode === "sentence" ? activeWeakWords : [],
             customWords: isCustomGeneration ? customWordsToUse : undefined,
             excludeIds: Array.from(seenSentenceIdsRef.current),
+            persona: personaToSend && personaToSend.enabled !== false ? personaToSend : undefined,
           }),
         });
 
@@ -926,6 +958,41 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               </div>
             </div>
 
+            {/* Persona Status Banner in Selector */}
+            {activePersona &&
+            activePersona.enabled !== false &&
+            (activePersona.jobRole || activePersona.industryField || activePersona.targetScenario) ? (
+              <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-300">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold">🎯 ペルソナ特化有効:</span>
+                  <span>
+                    {[activePersona.jobRole, activePersona.industryField].filter(Boolean).join(" × ")}
+                  </span>
+                  {activePersona.targetScenario && (
+                    <span className="text-muted-foreground text-[11px] hidden sm:inline">
+                      （{activePersona.targetScenario}）
+                    </span>
+                  )}
+                </div>
+                <Link
+                  href="/settings?section=persona"
+                  className="font-bold hover:underline shrink-0 text-indigo-600 dark:text-indigo-400"
+                >
+                  設定変更 ↗
+                </Link>
+              </div>
+            ) : isPersonaEligible(plan) ? (
+              <div className="p-2.5 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                <span>💡 職種や業界に特化した出題にするには、ペルソナ設定をご利用いただけます</span>
+                <Link
+                  href="/settings?section=persona"
+                  className="text-primary font-bold hover:underline shrink-0 ml-2"
+                >
+                  ペルソナ設定へ ↗
+                </Link>
+              </div>
+            ) : null}
+
             {/* Start Generation Button */}
             <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-border">
               <div className="text-xs text-muted-foreground">
@@ -1082,6 +1149,35 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                 </Link>
               </div>
             )}
+
+            {/* Persona Specialization Badge (Base / Pro users with active persona) */}
+            {activeCustomWords.length === 0 &&
+              activePersona &&
+              activePersona.enabled !== false &&
+              (activePersona.jobRole || activePersona.industryField || activePersona.targetScenario) &&
+              sentence && (
+                <div className="flex items-center justify-between gap-2 flex-wrap px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-[11px] sm:text-xs font-semibold animate-in fade-in-50">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-1.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-400 font-bold text-[10px]">
+                      🎯 ペルソナ特化
+                    </span>
+                    <span className="font-bold text-foreground">
+                      {[activePersona.jobRole, activePersona.industryField].filter(Boolean).join(" × ") || "実務特化"}
+                    </span>
+                    {activePersona.targetScenario && (
+                      <span className="text-muted-foreground text-[10px]">
+                        （{activePersona.targetScenario}）
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href="/settings?section=persona"
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold text-[11px] shrink-0"
+                  >
+                    設定確認 ↗
+                  </Link>
+                </div>
+              )}
 
             {/* Personalization badge: shown when weak words are being reinforced (and not custom word mode) */}
             {activeCustomWords.length === 0 && activeWeakWords.length > 0 && sentence && (
