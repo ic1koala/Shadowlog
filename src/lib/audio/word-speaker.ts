@@ -85,6 +85,29 @@ export interface PlayWordOptions {
 }
 
 /**
+ * Preload word pronunciation audio in the background to ensure instant playback on tap.
+ */
+export function preloadWordAudio(words: string[]): void {
+  if (typeof window === "undefined") return;
+
+  const seen = new Set<string>();
+  for (const raw of words) {
+    const clean = raw.replace(/^[^\w]+|[^\w]+$/g, "").trim();
+    if (!clean || clean.length <= 1) continue;
+    const lower = clean.toLowerCase();
+    if (seen.has(lower)) continue;
+    seen.add(lower);
+
+    try {
+      const audioUrl = `/api/tts?text=${encodeURIComponent(clean)}`;
+      fetch(audioUrl, { method: "GET", cache: "force-cache" }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/**
  * Plays the pronunciation of a word or short phrase.
  * Priority 1: High-fidelity MP3 from /api/tts (works even when iPhone mute switch is ON).
  * Priority 2: Hardened SpeechSynthesis with iOS Safari bug workarounds.
@@ -97,6 +120,13 @@ export async function playWordAudio(rawText: string, options: PlayWordOptions = 
   if (!cleanWord) return;
 
   stopAllSpeech();
+
+  let fallbackTriggered = false;
+  const triggerFallback = () => {
+    if (fallbackTriggered) return;
+    fallbackTriggered = true;
+    fallbackToSpeechSynthesis(cleanWord, options);
+  };
 
   // 1. Try server-side TTS audio (MP3 works even on silent mode)
   try {
@@ -115,14 +145,14 @@ export async function playWordAudio(rawText: string, options: PlayWordOptions = 
 
     audio.onerror = () => {
       // Audio load or network failed — fallback to SpeechSynthesis
-      fallbackToSpeechSynthesis(cleanWord, options);
+      triggerFallback();
     };
 
     await audio.play();
     return;
   } catch {
     // Play rejected or failed — fallback to SpeechSynthesis
-    fallbackToSpeechSynthesis(cleanWord, options);
+    triggerFallback();
   }
 }
 
@@ -138,11 +168,21 @@ function fallbackToSpeechSynthesis(cleanWord: string, options: PlayWordOptions =
     return;
   }
 
-  // Workaround for iOS WebKit bug: calling speak() immediately after cancel() drops the utterance.
-  // We use a small setTimeout (50ms) to ensure the cancel queue is fully cleared.
-  window.speechSynthesis.cancel();
+  // Ensure speech synthesis is not stuck in paused state (Android / Chrome quirk)
+  if (window.speechSynthesis.paused) {
+    try {
+      window.speechSynthesis.resume();
+    } catch {
+      // ignore
+    }
+  }
 
-  setTimeout(() => {
+  const isSpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending;
+  if (isSpeaking) {
+    window.speechSynthesis.cancel();
+  }
+
+  const executeSpeak = () => {
     try {
       const utterance = new SpeechSynthesisUtterance(cleanWord);
       utterance.lang = "en-US";
@@ -178,5 +218,13 @@ function fallbackToSpeechSynthesis(cleanWord: string, options: PlayWordOptions =
       onError?.(err);
       onEnd?.();
     }
-  }, 50);
+  };
+
+  // If we had to cancel active speech, wait 30ms to avoid WebKit queue drop bug.
+  // Otherwise execute synchronously immediately to preserve user activation gesture!
+  if (isSpeaking) {
+    setTimeout(executeSpeak, 30);
+  } else {
+    executeSpeak();
+  }
 }

@@ -16,6 +16,11 @@ import {
   getShadowingPlaybackSettleDelayMs,
 } from "@/hooks/use-audio-recorder";
 import { addLookedUpWord } from "@/lib/storage/user-learning-store";
+import {
+  playWordAudio,
+  preloadWordAudio,
+  initSpeechVoices,
+} from "@/lib/audio/word-speaker";
 
 const VOLUME_BOOST_STORAGE_KEY = "shadowlog_volume_boost";
 // Gain multipliers (> 1.0 amplifies HTMLAudioElement via Web Audio API GainNode + Compressor limiter)
@@ -93,6 +98,7 @@ export function SentenceCard({
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1.0);
   const [flippedWordIndices, setFlippedWordIndices] = useState<Set<number>>(new Set());
   const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, string>>({});
+  const [speakingWord, setSpeakingWord] = useState<string | null>(null);
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [isVolumeBoosted, setIsVolumeBoosted] = useState<boolean>(false);
@@ -389,10 +395,10 @@ export function SentenceCard({
     return () => window.removeEventListener("shadowlog:stop-model-audio", handleForceStop);
   }, [stopModelAudio]);
 
-  // Pronounce an individual English word via SpeechSynthesis (User request ②)
+  // Pronounce an individual English word via high-fidelity OpenAI TTS with SpeechSynthesis fallback
   const speakSingleWord = useCallback(
     (rawWord: string) => {
-      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+      if (typeof window === "undefined") return;
       const cleaned = cleanWord(rawWord);
       if (!cleaned) return;
 
@@ -402,21 +408,13 @@ export function SentenceCard({
           stopModelAudio();
         }
 
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(cleaned);
-        utterance.lang = "en-US";
-        utterance.rate = 0.85; // Clean, natural, articulate pronunciation pace for single-word learning
-        utterance.pitch = 1.0;
-
-        const bestVoice = findBestEnglishVoice(voicesRef.current);
-        if (bestVoice) {
-          utterance.voice = bestVoice;
-          utterance.lang = bestVoice.lang;
-        }
-
-        window.speechSynthesis.speak(utterance);
+        setSpeakingWord(cleaned);
+        void playWordAudio(cleaned, {
+          onEnd: () => setSpeakingWord((cur) => (cur === cleaned ? null : cur)),
+          onError: () => setSpeakingWord((cur) => (cur === cleaned ? null : cur)),
+        });
       } catch (err) {
-        console.warn("Single-word speech synthesis error:", err);
+        console.warn("Single-word speech error:", err);
       }
     },
     [isPlaying, stopModelAudio]
@@ -567,6 +565,7 @@ export function SentenceCard({
 
   // Pre-load SpeechSynthesis voices (Chrome loads them asynchronously)
   useEffect(() => {
+    initSpeechVoices();
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
     const loadVoices = () => {
@@ -583,6 +582,13 @@ export function SentenceCard({
       window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
     };
   }, []);
+
+  // Pre-load word pronunciation audio in the background for instant playback on tap
+  useEffect(() => {
+    if (!sentence?.english) return;
+    const words = sentence.english.split(/\s+/);
+    preloadWordAudio(words);
+  }, [sentence?.english]);
 
   // Reset playback, highlight state, and audio element when sentence changes
   useEffect(() => {
@@ -1233,7 +1239,7 @@ export function SentenceCard({
       {/* Tap hint moved to top above sentence card per user request */}
       <p className="text-[11px] text-muted-foreground/90 flex items-center gap-1.5 pt-0.5">
         <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-        <span>英単語をタップすると日本語の意味にフリップします（単語帳へ自動記録）</span>
+        <span>英単語をタップすると発音を再生＆日本語の意味にフリップ（単語帳へ自動記録）</span>
       </p>
 
       <div className="space-y-2 sm:space-y-3">
@@ -1246,6 +1252,7 @@ export function SentenceCard({
               const isFlipped = flippedWordIndices.has(idx);
               const cleaned = cleanWord(w.text);
               const translation = dynamicTranslations[cleaned] || getWordTranslation(w.text);
+              const isSpeakingThisWord = speakingWord === cleaned;
 
               return (
                 <span
@@ -1266,11 +1273,16 @@ export function SentenceCard({
                       <span
                         key="japanese"
                         className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-lg text-xs sm:text-sm font-bold animate-word-flip transition-colors duration-150 whitespace-nowrap shadow-xs ${
-                          isCurrent
+                          isSpeakingThisWord
+                            ? "bg-blue-500/25 text-blue-600 dark:text-blue-300 ring-2 ring-blue-500 border border-blue-500"
+                            : isCurrent
                             ? "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/40"
                             : "bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/35"
                         }`}
                       >
+                        {isSpeakingThisWord && (
+                          <Volume2 className="w-3 h-3 mr-1 animate-pulse text-blue-600 dark:text-blue-400 inline" />
+                        )}
                         {translation}
                       </span>
                     ) : (
@@ -1278,11 +1290,16 @@ export function SentenceCard({
                       <span
                         key="english"
                         className={`relative inline-block px-0.5 py-0 rounded-md transition-colors duration-100 whitespace-nowrap ${
-                          isCurrent
+                          isSpeakingThisWord
+                            ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-500/15 rounded-md px-1 ring-2 ring-blue-500/50"
+                            : isCurrent
                             ? "text-blue-600 dark:text-blue-400 [-webkit-text-stroke:0.4px_currentColor] underline decoration-solid decoration-blue-600 dark:decoration-blue-400 decoration-2 underline-offset-[3px]"
                             : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-[3px] group-hover/word:decoration-primary"
                         }`}
                       >
+                        {isSpeakingThisWord && (
+                          <Volume2 className="w-3 h-3 mr-0.5 inline text-blue-600 dark:text-blue-400 animate-pulse" />
+                        )}
                         {w.text}
                       </span>
                     )}

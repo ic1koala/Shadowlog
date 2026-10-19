@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { playWordAudio } from "@/lib/audio/word-speaker";
 import {
   DiffResult,
   CoachFeedback,
@@ -47,6 +49,18 @@ export function DiffViewer({
   isSaved = false,
   retryCount = 0,
 }: DiffViewerProps) {
+  const [speakingWord, setSpeakingWord] = useState<string | null>(null);
+
+  const handlePlayWord = (rawWord: string) => {
+    const clean = rawWord.replace(/^[^\w]+|[^\w]+$/g, "").trim();
+    if (!clean) return;
+    setSpeakingWord(clean);
+    void playWordAudio(clean, {
+      onEnd: () => setSpeakingWord((cur) => (cur === clean ? null : cur)),
+      onError: () => setSpeakingWord((cur) => (cur === clean ? null : cur)),
+    });
+  };
+
   if (!diff) return null;
 
   const score = azureAssessment ? azureAssessment.overallScore : diff.accuracyScore;
@@ -213,110 +227,164 @@ export function DiffViewer({
 
       {/* Diff Tokens View */}
       <div className="space-y-3">
-        <label className="text-[11px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-          {azureAssessment ? "単語別音素判定ハイライト" : "単語別差分ハイライト"}
-        </label>
+        <div className="flex items-center justify-between flex-wrap gap-1.5">
+          <label className="text-[11px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            {azureAssessment ? "単語別音素判定ハイライト" : "単語別差分ハイライト"}
+          </label>
+          <span className="text-[11px] text-muted-foreground/85 flex items-center gap-1">
+            <Volume2 className="w-3 h-3 text-primary inline" />
+            単語をタップしてネイティブ発音を聴く
+          </span>
+        </div>
         <div className="p-3 sm:p-6 bg-muted/30 rounded-2xl border border-border/80 flex flex-wrap items-center gap-1.5 sm:gap-2 text-base sm:text-lg font-medium leading-relaxed">
           {azureAssessment && azureAssessment.words.length > 0
             ? azureAssessment.words.map((w, idx) => {
+                const isSpeaking = speakingWord === w.word.replace(/^[^\w]+|[^\w]+$/g, "").trim();
+                const activeRing = isSpeaking ? "ring-2 ring-primary scale-105" : "";
+
                 if (w.errorType === "None") {
                   return (
-                    <span
+                    <button
                       key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-lg shadow-xs text-sm sm:text-lg"
-                      title={`正確度: ${w.accuracyScore}点`}
+                      type="button"
+                      onClick={() => handlePlayWord(w.word)}
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-lg shadow-xs text-sm sm:text-lg cursor-pointer hover:opacity-90 active:scale-95 transition ${activeRing}`}
+                      title={`正確度: ${w.accuracyScore}点（タップで発音再生）`}
                     >
+                      {isSpeaking && <Volume2 className="w-3 h-3 mr-1 inline animate-pulse text-emerald-600 dark:text-emerald-400" />}
                       {w.word}
-                    </span>
+                    </button>
                   );
                 }
                 if (w.errorType === "Mispronunciation") {
                   return (
-                    <span
+                    <button
                       key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30 rounded-lg text-sm sm:text-lg"
-                      title={`発音改善が必要 (スコア: ${w.accuracyScore}点)`}
+                      type="button"
+                      onClick={() => handlePlayWord(w.word)}
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30 rounded-lg text-sm sm:text-lg cursor-pointer hover:opacity-90 active:scale-95 transition ${activeRing}`}
+                      title={`発音改善が必要 (スコア: ${w.accuracyScore}点 / タップで発音再生)`}
                     >
+                      {isSpeaking && <Volume2 className="w-3 h-3 mr-1 inline animate-pulse text-orange-600 dark:text-orange-400" />}
                       {w.word}
                       <span className="text-[10px] sm:text-xs ml-1 opacity-75">
                         ({w.accuracyScore}点)
                       </span>
-                    </span>
+                    </button>
                   );
                 }
                 if (w.errorType === "Omission") {
                   return (
-                    <span
+                    <button
                       key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-lg line-through opacity-80 text-sm sm:text-lg"
-                      title="脱落（発音されなかった単語）"
+                      type="button"
+                      onClick={() => handlePlayWord(w.word)}
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-lg line-through opacity-80 text-sm sm:text-lg cursor-pointer hover:opacity-90 active:scale-95 transition ${activeRing}`}
+                      title="脱落（発音されなかった単語 / タップで発音再生）"
                     >
+                      {isSpeaking && <Volume2 className="w-3 h-3 mr-1 inline animate-pulse text-rose-600 dark:text-rose-400" />}
                       {w.word}
-                    </span>
+                    </button>
                   );
                 }
                 if (w.errorType === "Insertion") {
                   return (
-                    <span
+                    <button
                       key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 rounded-lg text-sm sm:text-lg"
-                      title="余分な発音"
+                      type="button"
+                      onClick={() => handlePlayWord(w.word)}
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 rounded-lg text-sm sm:text-lg cursor-pointer hover:opacity-90 active:scale-95 transition ${activeRing}`}
+                      title="余分な発音（タップで発音再生）"
                     >
+                      {isSpeaking && <Volume2 className="w-3 h-3 mr-1 inline animate-pulse text-purple-600 dark:text-purple-400" />}
                       +{w.word}
-                    </span>
+                    </button>
                   );
                 }
-                return <span key={idx}>{w.word}</span>;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handlePlayWord(w.word)}
+                    className="cursor-pointer hover:text-primary transition"
+                  >
+                    {w.word}
+                  </button>
+                );
               })
             : diff.tokens.map((token, idx) => {
+                const isSpeaking = speakingWord === token.word.replace(/^[^\w]+|[^\w]+$/g, "").trim();
+                const activeRing = isSpeaking ? "ring-2 ring-primary scale-105" : "";
+
                 if (token.status === "match") {
                   return (
-                    <span
+                    <button
                       key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-lg shadow-xs text-sm sm:text-lg"
-                      title="一致"
+                      type="button"
+                      onClick={() => handlePlayWord(token.word)}
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-lg shadow-xs text-sm sm:text-lg cursor-pointer hover:opacity-90 active:scale-95 transition ${activeRing}`}
+                      title="一致（タップで発音再生）"
                     >
+                      {isSpeaking && <Volume2 className="w-3 h-3 mr-1 inline animate-pulse text-emerald-600 dark:text-emerald-400" />}
                       {token.word}
-                    </span>
+                    </button>
                   );
                 }
                 if (token.status === "missing") {
                   return (
-                    <span
+                    <button
                       key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-lg line-through opacity-80 text-sm sm:text-lg"
-                      title="脱落（発音されなかった単語）"
+                      type="button"
+                      onClick={() => handlePlayWord(token.word)}
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 rounded-lg line-through opacity-80 text-sm sm:text-lg cursor-pointer hover:opacity-90 active:scale-95 transition ${activeRing}`}
+                      title="脱落（発音されなかった単語 / タップで発音再生）"
                     >
+                      {isSpeaking && <Volume2 className="w-3 h-3 mr-1 inline animate-pulse text-rose-600 dark:text-rose-400" />}
                       {token.word}
-                    </span>
+                    </button>
                   );
                 }
                 if (token.status === "extra") {
                   return (
-                    <span
+                    <button
                       key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-lg text-sm sm:text-lg"
-                      title="余剰（元の文にない単語）"
+                      type="button"
+                      onClick={() => handlePlayWord(token.word)}
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-lg text-sm sm:text-lg cursor-pointer hover:opacity-90 active:scale-95 transition ${activeRing}`}
+                      title="余剰（元の文にない単語 / タップで発音再生）"
                     >
+                      {isSpeaking && <Volume2 className="w-3 h-3 mr-1 inline animate-pulse text-amber-600 dark:text-amber-400" />}
                       +{token.word}
-                    </span>
+                    </button>
                   );
                 }
                 if (token.status === "mismatch") {
                   return (
-                    <span
+                    <button
                       key={idx}
-                      className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30 rounded-lg text-sm sm:text-lg"
-                      title={`誤読・発音のズレ（認識: ${token.spokenWord}）`}
+                      type="button"
+                      onClick={() => handlePlayWord(token.word)}
+                      className={`px-2 py-0.5 sm:px-2.5 sm:py-1 bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30 rounded-lg text-sm sm:text-lg cursor-pointer hover:opacity-90 active:scale-95 transition ${activeRing}`}
+                      title={`誤読・発音のズレ（認識: ${token.spokenWord} / タップで発音再生）`}
                     >
+                      {isSpeaking && <Volume2 className="w-3 h-3 mr-1 inline animate-pulse text-orange-600 dark:text-orange-400" />}
                       {token.word}
                       <span className="text-[10px] sm:text-xs ml-1 opacity-75">
                         ({token.spokenWord})
                       </span>
-                    </span>
+                    </button>
                   );
                 }
-                return <span key={idx}>{token.word}</span>;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handlePlayWord(token.word)}
+                    className="cursor-pointer hover:text-primary transition"
+                  >
+                    {token.word}
+                  </button>
+                );
               })}
         </div>
       </div>

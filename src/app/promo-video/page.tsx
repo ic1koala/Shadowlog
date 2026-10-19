@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, ArrowLeft, Video, Film, Share2 } from "lucide-react";
+import { Sparkles, Video, Film } from "lucide-react";
 import { PromoVideoSimulator } from "@/components/features/promo/PromoVideoSimulator";
 
 export const metadata: Metadata = {
