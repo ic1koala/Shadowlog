@@ -10,10 +10,19 @@ import { getThreadsUserId, getThreadsAccessToken } from "./constants";
 
 const QUEUE_FILE = path.join(process.cwd(), ".threads-queue.json");
 
+export interface PollOptions {
+  option_a: string;
+  option_b: string;
+  option_c?: string;
+  option_d?: string;
+}
+
 export interface QueueItem {
   id: string;
   text: string;
   imageUrl?: string;
+  replyToId?: string;
+  pollOptions?: PollOptions;
   scheduledAt: string; // ISO 8601 string
   status: "pending" | "published" | "failed" | "skipped";
   publishedAt?: string;
@@ -22,12 +31,13 @@ export interface QueueItem {
 }
 
 /**
- * Publishes a text/image post directly to Threads using Meta Threads API.
+ * Publishes a text/image post or native poll directly to Threads using Meta Threads API.
  */
 export async function postToThreads(
   text: string,
   imageUrl?: string,
-  replyToId?: string
+  replyToId?: string,
+  pollOptions?: PollOptions
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const userId = getThreadsUserId();
   const accessToken = getThreadsAccessToken();
@@ -46,7 +56,10 @@ export async function postToThreads(
       params.reply_to_id = replyToId;
     }
 
-    if (imageUrl) {
+    if (pollOptions) {
+      params.media_type = "TEXT";
+      params.poll_attachment = JSON.stringify(pollOptions);
+    } else if (imageUrl) {
       params.media_type = "IMAGE";
       params.image_url = imageUrl;
     } else {
@@ -161,7 +174,7 @@ export async function processQueue(): Promise<{ processedCount: number; results:
     if (item.status === "pending" && itemScheduledMs <= nowMs) {
       processedCount++;
       console.log(`[Threads Publisher] Publishing queue item ${item.id} scheduled for ${item.scheduledAt}...`);
-      const result = await postToThreads(item.text, item.imageUrl);
+      const result = await postToThreads(item.text, item.imageUrl, item.replyToId, item.pollOptions);
 
       if (result.success) {
         item.status = "published";
