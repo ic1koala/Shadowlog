@@ -9,6 +9,7 @@ import {
   saveAllWeakWords,
   setPlanType,
 } from "./user-learning-store";
+import { isCampaignVip, isVipEmail } from "@/lib/auth/vip-checker";
 
 const STORAGE_MIGRATED_PREFIX = "shadowlog_guest_migrated_";
 
@@ -510,8 +511,23 @@ export async function syncUserPlanFromSupabase(): Promise<UserBillingInfo | null
     if (!error && data) {
       const rawPlan = (data.plan as UserPlanType) || "free";
       const isInvited = localStorage.getItem("shadowlog_invited_vip") === "true";
-      // VIP invited accounts stay 'pro' unless user intentionally subscribed to another tier
-      const effectivePlan = isInvited && rawPlan !== "base" ? "pro" : rawPlan;
+      const isEarlyVip = isCampaignVip(user.created_at);
+      const isWhitelist = isVipEmail(user.email);
+      const isVip = isInvited || isEarlyVip || isWhitelist;
+
+      // VIP accounts stay 'pro' unless user intentionally subscribed to another tier
+      const effectivePlan = isVip && rawPlan !== "base" ? "pro" : rawPlan;
+
+      // If user qualifies for VIP but DB still has 'free', update Supabase DB so Admin Dashboard reflects it
+      if (isVip && rawPlan === "free") {
+        await supabase
+          .from("profiles")
+          .update({
+            plan: "pro",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id);
+      }
 
       setPlanType(effectivePlan);
       window.dispatchEvent(new Event("shadowlog:plan-updated"));

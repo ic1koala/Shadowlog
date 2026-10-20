@@ -18,9 +18,19 @@ export function getVipTesterEmails(): string[] {
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 
-  // Default fallback VIP emails
-  if (!baseList.includes("shadowlog.app@gmail.com")) {
-    baseList.push("shadowlog.app@gmail.com");
+  // Initial registered VIP testers & Owner accounts
+  const defaultVipEmails = [
+    "shadowlog.app@gmail.com",
+    "koala.hs@gmail.com",
+    "jabonbolivar@gmail.com",
+    "96430.yummy.717@gmail.com",
+    "ntprnc3shkr1ysk@gmail.com",
+  ];
+
+  for (const email of defaultVipEmails) {
+    if (!baseList.includes(email)) {
+      baseList.push(email);
+    }
   }
 
   return baseList;

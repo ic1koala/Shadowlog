@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
     // Fetch profiles
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, plan, created_at, updated_at")
+      .select("id, email, plan, stripe_customer_id, stripe_subscription_id, created_at, updated_at")
       .order("created_at", { ascending: false });
 
     if (profilesError) {
@@ -274,13 +274,39 @@ export async function GET(req: NextRequest) {
     (profiles || []).forEach((p) => {
       const t = ticketMap.get(p.id);
       const s = sessionStatsMap.get(p.id);
-      const vipType = getVipType({
+      let vipType = getVipType({
         email: p.email,
         registeredAt: p.created_at,
       });
+
+      // If user plan is 'pro' without an active Stripe subscription, recognize as invited VIP
+      if (!vipType && p.plan === "pro" && !p.stripe_subscription_id) {
+        vipType = "invite";
+      }
+
       const planVal: "free" | "base" | "pro" =
         p.plan === "pro" || p.plan === "base" ? p.plan : "free";
-      const effectivePlan = isAdminEmail(p.email) || Boolean(vipType) ? "pro" : planVal;
+      const isVip = Boolean(vipType);
+      const effectivePlan =
+        planVal === "base"
+          ? "base"
+          : isAdminEmail(p.email) || isVip || planVal === "pro"
+          ? "pro"
+          : "free";
+
+      // Self-heal: If user is VIP but DB stored 'free', asynchronously update Supabase DB to 'pro'
+      if (isVip && p.plan === "free") {
+        supabaseAdmin
+          .from("profiles")
+          .update({ plan: "pro", updated_at: new Date().toISOString() })
+          .eq("id", p.id)
+          .then(({ error: updateErr }) => {
+            if (updateErr) {
+              console.warn(`[Admin API] Failed to self-heal VIP plan for ${p.id}:`, updateErr);
+            }
+          });
+      }
+
       const metrics = calculateUsageAndRisk(
         effectivePlan,
         s?.count ?? 0,
