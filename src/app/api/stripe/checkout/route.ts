@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe/stripe-server";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { createClient as createServerSupabase } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 function resolveSafeOrigin(rawOrigin: string | null): string {
   const defaultOrigin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -40,7 +42,35 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { plan = "pro", email } = body as { plan?: "base" | "pro"; email?: string };
+    const { plan = "pro", email: bodyEmail } = body as { plan?: "base" | "pro"; email?: string };
+
+    // 1. Identify logged-in user if available
+    let userId: string | null = null;
+    let userEmail: string | null = bodyEmail || null;
+    let existingCustomerId: string | null = null;
+
+    try {
+      const supabase = await createServerSupabase();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        userId = user.id;
+        userEmail = user.email || bodyEmail || null;
+
+        // Check if customer ID already exists in profiles
+        const adminDb = getSupabaseAdmin();
+        const { data: profile } = await adminDb
+          .from("profiles")
+          .select("stripe_customer_id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profile?.stripe_customer_id) {
+          existingCustomerId = profile.stripe_customer_id;
+        }
+      }
+    } catch (authErr) {
+      console.warn("Failed to retrieve auth user in stripe-checkout:", authErr);
+    }
 
     const stripe = getStripeServer();
 
@@ -50,15 +80,16 @@ export async function POST(req: NextRequest) {
       ? "ShadowLog ベースプラン (月額)"
       : "ShadowLog Proプラン (月額)";
     const productDesc = isBase
-      ? "短文シャドーイング（無制限）＆弱点カルテ"
-      : "長文スピーチモード（60〜90語）＆業界別生成＆無制限練習";
+      ? "短文シャドーイング（完全無制限）＆弱点カルテ"
+      : "長文スピーチモード（60〜90語）＆業界別生成＆完全無制限練習";
 
     const origin = resolveSafeOrigin(req.headers.get("origin"));
 
-    const session = await stripe.checkout.sessions.create({
+    // Build session params
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sessionParams: any = {
       payment_method_types: ["card"],
       billing_address_collection: "auto",
-      customer_email: email || undefined,
       line_items: [
         {
           price_data: {
@@ -76,9 +107,32 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: "subscription",
+      allow_promotion_codes: true,
       success_url: `${origin}/practice?upgrade=success&plan=${plan}`,
-      cancel_url: `${origin}/practice?upgrade=cancel`,
-    });
+      cancel_url: `${origin}/settings?upgrade=cancel`,
+      metadata: {
+        userId: userId || "",
+        plan,
+      },
+      subscription_data: {
+        metadata: {
+          userId: userId || "",
+          plan,
+        },
+      },
+    };
+
+    if (existingCustomerId) {
+      sessionParams.customer = existingCustomerId;
+    } else if (userEmail) {
+      sessionParams.customer_email = userEmail;
+    }
+
+    if (userId) {
+      sessionParams.client_reference_id = userId;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {

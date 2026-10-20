@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, UserPlus, LogIn, Crown } from "lucide-react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
-import { migrateGuestDataToSupabase } from "@/lib/storage/sync-service";
+import { migrateGuestDataToSupabase, syncUserPlanFromSupabase } from "@/lib/storage/sync-service";
 import { isInvitedVip, setInvitedVip } from "@/lib/auth/vip-checker";
 
 function LoginContent() {
@@ -115,6 +115,7 @@ function LoginContent() {
             const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
             upgradeGuestToRegisteredUser(email, data.user?.created_at || new Date().toISOString());
             await migrateGuestDataToSupabase();
+            await syncUserPlanFromSupabase();
             window.dispatchEvent(new Event("shadowlog:ticket-update"));
           }
           setTimeout(() => {
@@ -140,6 +141,7 @@ function LoginContent() {
           const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
           upgradeGuestToRegisteredUser(email, signInData.user?.created_at);
           await migrateGuestDataToSupabase();
+          await syncUserPlanFromSupabase();
           window.dispatchEvent(new Event("shadowlog:ticket-update"));
         }
         setTimeout(() => {

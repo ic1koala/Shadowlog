@@ -47,6 +47,7 @@ import { StudySessionSummaryModal } from "@/components/features/practice/StudySe
 import { OnboardingTourModal } from "@/components/features/practice/OnboardingTourModal";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 import { convertBlobToWav } from "@/lib/audio/wav-converter";
+import { syncUserPlanFromSupabase } from "@/lib/storage/sync-service";
 import {
   ArrowRight,
   BookOpen,
@@ -180,6 +181,7 @@ export default function PracticePage() {
         setPlanType(upgradedPlan as UserPlanType);
         setPlan(upgradedPlan as UserPlanType);
         setUpgradeSuccess(`🎉 ${upgradedPlan === "pro" ? "Proプラン" : "ベースプラン"} へのアップグレードが完了しました！`);
+        syncUserPlanFromSupabase().catch(() => {});
         const updatedStatus = getTicketStatus();
         setTicketStatus(updatedStatus);
         setCustomQuota(getCustomGenerationQuota());

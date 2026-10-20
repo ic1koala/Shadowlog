@@ -46,6 +46,7 @@ import {
   fetchUserNickname,
   updateUserNickname,
   getStoredNickname,
+  syncUserPlanFromSupabase,
 } from "@/lib/storage/sync-service";
 import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
 import { clearAllLearningData } from "@/lib/storage/user-learning-store";
@@ -194,6 +195,9 @@ export default function SettingsPage() {
         setUserEmail(user.email || null);
         const provider = user.app_metadata?.provider;
         setIsGoogleUser(provider === "google");
+        syncUserPlanFromSupabase().then(() => {
+          setTicketStatus(getTicketStatus());
+        });
       } else {
         setIsLoggedIn(false);
         setUserEmail(null);
@@ -206,8 +210,10 @@ export default function SettingsPage() {
       setTicketStatus(getTicketStatus());
     };
     window.addEventListener("shadowlog:ticket-update", handleTicketUpdate);
+    window.addEventListener("shadowlog:plan-updated", handleTicketUpdate);
     return () => {
       window.removeEventListener("shadowlog:ticket-update", handleTicketUpdate);
+      window.removeEventListener("shadowlog:plan-updated", handleTicketUpdate);
     };
   }, []);
 

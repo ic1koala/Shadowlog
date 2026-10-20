@@ -17,13 +17,14 @@ export default function DashboardPage() {
   // Handle OAuth callback login success or general login sync
   useEffect(() => {
     if (typeof window !== "undefined") {
-      import("@/lib/storage/sync-service").then(async ({ getAuthenticatedUser, migrateGuestDataToSupabase, syncLocalSessionsToSupabase }) => {
+      import("@/lib/storage/sync-service").then(async ({ getAuthenticatedUser, migrateGuestDataToSupabase, syncLocalSessionsToSupabase, syncUserPlanFromSupabase }) => {
         const user = await getAuthenticatedUser();
         if (user && user.email) {
           const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
           upgradeGuestToRegisteredUser(user.email, user.created_at);
           await migrateGuestDataToSupabase();
           await syncLocalSessionsToSupabase();
+          await syncUserPlanFromSupabase();
           window.dispatchEvent(new Event("shadowlog:ticket-update"));
         }
       }).catch(() => {});

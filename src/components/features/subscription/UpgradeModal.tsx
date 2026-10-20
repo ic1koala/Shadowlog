@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Sparkles, Check, Zap, Shield, X } from "lucide-react";
-import { getTicketStatus, TicketStatus } from "@/lib/storage/ticket-store";
+import { Sparkles, Check, Zap, Shield, X, Loader2, ArrowRight } from "lucide-react";
+import { getTicketStatus, TicketStatus, getCurrentUserEmail } from "@/lib/storage/ticket-store";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 
 interface UpgradeModalProps {
@@ -18,9 +18,11 @@ export function UpgradeModal({
   isOpen,
   onClose,
   ticketStatus,
+  userEmail: propUserEmail,
 }: UpgradeModalProps) {
-  const [errorMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<"base" | "pro" | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -42,6 +44,36 @@ export function UpgradeModal({
 
   const resolvedTicketStatus = ticketStatus ?? getTicketStatus();
   const isGuest = !resolvedTicketStatus.isRegistered;
+  const currentPlan = resolvedTicketStatus.plan;
+  const email = propUserEmail || getCurrentUserEmail();
+
+  const handleCheckout = async (plan: "base" | "pro") => {
+    setErrorMessage(null);
+    if (isGuest) {
+      window.location.href = `/login?mode=signup&redirect=/practice`;
+      return;
+    }
+
+    setLoadingPlan(plan);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan, email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "決済ページの生成に失敗しました。時間をおいて再試行してください。");
+      }
+
+      window.location.href = data.url;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "決済処理の開始に失敗しました";
+      setErrorMessage(msg);
+      setLoadingPlan(null);
+    }
+  };
 
   const modalContent = (
     <div
@@ -86,15 +118,14 @@ export function UpgradeModal({
             </p>
           </div>
 
-          {/* Closed Beta Testing Notice */}
-          <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-left space-y-1">
-            <div className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-              <span>📢</span>
-              <span>現在、無料会員ベータ版テストを実施中</span>
+          {/* Notice Banner */}
+          <div className="mb-4 p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-left space-y-1">
+            <div className="text-xs font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
+              <span>🚀</span>
+              <span>いつでも解約可能・安心のStripe月額課金</span>
             </div>
-            <p className="text-[11px] text-amber-900/80 dark:text-amber-200/80 leading-relaxed">
-              有料プラン（ベース / Pro）は現在VIPテスター限定で先行公開中（一般受付準備中）です。
-              無料会員登録を行うことで、累計20回（ゲスト5回＋登録15回）およびPro長文2回のお試しをご利用いただけます。
+            <p className="text-[11px] text-indigo-900/80 dark:text-indigo-200/80 leading-relaxed">
+              契約期間の縛りは一切ありません。マイページからワンクリックでお支払い方法の変更や解約が行えます。
             </p>
           </div>
 
@@ -103,18 +134,18 @@ export function UpgradeModal({
             <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-left">
                 <div className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                  🎁 無料会員登録で「さらに15回分」チケットプレゼント！
+                  🎁 無料アカウント登録で「さらに15回分」チケットプレゼント！
                 </div>
                 <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">
-                  学習カルテの保存とストリーク機能、Pro長文モード2回お試し、カスタムマイ単語も解放されます。
+                  学習カルテの保存とストリーク機能、Pro長文モード2回お試し、カスタム単語生成も解放されます。
                 </div>
               </div>
-              <a
+              <Link
                 href="/login?mode=signup"
                 className="shrink-0 text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
               >
                 無料登録して試す
-              </a>
+              </Link>
             </div>
           )}
 
@@ -122,16 +153,20 @@ export function UpgradeModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             {/* Base Plan */}
             <div
-              className="p-5 rounded-2xl border border-border bg-card flex flex-col justify-between"
+              className={`p-5 rounded-2xl border flex flex-col justify-between ${
+                currentPlan === "base"
+                  ? "border-indigo-600 bg-indigo-500/5 shadow-md"
+                  : "border-border bg-card"
+              }`}
             >
               <div>
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted/40 text-muted-foreground">
-                    🔒 VIP先行公開中
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted/60 text-muted-foreground">
+                    毎日の習慣化
                   </span>
                   <div className="text-right">
                     <span className="text-2xl font-extrabold text-foreground">¥500</span>
-                    <span className="text-xs text-muted-foreground"> /月</span>
+                    <span className="text-xs text-muted-foreground"> /月 (税込)</span>
                   </div>
                 </div>
                 <h3 className="font-bold text-foreground text-base mb-1">ベースプラン</h3>
@@ -140,7 +175,7 @@ export function UpgradeModal({
                 <ul className="space-y-2 text-xs text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span><strong className="text-foreground">短文シャドーイング無制限</strong>（使い放題）</span>
+                    <span><strong className="text-foreground">短文シャドーイング完全無制限</strong>（使い放題）</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -150,20 +185,50 @@ export function UpgradeModal({
                     <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                     つまずき単語帳 ＆ 個人カルテ無制限
                   </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    パーソナライズ英語ペルソナ設定
+                  </li>
                 </ul>
               </div>
 
-              <div className="mt-6 w-full py-2.5 px-4 text-xs font-bold text-center rounded-xl bg-muted/40 text-muted-foreground border border-border">
-                🔒 VIPテスター限定先行公開中
+              <div className="mt-6">
+                {currentPlan === "base" ? (
+                  <div className="w-full py-2.5 px-4 text-xs font-bold text-center rounded-xl bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
+                    ✓ 現在ご利用中
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleCheckout("base")}
+                    disabled={loadingPlan !== null}
+                    className="w-full py-2.5 px-4 text-xs font-bold text-center rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    {loadingPlan === "base" ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>決済ページへ移動中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>ベースプランを始める (¥500/月)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Pro Plan */}
             <div
-              className="p-5 rounded-2xl border-2 border-indigo-600/50 bg-indigo-500/5 shadow-md relative flex flex-col justify-between"
+              className={`p-5 rounded-2xl border-2 shadow-md relative flex flex-col justify-between ${
+                currentPlan === "pro"
+                  ? "border-indigo-600 bg-indigo-500/10"
+                  : "border-indigo-600/50 bg-indigo-500/5"
+              }`}
             >
               <div className="absolute -top-3 right-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-sm">
-                🔒 VIP先行公開中
+                人気No.1
               </div>
 
               <div>
@@ -174,7 +239,7 @@ export function UpgradeModal({
                   </span>
                   <div className="text-right">
                     <span className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">¥1,000</span>
-                    <span className="text-xs text-muted-foreground"> /月</span>
+                    <span className="text-xs text-muted-foreground"> /月 (税込)</span>
                   </div>
                 </div>
                 <h3 className="font-bold text-foreground text-base mb-1">Proプラン</h3>
@@ -197,11 +262,37 @@ export function UpgradeModal({
                     <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                     エグゼクティブ話速・息継ぎAI指導
                   </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    パーソナライズ英語ペルソナ設定
+                  </li>
                 </ul>
               </div>
 
-              <div className="mt-6 w-full py-2.5 px-4 text-xs font-bold text-center rounded-xl bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25">
-                🔒 VIPテスター限定先行公開中
+              <div className="mt-6">
+                {currentPlan === "pro" ? (
+                  <div className="w-full py-2.5 px-4 text-xs font-bold text-center rounded-xl bg-indigo-600 text-white shadow-xs">
+                    👑 現在ご利用中（完全無制限）
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleCheckout("pro")}
+                    disabled={loadingPlan !== null}
+                    className="w-full py-2.5 px-4 text-xs font-bold text-center rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    {loadingPlan === "pro" ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>決済ページへ移動中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Proプランを始める (¥1,000/月)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>

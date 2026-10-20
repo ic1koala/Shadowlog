@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { syncLocalSessionsToSupabase, savePracticeSessionToSupabase } from "@/lib/storage/sync-service";
-import { saveAllSessions, clearAllLearningData } from "@/lib/storage/user-learning-store";
+import { syncLocalSessionsToSupabase, savePracticeSessionToSupabase, syncUserPlanFromSupabase } from "@/lib/storage/sync-service";
+import { saveAllSessions, clearAllLearningData, getPlanType } from "@/lib/storage/user-learning-store";
 import { StoredSession } from "@/types";
 
 // Mock Supabase client
@@ -8,9 +8,11 @@ const mockGetUser = vi.fn();
 const mockSelect = vi.fn();
 const mockInsert = vi.fn();
 const mockEq = vi.fn();
+const mockMaybeSingle = vi.fn();
 
 let mockSelectResult: { data: unknown[] | null; error: unknown } = { data: [], error: null };
 let mockInsertResult: { data: unknown; error: unknown } = { data: null, error: null };
+let mockMaybeSingleResult: { data: unknown; error: unknown } = { data: null, error: null };
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
@@ -23,7 +25,9 @@ vi.mock("@/lib/supabase/client", () => ({
         return {
           eq: (...eqArgs: unknown[]) => {
             mockEq(...eqArgs);
-            return Promise.resolve(mockSelectResult);
+            const promise = Promise.resolve(mockSelectResult) as any;
+            promise.maybeSingle = () => Promise.resolve(mockMaybeSingleResult);
+            return promise;
           },
         };
       },
@@ -197,5 +201,35 @@ describe("sync-service unit tests", () => {
         created_at: "2026-09-29T11:00:00.000Z",
       })
     );
+  });
+
+  describe("syncUserPlanFromSupabase", () => {
+    it("syncs Base plan from Supabase profile to LocalStorage", async () => {
+      mockMaybeSingleResult = {
+        data: { plan: "base", stripe_customer_id: "cus_123", stripe_subscription_id: "sub_123" },
+        error: null,
+      };
+
+      const result = await syncUserPlanFromSupabase();
+      expect(result).toEqual({
+        plan: "base",
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        isPaidPlan: true,
+      });
+      expect(getPlanType()).toBe("base");
+    });
+
+    it("syncs Pro plan from Supabase profile to LocalStorage", async () => {
+      mockMaybeSingleResult = {
+        data: { plan: "pro", stripe_customer_id: "cus_456", stripe_subscription_id: "sub_456" },
+        error: null,
+      };
+
+      const result = await syncUserPlanFromSupabase();
+      expect(result?.plan).toBe("pro");
+      expect(result?.isPaidPlan).toBe(true);
+      expect(getPlanType()).toBe("pro");
+    });
   });
 });

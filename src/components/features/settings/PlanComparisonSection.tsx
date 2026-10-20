@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   Check,
   Crown,
   ArrowRight,
-  Sparkles,
-  Lock,
+  Shield,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { UserPlanType } from "@/types";
 
@@ -19,7 +21,63 @@ interface PlanComparisonSectionProps {
 export function PlanComparisonSection({
   currentPlan,
   isRegistered,
+  userEmail,
 }: PlanComparisonSectionProps) {
+  const [loadingPlan, setLoadingPlan] = useState<"base" | "pro" | "portal" | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleCheckout = async (plan: "base" | "pro") => {
+    setErrorMessage(null);
+    if (!isRegistered) {
+      window.location.href = `/login?mode=signup&redirect=/settings`;
+      return;
+    }
+
+    setLoadingPlan(plan);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan, email: userEmail }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "決済ページの生成に失敗しました。時間をおいて再試行してください。");
+      }
+
+      window.location.href = data.url;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "決済処理の開始に失敗しました";
+      setErrorMessage(msg);
+      setLoadingPlan(null);
+    }
+  };
+
+  const handleOpenCustomerPortal = async () => {
+    setErrorMessage(null);
+    setLoadingPlan("portal");
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "カスタマーポータルの呼び出しに失敗しました。");
+      }
+
+      window.location.href = data.url;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "ポータルへの遷移に失敗しました";
+      setErrorMessage(msg);
+      setLoadingPlan(null);
+    }
+  };
+
+  const isPaidPlan = currentPlan === "base" || currentPlan === "pro";
+
   return (
     <div className="bg-card rounded-2xl p-5 sm:p-8 border border-border/80 shadow-xs space-y-6">
       <div className="space-y-1.5">
@@ -28,20 +86,48 @@ export function PlanComparisonSection({
           <span>料金プラン・コース案内</span>
         </div>
         <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-          あなたの学習スタイルや目標に合わせて選べるプランをご用意しています。
+          あなたの学習スタイルや目標に合わせて選べるプランをご用意しています。いつでも解約可能です。
         </p>
       </div>
 
-      {/* Beta Notice Banner */}
-      <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2.5">
-        <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-        <div className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-          <span className="font-bold">📢 現在、無料会員でのベータ版テストを実施中です。</span>
-          <span className="block text-[11px] text-muted-foreground mt-0.5">
-            ベースプラン・Proプランは現在VIPテスター限定で先行公開中（一般受付準備中）です。まずは無料会員登録にてチケット制の体験テストにご参加ください。
-          </span>
+      {/* Stripe Customer Portal Link for Subscribed Users */}
+      {isPaidPlan && (
+        <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <div className="text-xs font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+              <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span>サブスクリプション契約中（{currentPlan === "pro" ? "Proプラン" : "ベースプラン"}）</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              クレジットカード情報の変更、次回請求日の確認、解約手続きはStripeポータルから安全に行えます。
+            </p>
+          </div>
+          <button
+            onClick={handleOpenCustomerPortal}
+            disabled={loadingPlan === "portal"}
+            className="shrink-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-card hover:bg-muted text-foreground border border-border font-bold text-xs transition shadow-xs disabled:opacity-50 min-h-[36px]"
+          >
+            {loadingPlan === "portal" ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>ポータルへ移動中...</span>
+              </>
+            ) : (
+              <>
+                <span>解約・カード情報変更</span>
+                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+              </>
+            )}
+          </button>
         </div>
-      </div>
+      )}
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 text-center">
+          {errorMessage}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 items-stretch">
         {/* 1. Free Plan */}
@@ -50,10 +136,10 @@ export function PlanComparisonSection({
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                  ベータテスト対象
+                  まずは無料体験
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  現在受付中
+                  いつでも受付中
                 </span>
               </div>
               <h3 className="text-lg font-bold text-foreground">無料会員</h3>
@@ -97,27 +183,29 @@ export function PlanComparisonSection({
                 href="/login?mode=signup"
                 className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500 text-white font-bold text-xs hover:bg-emerald-600 transition min-h-[40px] shadow-xs"
               >
-                <span>無料アカウント作成（ベータ参加）</span>
+                <span>無料アカウント作成</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             ) : currentPlan === "free" || currentPlan === "guest" ? (
               <div className="w-full text-center py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                ✓ 現在ご利用中（無料会員ベータ）
+                ✓ 現在ご利用中
               </div>
             ) : null}
           </div>
         </div>
 
         {/* 2. Base Plan */}
-        <div className="rounded-2xl border border-border bg-background p-5 flex flex-col justify-between space-y-4">
+        <div className={`rounded-2xl border p-5 flex flex-col justify-between space-y-4 ${
+          currentPlan === "base" ? "border-indigo-600 bg-indigo-500/5 shadow-md" : "border-border bg-background"
+        }`}>
           <div className="space-y-3">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                   毎日の習慣化
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                  🔒 VIP先行公開中
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
+                  人気プラン
                 </span>
               </div>
               <h3 className="text-lg font-bold text-foreground">ベーシックプラン</h3>
@@ -134,7 +222,7 @@ export function PlanComparisonSection({
             <ul className="space-y-2 text-xs text-muted-foreground pt-1">
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <span><strong>短文シャドーイング無制限</strong>（使い放題）</span>
+                <span><strong>短文シャドーイング完全無制限</strong>（使い放題）</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
@@ -146,7 +234,7 @@ export function PlanComparisonSection({
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <span>広告なし・ストレスフリーな学習環境</span>
+                <span>パーソナライズ英語ペルソナ設定</span>
               </li>
             </ul>
           </div>
@@ -157,16 +245,31 @@ export function PlanComparisonSection({
                 ✓ 現在ご利用中
               </div>
             ) : (
-              <div className="w-full text-center py-2.5 px-3 text-xs font-bold text-muted-foreground bg-muted/60 rounded-xl border border-border/80 flex items-center justify-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>VIPテスター限定先行公開中</span>
-              </div>
+              <button
+                onClick={() => handleCheckout("base")}
+                disabled={loadingPlan !== null}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition min-h-[40px] disabled:opacity-50"
+              >
+                {loadingPlan === "base" ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>決済ページへ移動中...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>ベースプランを始める (¥500/月)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
             )}
           </div>
         </div>
 
         {/* 3. Pro Plan (Featured) */}
-        <div className="rounded-2xl border-2 border-primary/50 bg-primary/5 p-5 flex flex-col justify-between space-y-4 relative shadow-sm">
+        <div className={`rounded-2xl border-2 p-5 flex flex-col justify-between space-y-4 relative shadow-sm ${
+          currentPlan === "pro" ? "border-indigo-600 bg-indigo-500/10" : "border-primary/50 bg-primary/5"
+        }`}>
           <div className="space-y-3">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -174,7 +277,7 @@ export function PlanComparisonSection({
                   本気で英語をモノにする
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                  🔒 VIP先行公開中
+                  人気No.1
                 </span>
               </div>
               <h3 className="text-lg font-bold text-foreground flex items-center gap-1.5">
@@ -206,7 +309,11 @@ export function PlanComparisonSection({
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span>業界別特化英文生成（Tech / ビジネス / マーケティング / 日常会話）</span>
+                <span>業界別特化英文生成（Tech / ビジネス / マーケ / 日常）</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <span>パーソナライズ英語ペルソナ設定</span>
               </li>
             </ul>
           </div>
@@ -217,13 +324,34 @@ export function PlanComparisonSection({
                 👑 現在ご利用中（完全無制限）
               </div>
             ) : (
-              <div className="w-full text-center py-2.5 px-3 text-xs font-bold text-muted-foreground bg-muted/60 rounded-xl border border-border/80 flex items-center justify-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>VIPテスター限定先行公開中</span>
-              </div>
+              <button
+                onClick={() => handleCheckout("pro")}
+                disabled={loadingPlan !== null}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs shadow-md transition min-h-[40px] disabled:opacity-50"
+              >
+                {loadingPlan === "pro" ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>決済ページへ移動中...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Proプランを始める (¥1,000/月)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
             )}
           </div>
         </div>
+      </div>
+
+      <div className="text-center pt-2 text-[11px] text-muted-foreground flex flex-wrap items-center justify-center gap-3">
+        <span>🔒 Stripe 256bit SSL暗号化決済</span>
+        <span>•</span>
+        <Link href="/tokushoho" className="underline hover:text-foreground">特定商取引法に基づく表記</Link>
+        <span>•</span>
+        <Link href="/terms" className="underline hover:text-foreground">利用規約</Link>
       </div>
     </div>
   );

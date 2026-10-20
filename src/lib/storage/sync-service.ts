@@ -1,12 +1,13 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { StoredSession, WeakWord } from "@/types";
+import { StoredSession, WeakWord, UserPlanType } from "@/types";
 import {
   loadAllSessions,
   saveAllSessions,
   loadAllWeakWords,
   saveAllWeakWords,
+  setPlanType,
 } from "./user-learning-store";
 
 const STORAGE_MIGRATED_PREFIX = "shadowlog_guest_migrated_";
@@ -477,5 +478,54 @@ export async function updateUserNickname(nickname: string): Promise<boolean> {
   } catch (err) {
     console.warn("Error updating nickname:", err);
     return false;
+  }
+}
+
+// ── Subscription & Plan Synchronization ──
+
+export interface UserBillingInfo {
+  plan: UserPlanType;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  isPaidPlan: boolean;
+}
+
+/**
+ * Synchronizes user plan and billing status from Supabase DB to LocalStorage.
+ */
+export async function syncUserPlanFromSupabase(): Promise<UserBillingInfo | null> {
+  if (typeof window === "undefined" || !navigator.onLine) return null;
+
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return null;
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("plan, stripe_customer_id, stripe_subscription_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!error && data) {
+      const rawPlan = (data.plan as UserPlanType) || "free";
+      const isInvited = localStorage.getItem("shadowlog_invited_vip") === "true";
+      // VIP invited accounts stay 'pro' unless user intentionally subscribed to another tier
+      const effectivePlan = isInvited && rawPlan !== "base" ? "pro" : rawPlan;
+
+      setPlanType(effectivePlan);
+      window.dispatchEvent(new Event("shadowlog:plan-updated"));
+
+      return {
+        plan: effectivePlan,
+        stripeCustomerId: data.stripe_customer_id || null,
+        stripeSubscriptionId: data.stripe_subscription_id || null,
+        isPaidPlan: !!data.stripe_customer_id && (effectivePlan === "base" || effectivePlan === "pro"),
+      };
+    }
+    return null;
+  } catch (err) {
+    console.warn("Error syncing user plan from Supabase:", err);
+    return null;
   }
 }
