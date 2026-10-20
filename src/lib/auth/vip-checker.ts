@@ -25,6 +25,7 @@ export function getVipTesterEmails(): string[] {
     "jabonbolivar@gmail.com",
     "96430.yummy.717@gmail.com",
     "ntprnc3shkr1ysk@gmail.com",
+    "misticmirage_s@yahoo.co.jp",
   ];
 
   for (const email of defaultVipEmails) {
