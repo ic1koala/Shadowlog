@@ -6,10 +6,9 @@ import {
 } from "@/lib/notifications/web-push-server";
 
 describe("Web Push Server Delivery (FB-064)", () => {
-  it("exposes valid VAPID keys", () => {
-    expect(VAPID_PUBLIC_KEY).toBeTruthy();
-    expect(VAPID_PRIVATE_KEY).toBeTruthy();
-    expect(VAPID_PUBLIC_KEY.length).toBeGreaterThan(20);
+  it("reads VAPID keys from environment or empty string", () => {
+    expect(typeof VAPID_PUBLIC_KEY).toBe("string");
+    expect(typeof VAPID_PRIVATE_KEY).toBe("string");
   });
 
   it("safely skips non-https mock endpoints", async () => {

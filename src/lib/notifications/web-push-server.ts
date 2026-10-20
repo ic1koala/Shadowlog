@@ -1,12 +1,10 @@
 import webpush from "web-push";
 
 export const VAPID_PUBLIC_KEY =
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-  "BEdsH-HZbW2h4My47195BFDagQnu4_jzY76ngEgW7ijMINPT5kGoLaTWsqYoUWvJTBGpZNTFBAquYuLcCv1l0zE";
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
 export const VAPID_PRIVATE_KEY =
-  process.env.VAPID_PRIVATE_KEY ||
-  "lrDFl6ErRy-8qW9PnzukxqqR5Ot-zXO5ij8h0mlcVjA";
+  process.env.VAPID_PRIVATE_KEY || "";
 
 export const VAPID_SUBJECT =
   process.env.VAPID_SUBJECT || "mailto:admin@shadowlog.app";
@@ -15,6 +13,11 @@ let isVapidInitialized = false;
 
 function ensureVapidDetails() {
   if (!isVapidInitialized) {
+    if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+      throw new Error(
+        "VAPID credentials are missing. Please set NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY."
+      );
+    }
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
     isVapidInitialized = true;
   }
@@ -59,7 +62,15 @@ export async function sendWebPushNotification(
     return { success: false, error: "Missing p256dh or auth keys" };
   }
 
-  ensureVapidDetails();
+  try {
+    ensureVapidDetails();
+  } catch (err: unknown) {
+    const errorObj = err as Error;
+    return {
+      success: false,
+      error: errorObj.message || "VAPID initialization failed",
+    };
+  }
 
   const pushSub = {
     endpoint: subscription.endpoint,

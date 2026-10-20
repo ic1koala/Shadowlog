@@ -37,7 +37,7 @@ export const REMINDER_TIME_PRESETS: ReadonlyArray<{
 ];
 
 export const DEFAULT_VAPID_PUBLIC_KEY =
-  "BEdsH-HZbW2h4My47195BFDagQnu4_jzY76ngEgW7ijMINPT5kGoLaTWsqYoUWvJTBGpZNTFBAquYuLcCv1l0zE";
+  "BJVXAnAjrWL4pdPsSfYXiIbmMNCfL2DC5q2iOjkzL0S7BTDuBnu1k39cYhCYcyyVmUysTjZO05QMJsZ8qiFZEWU";
 
 /**
  * Converts a base64 string to a Uint8Array for PushManager applicationServerKey.
