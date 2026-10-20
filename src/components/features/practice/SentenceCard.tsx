@@ -1131,10 +1131,103 @@ export function SentenceCard({
         </button>
       </div>
 
-      {/* Audio player & speed selector (Tour STEP 1 target: clearly visible at top of card) */}
+      {/* Tap hint above sentence */}
+      <p className="text-[11px] text-muted-foreground/90 flex items-center gap-1.5 pt-0.5">
+        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+        <span>英単語をタップすると発音を再生＆日本語の意味にフリップ（単語帳へ自動記録）</span>
+      </p>
+
+      <div className="space-y-2 sm:space-y-3">
+        {/* English sentence with blue bold karaoke highlight (tap word to toggle Japanese translation) */}
+        <div id="tour-sentence-text" className="relative p-1 -m-1 select-none rounded-xl">
+          <p className="text-xl sm:text-3xl font-semibold leading-snug tracking-normal text-foreground flex flex-wrap gap-y-0.5 sm:gap-y-1 items-baseline relative z-10">
+            {parsedWords.map((w, idx) => {
+              const isCurrent = isPlaying && activeWordIndex === idx;
+              const hasSlash = showChunkSlash && chunkSlashIndices.has(idx);
+              const isFlipped = flippedWordIndices.has(idx);
+              const cleaned = cleanWord(w.text);
+              const translation = dynamicTranslations[cleaned] || getWordTranslation(w.text);
+              const isSpeakingThisWord = speakingWord === cleaned;
+
+              return (
+                <span
+                  key={w.id}
+                  className={`relative inline-block select-none align-baseline transition-colors duration-150 ${
+                    hasSlash ? "mr-3 sm:mr-3.5" : "mr-1 sm:mr-1.5"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => toggleWordFlip(idx, w.text, e)}
+                    className="group/word inline-flex cursor-pointer focus:outline-hidden align-baseline"
+                    title={isFlipped ? "タップで英語に戻す（発音再生）" : `タップで「${translation}」にフリップ（発音再生・単語帳へ記録）`}
+                    aria-label={isFlipped ? `${w.text} (日本語: ${translation}、発音再生)` : `${w.text} (発音再生)`}
+                  >
+                    {isFlipped ? (
+                      /* Flipped: Japanese Meaning Badge (Flips in smoothly, 100% front-facing, never mirrored) */
+                      <span
+                        key="japanese"
+                        className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-lg text-xs sm:text-sm font-bold animate-word-flip transition-colors duration-150 whitespace-nowrap shadow-xs ${
+                          isSpeakingThisWord
+                            ? "bg-blue-500/25 text-blue-600 dark:text-blue-300 ring-2 ring-blue-500 border border-blue-500"
+                            : isCurrent
+                            ? "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/40"
+                            : "bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/35"
+                        }`}
+                      >
+                        {isSpeakingThisWord && (
+                          <Volume2 className="w-3 h-3 mr-1 animate-pulse text-blue-600 dark:text-blue-400 inline" />
+                        )}
+                        {translation}
+                      </span>
+                    ) : (
+                      /* Unflipped: English word (constant font-weight prevents any line-wrap reflow during karaoke) */
+                      <span
+                        key="english"
+                        className={`relative inline-block px-0.5 py-0 rounded-md transition-colors duration-100 whitespace-nowrap ${
+                          isSpeakingThisWord
+                            ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-500/15 rounded-md px-1 ring-2 ring-blue-500/50"
+                            : isCurrent
+                            ? "text-blue-600 dark:text-blue-400 [-webkit-text-stroke:0.4px_currentColor] underline decoration-solid decoration-blue-600 dark:decoration-blue-400 decoration-2 underline-offset-[3px]"
+                            : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-[3px] group-hover/word:decoration-primary"
+                        }`}
+                      >
+                        {isSpeakingThisWord && (
+                          <Volume2 className="w-3 h-3 mr-0.5 inline text-blue-600 dark:text-blue-400 animate-pulse" />
+                        )}
+                        {w.text}
+                      </span>
+                    )}
+                  </button>
+
+                  {hasSlash && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none select-none absolute -right-[9px] sm:-right-[10px] top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 font-extrabold text-[0.95em] leading-none opacity-95 drop-shadow-2xs"
+                    >
+                      /
+                    </span>
+                  )}
+                </span>
+              );
+            })}
+          </p>
+        </div>
+
+        {/* Japanese translation displayed by default */}
+        {sentence.japanese && (
+          <div className="pt-2 sm:pt-3 border-t border-border/60">
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-normal">
+              {sentence.japanese}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Audio player & speed selector (Tour STEP 1 target: placed below phrase example sentence per user request) */}
       <div
         id="tour-audio-player"
-        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4 py-2.5 sm:py-3 border-y border-border/70 w-full"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4 pt-3 sm:pt-4 border-t border-border/70 w-full"
       >
         <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
           <button
@@ -1233,99 +1326,6 @@ export function SentenceCard({
             <RotateCcw className="w-3 h-3" />
             単語フリップを戻す ({flippedWordIndices.size})
           </button>
-        )}
-      </div>
-
-      {/* Tap hint moved to top above sentence card per user request */}
-      <p className="text-[11px] text-muted-foreground/90 flex items-center gap-1.5 pt-0.5">
-        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-        <span>英単語をタップすると発音を再生＆日本語の意味にフリップ（単語帳へ自動記録）</span>
-      </p>
-
-      <div className="space-y-2 sm:space-y-3">
-        {/* English sentence with blue bold karaoke highlight (tap word to toggle Japanese translation) */}
-        <div id="tour-sentence-text" className="relative p-1 -m-1 select-none rounded-xl">
-          <p className="text-xl sm:text-3xl font-semibold leading-snug tracking-normal text-foreground flex flex-wrap gap-y-0.5 sm:gap-y-1 items-baseline relative z-10">
-            {parsedWords.map((w, idx) => {
-              const isCurrent = isPlaying && activeWordIndex === idx;
-              const hasSlash = showChunkSlash && chunkSlashIndices.has(idx);
-              const isFlipped = flippedWordIndices.has(idx);
-              const cleaned = cleanWord(w.text);
-              const translation = dynamicTranslations[cleaned] || getWordTranslation(w.text);
-              const isSpeakingThisWord = speakingWord === cleaned;
-
-              return (
-                <span
-                  key={w.id}
-                  className={`relative inline-block select-none align-baseline transition-colors duration-150 ${
-                    hasSlash ? "mr-3 sm:mr-3.5" : "mr-1 sm:mr-1.5"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={(e) => toggleWordFlip(idx, w.text, e)}
-                    className="group/word inline-flex cursor-pointer focus:outline-hidden align-baseline"
-                    title={isFlipped ? "タップで英語に戻す（発音再生）" : `タップで「${translation}」にフリップ（発音再生・単語帳へ記録）`}
-                    aria-label={isFlipped ? `${w.text} (日本語: ${translation}、発音再生)` : `${w.text} (発音再生)`}
-                  >
-                    {isFlipped ? (
-                      /* Flipped: Japanese Meaning Badge (Flips in smoothly, 100% front-facing, never mirrored) */
-                      <span
-                        key="japanese"
-                        className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-lg text-xs sm:text-sm font-bold animate-word-flip transition-colors duration-150 whitespace-nowrap shadow-xs ${
-                          isSpeakingThisWord
-                            ? "bg-blue-500/25 text-blue-600 dark:text-blue-300 ring-2 ring-blue-500 border border-blue-500"
-                            : isCurrent
-                            ? "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/40"
-                            : "bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/35"
-                        }`}
-                      >
-                        {isSpeakingThisWord && (
-                          <Volume2 className="w-3 h-3 mr-1 animate-pulse text-blue-600 dark:text-blue-400 inline" />
-                        )}
-                        {translation}
-                      </span>
-                    ) : (
-                      /* Unflipped: English word (constant font-weight prevents any line-wrap reflow during karaoke) */
-                      <span
-                        key="english"
-                        className={`relative inline-block px-0.5 py-0 rounded-md transition-colors duration-100 whitespace-nowrap ${
-                          isSpeakingThisWord
-                            ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-500/15 rounded-md px-1 ring-2 ring-blue-500/50"
-                            : isCurrent
-                            ? "text-blue-600 dark:text-blue-400 [-webkit-text-stroke:0.4px_currentColor] underline decoration-solid decoration-blue-600 dark:decoration-blue-400 decoration-2 underline-offset-[3px]"
-                            : "text-foreground group-hover/word:text-primary group-hover/word:bg-primary/5 underline decoration-dotted decoration-muted-foreground/40 underline-offset-[3px] group-hover/word:decoration-primary"
-                        }`}
-                      >
-                        {isSpeakingThisWord && (
-                          <Volume2 className="w-3 h-3 mr-0.5 inline text-blue-600 dark:text-blue-400 animate-pulse" />
-                        )}
-                        {w.text}
-                      </span>
-                    )}
-                  </button>
-
-                  {hasSlash && (
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none select-none absolute -right-[9px] sm:-right-[10px] top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 font-extrabold text-[0.95em] leading-none opacity-95 drop-shadow-2xs"
-                    >
-                      /
-                    </span>
-                  )}
-                </span>
-              );
-            })}
-          </p>
-        </div>
-
-        {/* Japanese translation displayed by default */}
-        {sentence.japanese && (
-          <div className="pt-2 sm:pt-3 border-t border-border/60">
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-normal">
-              {sentence.japanese}
-            </p>
-          </div>
         )}
       </div>
     </div>
