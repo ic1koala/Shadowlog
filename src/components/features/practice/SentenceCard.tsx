@@ -1134,14 +1134,14 @@ export function SentenceCard({
       {/* Audio player & speed selector (Tour STEP 1 target: clearly visible at top of card) */}
       <div
         id="tour-audio-player"
-        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 py-2.5 sm:py-3 border-y border-border/70"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4 py-2.5 sm:py-3 border-y border-border/70 w-full"
       >
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             type="button"
             onClick={togglePlayAudio}
             disabled={isRecording && recordingType !== "shadowing"}
-            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0 ${
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0 ${
               isPlaying
                 ? "bg-emerald-700 text-white shadow-md ring-2 ring-emerald-500/40"
                 : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25 active:scale-95"
@@ -1159,7 +1159,7 @@ export function SentenceCard({
           </button>
 
           {/* Speed Selector with dynamic WPM capsule indicators */}
-          <div className="flex items-center bg-muted/70 p-1 rounded-xl gap-1 shadow-inner shrink-0">
+          <div className="flex items-center bg-muted/70 p-1 rounded-xl gap-1 shadow-inner shrink-0 ml-auto sm:ml-0">
             {([0.6, 1.0, 1.2] as const).map((spd) => {
               const isSelected = playbackSpeed === spd;
               const wpmVal = speedWpmMap[spd];
@@ -1205,7 +1205,7 @@ export function SentenceCard({
                   ensureWebAudioBoost(audioRef.current);
                 }
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition min-h-[40px] shrink-0 cursor-pointer border ${
+              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-bold transition min-h-[40px] shrink-0 cursor-pointer border ${
                 isVolumeBoosted
                   ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 shadow-2xs"
                   : "bg-muted/60 text-muted-foreground hover:text-foreground border-border/60"
@@ -1218,7 +1218,7 @@ export function SentenceCard({
                   isVolumeBoosted ? "text-amber-500" : "text-muted-foreground"
                 }`}
               />
-              <span>{isVolumeBoosted ? "音量ブースト ON" : "音量ブースト"}</span>
+              <span>{isVolumeBoosted ? "ブースト ON" : "ブースト"}</span>
             </button>
           )}
         </div>
@@ -1227,7 +1227,7 @@ export function SentenceCard({
           <button
             type="button"
             onClick={() => setFlippedWordIndices(new Set())}
-            className="text-xs text-muted-foreground hover:text-foreground transition py-1 min-h-[36px] self-end sm:self-auto flex items-center gap-1 cursor-pointer"
+            className="text-xs text-muted-foreground hover:text-foreground transition py-1 min-h-[36px] self-end sm:self-auto flex items-center gap-1 cursor-pointer shrink-0"
             title="すべての単語を英語表示に戻す"
           >
             <RotateCcw className="w-3 h-3" />
