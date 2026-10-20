@@ -64,10 +64,27 @@ body {
 }
 
 /* Prevent text size adjustment on orientation change & outer rubber-band pull detachment */
-html {
+html,
+body {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   overscroll-behavior-y: none;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-4px);
+  }
+  40%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.35s ease-in-out;
 }
 
 /* Better touch targets — prevent accidental double-tap zoom */
