@@ -27,19 +27,20 @@ interface PromoVideoSimulatorProps {
   onFullScreenChange?: (isFull: boolean) => void;
 }
 
+// 20% scaled down particles for logo animation 2
 const PARTICLES = [
-  { x: -140, y: -90, size: 7, color: "#60A5FA", delay: "0.05s" },
-  { x: 150, y: -80, size: 6, color: "#FFFFFF", delay: "0.1s" },
-  { x: -160, y: 70, size: 8, color: "#3B82F6", delay: "0.08s" },
-  { x: 130, y: 100, size: 6, color: "#93C5FD", delay: "0.12s" },
-  { x: 0, y: -130, size: 9, color: "#FFFFFF", delay: "0.02s" },
-  { x: -90, y: 120, size: 6, color: "#2563EB", delay: "0.15s" },
-  { x: 110, y: -40, size: 7, color: "#FFFFFF", delay: "0.06s" },
-  { x: -110, y: -30, size: 6, color: "#60A5FA", delay: "0.11s" },
-  { x: 50, y: 130, size: 8, color: "#3B82F6", delay: "0.04s" },
-  { x: -60, y: -110, size: 7, color: "#FFFFFF", delay: "0.09s" },
-  { x: 140, y: 40, size: 5, color: "#38BDF8", delay: "0.14s" },
-  { x: -40, y: 80, size: 6, color: "#818CF8", delay: "0.07s" },
+  { x: -112, y: -72, size: 5.5, color: "#60A5FA", delay: "0.05s" },
+  { x: 120, y: -64, size: 5, color: "#FFFFFF", delay: "0.1s" },
+  { x: -128, y: 56, size: 6.5, color: "#3B82F6", delay: "0.08s" },
+  { x: 104, y: 80, size: 5, color: "#93C5FD", delay: "0.12s" },
+  { x: 0, y: -104, size: 7, color: "#FFFFFF", delay: "0.02s" },
+  { x: -72, y: 96, size: 5, color: "#2563EB", delay: "0.15s" },
+  { x: 88, y: -32, size: 5.5, color: "#FFFFFF", delay: "0.06s" },
+  { x: -88, y: -24, size: 5, color: "#60A5FA", delay: "0.11s" },
+  { x: 40, y: 104, size: 6.5, color: "#3B82F6", delay: "0.04s" },
+  { x: -48, y: -88, size: 5.5, color: "#FFFFFF", delay: "0.09s" },
+  { x: 112, y: 32, size: 4, color: "#38BDF8", delay: "0.14s" },
+  { x: -32, y: 64, size: 5, color: "#818CF8", delay: "0.07s" },
 ];
 
 export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorProps) {
@@ -230,6 +231,49 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
     cameraTranslateY = -20 + p * 20;
   }
 
+  // 3D Horizontal Flip Transition on Feature Changes (3.2s, 7.2s, 11.5s, 15.0s)
+  const getFlipTransform = (time: number) => {
+    const transitions = [
+      { at: 3.2, duration: 0.45 },
+      { at: 7.2, duration: 0.45 },
+      { at: 11.5, duration: 0.45 },
+      { at: 15.0, duration: 0.45 },
+    ];
+
+    for (const tr of transitions) {
+      const half = tr.duration / 2;
+      const diff = time - tr.at;
+      if (diff >= -half && diff <= half) {
+        if (diff < 0) {
+          // 前半: 0deg -> 90deg（右へ裏返る）
+          const p = (diff + half) / half; // 0 -> 1
+          const rotY = p * 90;
+          const scale = 1 - p * 0.08;
+          return {
+            transform: `perspective(900px) rotateY(${rotY.toFixed(1)}deg) scale(${scale.toFixed(3)})`,
+            opacity: Math.max(0.15, 1 - p * 0.85),
+          };
+        } else {
+          // 後半: -90deg -> 0deg（左から表れる）
+          const p = diff / half; // 0 -> 1
+          const rotY = -90 + p * 90;
+          const scale = 0.92 + p * 0.08;
+          return {
+            transform: `perspective(900px) rotateY(${rotY.toFixed(1)}deg) scale(${scale.toFixed(3)})`,
+            opacity: Math.min(1, 0.15 + p * 0.85),
+          };
+        }
+      }
+    }
+
+    return {
+      transform: "perspective(900px) rotateY(0deg) scale(1)",
+      opacity: 1,
+    };
+  };
+
+  const flipStyle = getFlipTransform(t);
+
   // WPM meter gauge calculation during Scene 3
   const wpmValue = Math.min(
     142,
@@ -263,6 +307,8 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
                 ? "radial-gradient(circle, rgba(168,85,247,0.25) 0%, rgba(59,130,246,0.15) 60%, transparent 100%)"
                 : isScene4
                 ? "radial-gradient(circle, rgba(34,197,94,0.25) 0%, rgba(59,130,246,0.15) 60%, transparent 100%)"
+                : isScene5
+                ? "radial-gradient(circle, rgba(245,158,11,0.28) 0%, rgba(234,88,12,0.15) 60%, transparent 100%)"
                 : "radial-gradient(circle, rgba(59,130,246,0.25) 0%, rgba(99,102,241,0.12) 60%, transparent 100%)",
             }}
           />
@@ -341,14 +387,14 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
 
             {isScene5 && (
               <div className="animate-fade-in space-y-1">
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 backdrop-blur-md">
-                  <Award className="w-3 h-3 text-amber-300" />
-                  月額2万円のスクールにさようなら
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur-md animate-pulse">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  🎉 2026年11月 正式配信スタート！
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-white">
-                  誰でも手軽に、毎日の発話習慣を。<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400">
-                    ベータ版無料配信中！今すぐ体験
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  AIシャドーイングの新習慣を、最速で。<br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-orange-400 font-black">
+                    Waitlist登録受付中（無料先行特典つき）
                   </span>
                 </h2>
               </div>
