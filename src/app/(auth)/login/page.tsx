@@ -7,7 +7,7 @@ import { Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, UserPlus, LogIn, Cro
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import { migrateGuestDataToSupabase, syncUserPlanFromSupabase } from "@/lib/storage/sync-service";
-import { isInvitedVip, setInvitedVip } from "@/lib/auth/vip-checker";
+import { setInvitedVip } from "@/lib/auth/vip-checker";
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -16,7 +16,6 @@ function LoginContent() {
       ? "signup"
       : "login";
   const [authMode, setAuthMode] = useState<"login" | "signup">(initialMode);
-  const [isVipInvited, setIsVipInvited] = useState(false);
   const [isVipUrlAccess, setIsVipUrlAccess] = useState(false);
 
   useEffect(() => {

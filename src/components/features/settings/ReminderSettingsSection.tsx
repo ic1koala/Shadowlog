@@ -12,9 +12,8 @@ import {
   ChevronDown,
   Share,
   PlusSquare,
-  Plus,
-  Trash2,
   Check,
+  Info,
 } from "lucide-react";
 import {
   ReminderSettings,
@@ -75,15 +74,18 @@ export function ReminderSettingsSection() {
     setTimeout(() => setSavedToast(false), 2500);
   };
 
-  const activeTimes =
-    settings.times && settings.times.length > 0
-      ? settings.times
-      : settings.time
-      ? [settings.time]
-      : ["21:00"];
+  // Single-time selection per Vercel 1/day cron limit
+  const selectedTime = settings.time || "21:00";
+  const isPresetSelected = REMINDER_TIME_PRESETS.some((p) => p.time === selectedTime);
+  const [customTimeInput, setCustomTimeInput] = useState(
+    isPresetSelected ? "19:00" : selectedTime
+  );
 
-  const presetSet = new Set(REMINDER_TIME_PRESETS.map((p) => p.time));
-  const customTimes = activeTimes.filter((t) => !presetSet.has(t));
+  useEffect(() => {
+    if (!isPresetSelected && selectedTime) {
+      setCustomTimeInput(selectedTime);
+    }
+  }, [selectedTime, isPresetSelected]);
 
   const handleToggleEnabled = async () => {
     const nextEnabled = !settings.enabled;
@@ -106,17 +108,11 @@ export function ReminderSettingsSection() {
     void subscribeToPushServer(updated);
   };
 
-  // Toggle preset time ON/OFF on tap
-  const handleTogglePreset = (presetTime: string) => {
-    let nextTimes: string[];
-    if (activeTimes.includes(presetTime)) {
-      nextTimes = activeTimes.filter((t) => t !== presetTime);
-    } else {
-      nextTimes = [...activeTimes, presetTime].sort();
-    }
+  // Select a preset time (Single-select per Vercel 1/day constraint)
+  const handleSelectPreset = (presetTime: string) => {
     const updated = saveReminderSettings({
-      times: nextTimes,
-      time: nextTimes[0] || "21:00",
+      time: presetTime,
+      times: [presetTime],
     });
     setSettings(updated);
     triggerSavedToast();
@@ -125,46 +121,13 @@ export function ReminderSettingsSection() {
     }
   };
 
-  // Add custom time (up to 5)
-  const handleAddCustomTime = () => {
-    if (customTimes.length >= 5) return;
-    const candidates = ["19:00", "07:00", "18:00", "23:00", "15:00", "09:00", "11:00"];
-    const newTime = candidates.find((c) => !activeTimes.includes(c)) || "19:00";
-    const nextTimes = [...activeTimes, newTime].sort();
+  // Select and update custom time (Single-select per Vercel 1/day constraint)
+  const handleSelectCustomTime = (newTime: string) => {
+    if (!newTime) return;
+    setCustomTimeInput(newTime);
     const updated = saveReminderSettings({
-      times: nextTimes,
-      time: nextTimes[0] || newTime,
-    });
-    setSettings(updated);
-    triggerSavedToast();
-    if (updated.enabled) {
-      void subscribeToPushServer(updated);
-    }
-  };
-
-  // Update a custom time
-  const handleUpdateCustomTime = (index: number, newTimeValue: string) => {
-    if (!newTimeValue) return;
-    const oldCustomTime = customTimes[index];
-    const nextTimes = activeTimes.map((t) => (t === oldCustomTime ? newTimeValue : t));
-    const uniqueTimes = Array.from(new Set(nextTimes)).sort();
-    const updated = saveReminderSettings({
-      times: uniqueTimes,
-      time: uniqueTimes[0] || "21:00",
-    });
-    setSettings(updated);
-    triggerSavedToast();
-    if (updated.enabled) {
-      void subscribeToPushServer(updated);
-    }
-  };
-
-  // Delete a custom time
-  const handleDeleteCustomTime = (timeToDelete: string) => {
-    const nextTimes = activeTimes.filter((t) => t !== timeToDelete);
-    const updated = saveReminderSettings({
-      times: nextTimes,
-      time: nextTimes[0] || "21:00",
+      time: newTime,
+      times: [newTime],
     });
     setSettings(updated);
     triggerSavedToast();
@@ -202,16 +165,12 @@ export function ReminderSettingsSection() {
             </h2>
             {settings.enabled && (
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                {activeTimes.length === 0
-                  ? "時刻未選択"
-                  : activeTimes.length === 1
-                  ? `毎日 ${activeTimes[0]} に設定中`
-                  : `毎日 ${activeTimes.length}件の時刻に設定中 (${activeTimes.join(", ")})`}
+                毎日 {selectedTime} に設定中
               </span>
             )}
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            決まった時間にスマホへ通知し、1日1文のシャドーイング習慣化をサポートします（複数選択可・メールは届きません）。
+            決まった時間にスマホへ通知し、1日1文のシャドーイング習慣化をサポートします（メールは届きません）。
           </p>
         </div>
 
@@ -325,16 +284,27 @@ export function ReminderSettingsSection() {
         </div>
       )}
 
-      {/* Multi-Time Selection: Presets (Tap to toggle) */}
+      {/* Single-Time Selection: Presets (Radio / Single Selection) */}
       <div className="space-y-3 pt-1">
+        {/* Notice for Vercel 1/day constraint */}
+        <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-2.5 text-xs text-blue-900 dark:text-blue-200">
+          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5 leading-relaxed">
+            <span className="font-bold block">1日1回の通知スケジュールについて</span>
+            <span className="text-[11px] text-blue-800/85 dark:text-blue-300/85">
+              現在Vercelの定期配信制限（1日1回）に準拠しているため、もっとも学習しやすい時間帯を1つ選んで設定いただけます。
+            </span>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="space-y-0.5">
             <label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-primary" />
-              <span>通知を受け取る時刻（ワンタップでオン/オフ切替）</span>
+              <span>通知を受け取る時刻（1つ選択）</span>
             </label>
             <p className="text-[11px] text-muted-foreground">
-              タップするたびに選択/解除できます（複数選択可能）。
+              生活リズムに合わせてご希望の通知時間帯をタップしてください。
             </p>
           </div>
           {savedToast && (
@@ -345,15 +315,15 @@ export function ReminderSettingsSection() {
           )}
         </div>
 
-        {/* Preset Pills */}
+        {/* Preset Pills (Single Selection) */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {REMINDER_TIME_PRESETS.map((preset) => {
-            const isSelected = activeTimes.includes(preset.time);
+            const isSelected = selectedTime === preset.time;
             return (
               <button
                 key={preset.time}
                 type="button"
-                onClick={() => handleTogglePreset(preset.time)}
+                onClick={() => handleSelectPreset(preset.time)}
                 className={`p-2.5 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-0.5 min-h-[58px] relative ${
                   isSelected
                     ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/25 font-bold shadow-xs"
@@ -374,85 +344,59 @@ export function ReminderSettingsSection() {
           })}
         </div>
 
-        {/* Custom Times Section (up to 5) */}
+        {/* Custom Time Option (Single Custom Time) */}
         <div className="pt-3 border-t border-border/60 space-y-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
               <h3 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
-                <span>自由な時間設定</span>
-                <span className="text-[11px] text-muted-foreground font-normal">
-                  （最大5件まで追加可能 / 現在 {customTimes.length}件）
-                </span>
+                <span>その他の時刻を指定</span>
+                {!isPresetSelected && (
+                  <span className="text-[11px] text-primary font-bold">
+                    （カスタム時刻を適用中）
+                  </span>
+                )}
               </h3>
               <p className="text-[11px] text-muted-foreground">
-                生活リズムに合わせてお好みの時刻を個別に追加できます。
+                上記プリセット以外の時刻に通知を受け取りたい場合はこちらで設定できます。
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleAddCustomTime}
-              disabled={customTimes.length >= 5}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border min-h-[36px] ${
-                customTimes.length >= 5
-                  ? "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-60"
-                  : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30 cursor-pointer shadow-2xs"
-              }`}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>時刻を追加 {customTimes.length >= 5 ? "(上限5件)" : ""}</span>
-            </button>
-          </div>
-
-          {/* List of Custom Times */}
-          {customTimes.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
-              {customTimes.map((ct, idx) => (
-                <div
-                  key={`custom-time-${idx}-${ct}`}
-                  className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-primary/30 bg-primary/5 shadow-2xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center shrink-0">
-                      {idx + 1}
-                    </span>
-                    <input
-                      type="time"
-                      value={ct}
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          handleUpdateCustomTime(idx, e.target.value);
-                        }
-                      }}
-                      className="px-2.5 py-1 rounded-lg border border-border bg-background text-foreground text-xs sm:text-sm font-bold focus:outline-hidden focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteCustomTime(ct)}
-                    className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition cursor-pointer"
-                    aria-label={`カスタム時刻 ${ct} を削除`}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
+            <div className="flex items-center gap-2">
+              <input
+                type="time"
+                value={customTimeInput}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleSelectCustomTime(e.target.value);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-bold focus:outline-hidden focus:ring-2 focus:ring-primary/30 ${
+                  !isPresetSelected
+                    ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/25"
+                    : "border-border bg-background text-foreground"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => handleSelectCustomTime(customTimeInput)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border min-h-[36px] cursor-pointer ${
+                  !isPresetSelected
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-border"
+                }`}
+              >
+                {!isPresetSelected ? "適用中" : "この時刻に設定"}
+              </button>
             </div>
-          )}
+          </div>
 
           {/* Test Notification Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             <div className="text-[11px] text-muted-foreground">
-              {activeTimes.length === 0 ? (
-                <span className="text-amber-600 font-bold">
-                  ⚠️ 現在通知時刻が1つも選ばれていません。上のボタンから時刻を選択してください。
-                </span>
-              ) : (
-                <span>
-                  設定中の時刻:{" "}
-                  <strong className="text-foreground">{activeTimes.join("、 ")}</strong>
-                </span>
-              )}
+              <span>
+                現在の設定時刻:{" "}
+                <strong className="text-foreground font-bold">{selectedTime}</strong>
+              </span>
             </div>
 
             {envStatus === "supported" && (

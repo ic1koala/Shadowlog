@@ -133,6 +133,7 @@ export default function AdminCustomersPage() {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 2. Fetch Customer Data

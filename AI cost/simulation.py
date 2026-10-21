@@ -137,9 +137,9 @@ def run_simulation(
         active_unit_jpy = standard_unit["total_jpy"]
         active_rotation_jpy = 0.0
 
-    # Custom 3-Word Generation additional monthly cost per user (FB-035)
-    # Using 9:1 Basic/Pro weighted average if price ~598, or plan-specific if 500 or 1480
-    if monthly_price_jpy >= 1200:
+    # Custom 3-Word / Persona Generation additional monthly cost per user (FB-035/FB-053)
+    # Using 9:1 Basic/Pro weighted average if price ~550, or plan-specific if 500 or 1000
+    if monthly_price_jpy >= 800:
         max_custom_daily = PRO_CUSTOM_DAILY_LIMIT
         real_custom_daily = PRO_CUSTOM_REALISTIC_DAILY
     elif monthly_price_jpy <= 520:
@@ -285,80 +285,77 @@ def print_report(res):
     basic_users = 45
     pro_users = 5
     b_rev = basic_users * 500
-    p_rev = pro_users * 1480
-    port_gross_rev = b_rev + p_rev  # ¥29,900
+    p_rev = pro_users * 1000
+    port_gross_rev = b_rev + p_rev  # ¥27,500
     fee_pct = res["credit_card_fee_pct"]
-    port_fee = port_gross_rev * (fee_pct / 100.0)  # ¥1,076
-    port_net_rev = port_gross_rev - port_fee  # ¥28,824
+    port_fee = port_gross_rev * (fee_pct / 100.0)  # ¥990
+    port_net_rev = port_gross_rev - port_fee  # ¥26,510
 
     # Volume A: 50 users x 20/day avg = 30,000 practices/mo
     cnt_30k = 50 * 20 * 30  # 30,000
     # Volume B: Basic 45x20 + Pro 5x40 = 33,000 practices/mo
     cnt_33k = (basic_users * 20 * 30) + (pro_users * 40 * 30)  # 33,000
 
-    # Custom word generation portfolio cost (45 Basic + 5 Pro)
+    # Custom / Persona word generation portfolio cost (45 Basic + 5 Pro)
     # Realistic: 45 * 1/day * 30 + 5 * 3/day * 30 = 1,800 gens/mo * 0.174 JPY = ¥313.2/mo
-    # Max quota: 45 * 3/day * 30 + 5 * 10/day * 30 = 5,550 gens/mo * 0.174 JPY = ¥965.7/mo
+    # Max quota (FB-053): 45 * 5/day * 30 + 5 * 15/day * 30 = 9,000 gens/mo * 0.174 JPY = ¥1,566/mo
     custom_port_real = ((basic_users * BASE_CUSTOM_REALISTIC_DAILY * 30) + (pro_users * PRO_CUSTOM_REALISTIC_DAILY * 30)) * u["custom_gen_jpy"]
-    custom_port_max = ((basic_users * BASE_CUSTOM_DAILY_LIMIT * 30) + (pro_users * PRO_CUSTOM_DAILY_LIMIT * 30)) * u["custom_gen_jpy"]
+    custom_port_max = ((basic_users * 5.0 * 30) + (pro_users * 15.0 * 30)) * u["custom_gen_jpy"]
 
     # Phase A (Accumulation @0.322 JPY)
-    ai_acc_30k = cnt_30k * u["opt_total_jpy"]  # ~¥9,674
+    ai_acc_30k = cnt_30k * u["opt_total_jpy"]
     op_acc_30k = port_net_rev - ai_acc_30k - res["fixed_office_jpy"]
     margin_acc_30k = (op_acc_30k / port_gross_rev) * 100.0
 
-    ai_acc_33k = cnt_33k * u["opt_total_jpy"]  # ~¥10,641
+    ai_acc_33k = cnt_33k * u["opt_total_jpy"]
     op_acc_33k = port_net_rev - ai_acc_33k - res["fixed_office_jpy"]
     margin_acc_33k = (op_acc_33k / port_gross_rev) * 100.0
 
     # Phase B (Sentence Bank Steady-State @0.097 JPY + ¥331 rotation)
     ai_bank_30k_base = (cnt_30k * u["bank_var_jpy"]) + u["rotation_fixed_jpy"]  # ¥2,910 + ¥331 = ¥3,241
-    op_bank_30k_base = port_net_rev - ai_bank_30k_base - res["fixed_office_jpy"]  # +¥23,933 (80.0%)
+    op_bank_30k_base = port_net_rev - ai_bank_30k_base - res["fixed_office_jpy"]  # +¥21,619 (78.6%)
 
-    # Phase B + Custom Words (Realistic +¥313/mo & Max Quota +¥966/mo)
+    # Phase B + Custom Words / Persona (Realistic +¥313/mo & Max Quota +¥1,566/mo)
     ai_bank_30k_real = ai_bank_30k_base + custom_port_real  # ¥3,554
-    op_bank_30k_real = port_net_rev - ai_bank_30k_real - res["fixed_office_jpy"]  # +¥23,620
-    margin_bank_30k_real = (op_bank_30k_real / port_gross_rev) * 100.0  # 79.0%
+    op_bank_30k_real = port_net_rev - ai_bank_30k_real - res["fixed_office_jpy"]  # +¥21,306
+    margin_bank_30k_real = (op_bank_30k_real / port_gross_rev) * 100.0  # 77.5%
 
-    ai_bank_30k_max = ai_bank_30k_base + custom_port_max  # ¥4,207
-    op_bank_30k_max = port_net_rev - ai_bank_30k_max - res["fixed_office_jpy"]  # +¥22,967
-    margin_bank_30k_max = (op_bank_30k_max / port_gross_rev) * 100.0  # 76.8%
+    ai_bank_30k_max = ai_bank_30k_base + custom_port_max  # ¥4,807
+    op_bank_30k_max = port_net_rev - ai_bank_30k_max - res["fixed_office_jpy"]  # +¥20,053
+    margin_bank_30k_max = (op_bank_30k_max / port_gross_rev) * 100.0  # 72.9%
 
-    ai_bank_33k_real = (cnt_33k * u["bank_var_jpy"]) + u["rotation_fixed_jpy"] + custom_port_real  # ¥3,845
-    op_bank_33k_real = port_net_rev - ai_bank_33k_real - res["fixed_office_jpy"]  # +¥23,329
-    margin_bank_33k_real = (op_bank_33k_real / port_gross_rev) * 100.0  # 78.0%
+    ai_bank_33k_real = (cnt_33k * u["bank_var_jpy"]) + u["rotation_fixed_jpy"] + custom_port_real
+    op_bank_33k_real = port_net_rev - ai_bank_33k_real - res["fixed_office_jpy"]
+    margin_bank_33k_real = (op_bank_33k_real / port_gross_rev) * 100.0
 
     print("▶ 2. 【3ヶ月後到達目標】有料会員50名（ベーシック45名 ＋ Pro 5名）収支試算")
     print("-" * 82)
-    print(f"  ・目標構成                          : ベーシック 45名 (¥500) ＋ Pro 5名 (¥1,480) = 計 50名")
+    print(f"  ・目標構成                          : ベーシック 45名 (¥500) ＋ Pro 5名 (¥1,000) = 計 50名")
     print(f"  ・月間総売上 (MRR)                  :  ¥{port_gross_rev:,.0f} / 月")
     print(f"  ・Stripe決済手数料 ({fee_pct}%)            : -¥{port_fee:,.0f} / 月 (手取純売上: ¥{port_net_rev:,.0f})")
-    print(f"  ・GMOバーチャルオフィス固定費       : -¥{res['fixed_office_jpy']:,.0f} / 月 (Vercel/Supabase/Resendは無料枠 ¥0)")
+    print(f"  ・GMOバーチャルオフィス固定費       : -¥{res['fixed_office_jpy']:,.0f} / 月 (Supabase/Resend無料枠 ¥0)")
+    print(f"  ・Vercel有料化方針                  : 有料会員30名超でPro ($20/月≒¥3,000) 移行検討 (下記は現行Hobby ¥0)")
     print()
-    print("  【フェーズA：バンク蓄積期・保守上限試算 (@0.322円/回)】")
-    print(f"    ・月30,000回 (平均20回/日) 時     : AI原価 -¥{ai_acc_30k:,.0f} ➔ 🟢 営業利益 +¥{op_acc_30k:,.0f}/月 (利益率 {margin_acc_30k:.1f}%)")
-    print(f"    ・月33,000回 (Pro40回/日) 時      : AI原価 -¥{ai_acc_33k:,.0f} ➔ 🟢 営業利益 +¥{op_acc_33k:,.0f}/月 (利益率 {margin_acc_33k:.1f}%)")
-    print(f"    ・固定費回収の損益分岐会員数      : ベーシック 6名 (または Pro 2名)")
+    print("  【フェーズB：問題バンク定常運用期 (@0.097円/回 ＋ 週10%入替 ¥331/月) ★本命】")
+    print(f"    ・バンク定常のみ (月30,000回)     : AI原価 -¥{ai_bank_30k_base:,.0f} ➔ 🟢 営業利益 +¥{op_bank_30k_base:,.0f}/月 (利益率 {margin_bank_30k_base:.1f}%)")
+    print(f"    ・ペルソナ/カスタム実効平均込     : AI原価 -¥{ai_bank_30k_real:,.0f} ➔ 🟢 営業利益 +¥{op_bank_30k_real:,.0f}/月 (利益率 {margin_bank_30k_real:.1f}%!)")
+    print(f"    ・ペルソナ/カスタム全員毎日上限込 : AI原価 -¥{ai_bank_30k_max:,.0f} ➔ 🟢 営業利益 +¥{op_bank_30k_max:,.0f}/月 (利益率 {margin_bank_30k_max:.1f}%!)")
+    print(f"    ・固定費回収の損益分岐会員数      : ベーシック わずか 5名 (または Pro 3名)")
     print()
-    print("  【フェーズB：問題バンク定常運用期 (@0.097円/回 ＋ 週10%入替 ¥331/月 ＋ 3単語カスタム生成) ★本命】")
-    print(f"    ・バンク定常のみ (月30,000回)     : AI原価 -¥{ai_bank_30k_base:,.0f} (変動¥2,910+入替¥331) ➔ 🟢 営業利益 +¥{op_bank_30k_base:,.0f}/月 (利益率 80.0%)")
-    print(f"    ・カスタム生成 実効平均込(+¥313)  : AI原価 -¥{ai_bank_30k_real:,.0f} ➔ 🟢 営業利益 +¥{op_bank_30k_real:,.0f}/月 (利益率 {margin_bank_30k_real:.1f}%!)")
-    print(f"    ・カスタム生成 全員毎日上限(+¥966): AI原価 -¥{ai_bank_30k_max:,.0f} ➔ 🟢 営業利益 +¥{op_bank_30k_max:,.0f}/月 (利益率 {margin_bank_30k_max:.1f}%!)")
-    print(f"    ・Pro40回/日＋カスタム実効平均込  : AI原価 -¥{ai_bank_33k_real:,.0f} ➔ 🟢 営業利益 +¥{op_bank_33k_real:,.0f}/月 (利益率 {margin_bank_33k_real:.1f}%!)")
-    print(f"    ・固定費回収の損益分岐会員数      : ベーシック わずか 5名 (または Pro 2名)")
+    print("  ※ 30名到達時にVercel Pro (約¥3,000/月) を契約した場合でも、50名時営業利益は約 +¥17,000〜¥18,000/月 (利益率 60%超) を維持。")
     print("-" * 82)
     print()
 
-    print("▶ 3. プラン別 1人あたり採算性 ＆ 損益分岐ライン（1日上限撤廃・3単語カスタム生成対応）")
+    print("▶ 3. プラン別 1人あたり採算性 ＆ 損益分岐ライン（1日上限撤廃・ペルソナハイブリッド出題対応）")
     print("-" * 82)
     print(f"{'プラン・フェーズ':<28} | {'月額(手取)':<11} | {'20回/日時原価':<14} | {'1人粗利':<9} | {'採算限界(損益分岐回数)'}")
     print("-" * 82)
     print(f"{'Basic (蓄積期 @0.322円)':<28} | ¥500 (¥482) | ¥193 /月       | +¥289 /人 | 月 1,492回 (1日 約 50回)")
-    print(f"{'Basic (定常 @0.097円+Custom)':<28} | ¥500 (¥482) | ¥63〜¥74 /月   | +¥408〜419| 月 4,807〜4,969回 (1日160〜165回)")
-    print(f"{'Pro   (蓄積期 @0.322円)':<28} | ¥1480(¥1427)| ¥386 /月*      | +¥1041/人 | 月 4,414回 (1日 約147回)")
-    print(f"{'Pro   (定常 @0.097円+Custom)':<28} | ¥1480(¥1427)| ¥132〜¥168 /月*| +¥1259〜  | 月14,173〜14,711回(1日472〜490回)")
+    print(f"{'Basic (定常 @0.097円+ペルソナ)':<28} | ¥500 (¥482) | ¥74〜¥84 /月   | +¥398〜408| 月 4,700〜4,900回 (1日 約160回)")
+    print(f"{'Pro   (蓄積期 @0.322円)':<28} | ¥1000(¥964) | ¥193 /月       | +¥771 /人 | 月 2,990回 (1日 約 100回)")
+    print(f"{'Pro   (定常 @0.097円+ペルソナ)':<28} | ¥1000(¥964) | ¥100〜¥137 /月 | +¥827〜864| 月 9,000〜9,500回 (1日 約300回)")
     print("-" * 82)
-    print("  ※ Proの原価・粗利は1日40回（月1,200回）利用時で算出。Customは3単語カスタム生成（Base最大3回/日、Pro最大10回/日）込。")
+    print("  ※ 定常モードのペルソナ/カスタムは、Base上限5問/日(月+26.1円)、Pro上限15問/日(月+78.3円)を安全キャップとして組み込み済み。")
     print("=" * 82)
 
 

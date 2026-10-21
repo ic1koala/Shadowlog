@@ -20,7 +20,6 @@ import {
   TrendingUp,
   Flame,
   Video,
-  Award,
   Music,
 } from "lucide-react";
 

@@ -113,7 +113,7 @@ export function ThreadsPerformanceSection({
         setRefreshing(false);
       }
     },
-    [authToken]
+    [authToken, adminEmail]
   );
 
   useEffect(() => {

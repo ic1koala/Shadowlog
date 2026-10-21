@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Mic, BarChart2, Settings, BookOpen } from "lucide-react";
 import { TicketBadge } from "@/components/features/subscription/TicketBadge";
 import { AnnouncementModal } from "@/components/features/announcements/AnnouncementModal";
+import { AppLaunchSplash } from "@/components/features/onboarding/AppLaunchSplash";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { hasUnreadLaterAnnouncements } from "@/lib/storage/announcement-store";
 import {
@@ -76,6 +77,9 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* App Launch Logo Animation Splash (Candidate #2 Particle Convergence adopted) */}
+      <AppLaunchSplash />
+
       {/* Global Campaign Announcement Popup Modal */}
       <AnnouncementModal />
 
