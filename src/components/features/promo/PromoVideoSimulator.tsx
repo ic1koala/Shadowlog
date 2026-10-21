@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import {
   Play,
   Pause,
@@ -13,21 +14,38 @@ import {
   Monitor,
   Sparkles,
   Mic,
+  Headphones,
   Activity,
   CheckCircle2,
   TrendingUp,
-  Award,
+  Flame,
   Video,
+  Award,
 } from "lucide-react";
 
 interface PromoVideoSimulatorProps {
   onFullScreenChange?: (isFull: boolean) => void;
 }
 
+const PARTICLES = [
+  { x: -140, y: -90, size: 7, color: "#60A5FA", delay: "0.05s" },
+  { x: 150, y: -80, size: 6, color: "#FFFFFF", delay: "0.1s" },
+  { x: -160, y: 70, size: 8, color: "#3B82F6", delay: "0.08s" },
+  { x: 130, y: 100, size: 6, color: "#93C5FD", delay: "0.12s" },
+  { x: 0, y: -130, size: 9, color: "#FFFFFF", delay: "0.02s" },
+  { x: -90, y: 120, size: 6, color: "#2563EB", delay: "0.15s" },
+  { x: 110, y: -40, size: 7, color: "#FFFFFF", delay: "0.06s" },
+  { x: -110, y: -30, size: 6, color: "#60A5FA", delay: "0.11s" },
+  { x: 50, y: 130, size: 8, color: "#3B82F6", delay: "0.04s" },
+  { x: -60, y: -110, size: 7, color: "#FFFFFF", delay: "0.09s" },
+  { x: 140, y: 40, size: 5, color: "#38BDF8", delay: "0.14s" },
+  { x: -40, y: 80, size: 6, color: "#818CF8", delay: "0.07s" },
+];
+
 export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0); // in seconds
-  const [aspectRatio, setAspectRatio] = useState<"vertical" | "horizontal">("vertical"); // vertical: 9:16, horizontal: 16:9
+  const [aspectRatio, setAspectRatio] = useState<"vertical" | "horizontal">("vertical");
   const [isMuted, setIsMuted] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -39,7 +57,7 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Sound Synthesizer via Web Audio API
-  const playSound = useCallback((type: "click" | "beep" | "success" | "transition") => {
+  const playSound = useCallback((type: "particle" | "click" | "beep" | "success" | "transition") => {
     if (isMuted) return;
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -57,41 +75,50 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      if (type === "click") {
+      if (type === "particle") {
         osc.type = "sine";
-        osc.frequency.setValueAtTime(800, now);
-        osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
-        gain.gain.setValueAtTime(0.12, now);
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.12, now + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === "click") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(750, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.05);
+        gain.gain.setValueAtTime(0.15, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
         osc.start(now);
         osc.stop(now + 0.05);
       } else if (type === "beep") {
         osc.type = "sine";
-        osc.frequency.setValueAtTime(650, now);
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.setValueAtTime(800, now + 0.06);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
         osc.start(now);
-        osc.stop(now + 0.12);
+        osc.stop(now + 0.14);
       } else if (type === "transition") {
         osc.type = "triangle";
-        osc.frequency.setValueAtTime(260, now);
-        osc.frequency.exponentialRampToValueAtTime(520, now + 0.25);
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
         gain.gain.setValueAtTime(0.08, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
         osc.start(now);
         osc.stop(now + 0.25);
       } else if (type === "success") {
-        // Chord
         [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
           const chordOsc = ctx.createOscillator();
           const chordGain = ctx.createGain();
           chordOsc.connect(chordGain);
           chordGain.connect(ctx.destination);
           chordOsc.type = "sine";
-          chordOsc.frequency.setValueAtTime(freq, now + idx * 0.05);
-          chordGain.gain.setValueAtTime(0.1, now + idx * 0.05);
+          chordOsc.frequency.setValueAtTime(freq, now + idx * 0.04);
+          chordGain.gain.setValueAtTime(0.09, now + idx * 0.04);
           chordGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-          chordOsc.start(now + idx * 0.05);
+          chordOsc.start(now + idx * 0.04);
           chordOsc.stop(now + 0.6);
         });
       }
@@ -137,15 +164,16 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
   const lastSceneRef = useRef<number>(-1);
   useEffect(() => {
     let currentScene = 0;
-    if (currentTime < 3.5) currentScene = 1;
-    else if (currentTime < 7.5) currentScene = 2;
-    else if (currentTime < 12.0) currentScene = 3;
-    else if (currentTime < 15.5) currentScene = 4;
+    if (currentTime < 3.2) currentScene = 1;
+    else if (currentTime < 7.2) currentScene = 2;
+    else if (currentTime < 11.5) currentScene = 3;
+    else if (currentTime < 15.0) currentScene = 4;
     else currentScene = 5;
 
     if (currentScene !== lastSceneRef.current && isPlaying) {
       lastSceneRef.current = currentScene;
-      if (currentScene === 2) playSound("transition");
+      if (currentScene === 1) playSound("particle");
+      else if (currentScene === 2) playSound("click");
       else if (currentScene === 3) playSound("beep");
       else if (currentScene === 4) playSound("success");
       else if (currentScene === 5) playSound("transition");
@@ -170,42 +198,42 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
     onFullScreenChange?.(next);
   };
 
-  // Helper values for timeline scenes
+  // Timeline Scene Definitions
   const t = currentTime;
-  const isScene1 = t >= 0 && t < 3.5;
-  const isScene2 = t >= 3.5 && t < 7.5;
-  const isScene3 = t >= 7.5 && t < 12.0;
-  const isScene4 = t >= 12.0 && t < 15.5;
-  const isScene5 = t >= 15.5 && t <= 18.0;
+  const isScene1 = t >= 0 && t < 3.2;   // Logo Animation ②: Particle Convergence
+  const isScene2 = t >= 3.2 && t < 7.2; // Practice Screen & Chunk Slashes & Word 3D Dict
+  const isScene3 = t >= 7.2 && t < 11.5; // Repeating / Shadowing 2-Button Recording & Live Waveform/WPM
+  const isScene4 = t >= 11.5 && t < 15.0; // Whisper AI Diff Analysis & Word Accuracy Breakdown
+  const isScene5 = t >= 15.0 && t <= 18.0; // Streaks (Heatmap) & Brand Outro CTA
 
-  // Camera zoom calculation (simulating smooth director punch-in)
+  // Camera zoom dynamics
   let cameraScale = 1.0;
   let cameraTranslateY = 0;
   if (isScene1) {
-    cameraScale = 0.95 + (t / 3.5) * 0.05;
-    cameraTranslateY = 15 - (t / 3.5) * 15;
+    cameraScale = 1.0;
+    cameraTranslateY = 0;
   } else if (isScene2) {
-    const p = (t - 3.5) / 4.0;
-    cameraScale = 1.0 + p * 0.12;
-    cameraTranslateY = -p * 20;
+    const p = (t - 3.2) / 4.0;
+    cameraScale = 1.0 + p * 0.1;
+    cameraTranslateY = -p * 15;
   } else if (isScene3) {
-    const p = (t - 7.5) / 4.5;
-    cameraScale = 1.12 + p * 0.06;
-    cameraTranslateY = -20 - p * 15;
+    const p = (t - 7.2) / 4.3;
+    cameraScale = 1.1 + p * 0.08;
+    cameraTranslateY = -15 - p * 15;
   } else if (isScene4) {
-    const p = (t - 12.0) / 3.5;
-    cameraScale = 1.18 - p * 0.08;
-    cameraTranslateY = -35 + p * 15;
+    const p = (t - 11.5) / 3.5;
+    cameraScale = 1.18 - p * 0.06;
+    cameraTranslateY = -30 + p * 10;
   } else if (isScene5) {
-    const p = (t - 15.5) / 2.5;
-    cameraScale = 1.1 - p * 0.15;
+    const p = (t - 15.0) / 3.0;
+    cameraScale = 1.12 - p * 0.15;
     cameraTranslateY = -20 + p * 20;
   }
 
   // WPM meter gauge calculation during Scene 3
   const wpmValue = Math.min(
-    148,
-    Math.round(isScene3 ? 80 + Math.pow((t - 7.5) / 4.5, 1.3) * 68 : isScene4 || isScene5 ? 148 : 0)
+    142,
+    Math.round(isScene3 ? 85 + Math.pow((t - 7.2) / 4.3, 1.2) * 57 : isScene4 || isScene5 ? 142 : 0)
   );
 
   return (
@@ -224,19 +252,20 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
             : "w-full aspect-video max-h-[580px] rounded-2xl"
         }`}
       >
-        {/* Background Atmosphere & Ambient Light */}
+        {/* Ambient Glow Atmosphere */}
         <div className="absolute inset-0 pointer-events-none">
           <div
             className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[340px] h-[340px] rounded-full blur-[90px] transition-all duration-1000"
             style={{
-              background: isScene3
-                ? "radial-gradient(circle, rgba(168,85,247,0.22) 0%, rgba(59,130,246,0.12) 60%, transparent 100%)"
+              background: isScene1
+                ? "radial-gradient(circle, rgba(56,189,248,0.28) 0%, rgba(37,99,235,0.2) 60%, transparent 100%)"
+                : isScene3
+                ? "radial-gradient(circle, rgba(168,85,247,0.25) 0%, rgba(59,130,246,0.15) 60%, transparent 100%)"
                 : isScene4
                 ? "radial-gradient(circle, rgba(34,197,94,0.25) 0%, rgba(59,130,246,0.15) 60%, transparent 100%)"
                 : "radial-gradient(circle, rgba(59,130,246,0.25) 0%, rgba(99,102,241,0.12) 60%, transparent 100%)",
             }}
           />
-          {/* Subtle Cyber Grid */}
           <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:24px_24px]" />
         </div>
 
@@ -248,18 +277,18 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
             transformOrigin: "center center",
           }}
         >
-          {/* Top Overlaid Subtitles / Taglines */}
+          {/* Top Overlaid Subtitles / Copy */}
           <div className="w-full text-center z-20 pt-2 sm:pt-4 min-h-[70px] flex items-center justify-center">
             {isScene1 && (
               <div className="animate-fade-in space-y-1">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 backdrop-blur-md">
-                  <Sparkles className="w-3 h-3" />
-                  忙しい社会人のためのAI英語
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
+                  声に出して身につける、新しい英語習慣
                 </span>
                 <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight drop-shadow-md">
-                  英語を声に出す機会、<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-pink-400 to-amber-300">
-                    ゼロになっていませんか？
+                  AIシャドーイング ＆ 発話習熟SaaS<br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300">
+                    ShadowLog（シャドーログ）
                   </span>
                 </h2>
               </div>
@@ -267,14 +296,14 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
 
             {isScene2 && (
               <div className="animate-fade-in space-y-1">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 backdrop-blur-md">
-                  <Activity className="w-3 h-3" />
-                  1分で実力判定
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 backdrop-blur-md">
+                  <Sparkles className="w-3 h-3" />
+                  4大実務ジャンル ＆ チャンク(/)表示
                 </span>
                 <h2 className="text-lg sm:text-xl font-extrabold text-white">
-                  発話速度（WPM）と発音を<br />
+                  意味のカタマリごとに発話できるから、<br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                    AIが0秒で精密スコア化！
+                    英語の語順のままスラスラ理解！
                   </span>
                 </h2>
               </div>
@@ -282,14 +311,14 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
 
             {isScene3 && (
               <div className="animate-fade-in space-y-1">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30 animate-pulse backdrop-blur-md">
-                  <Mic className="w-3 h-3" />
-                  リアルタイム音声解析中
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 animate-pulse backdrop-blur-md">
+                  <Headphones className="w-3 h-3" />
+                  リピーティング ＆ シャドーイング
                 </span>
                 <h2 className="text-lg sm:text-xl font-extrabold text-white">
-                  声を吹き込むだけで、<br />
+                  お手本を追いかけて声に出す。<br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-300">
-                    自然なスピードに耳と口が慣れる！
+                    話すスピード（WPM）もリアルタイム可視化！
                   </span>
                 </h2>
               </div>
@@ -298,13 +327,13 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
             {isScene4 && (
               <div className="animate-fade-in space-y-1">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-md">
-                  <Award className="w-3 h-3" />
-                  推定TOEICスコア即時判定
+                  <CheckCircle2 className="w-3 h-3" />
+                  Whisper AI 精密音声認識 ＆ Diff判定
                 </span>
                 <h2 className="text-lg sm:text-xl font-extrabold text-white">
-                  弱点単語とリンキングも<br />
+                  詰まった単語や発音の抜け落ちを、<br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
-                    単語単位でまるわかり！
+                    AIが1語単位で可視化・弱点を自動蓄積！
                   </span>
                 </h2>
               </div>
@@ -313,183 +342,318 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
             {isScene5 && (
               <div className="animate-fade-in space-y-1">
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 backdrop-blur-md">
-                  <Sparkles className="w-3 h-3 text-amber-300" />
-                  11月正式リリース！ベータ無料枠公開中
+                  <Award className="w-3 h-3 text-amber-300" />
+                  月額2万円のスクールにさようなら
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-white">
-                  あなたも今すぐ、<br />
+                  誰でも手軽に、毎日の発話習慣を。<br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400">
-                    自分の英語力を1分測定！
+                    ベータ版無料配信中！今すぐ体験
                   </span>
                 </h2>
               </div>
             )}
           </div>
 
-          {/* Center: Sleek 3D Device Mockup */}
-          <div className="relative my-auto z-10">
-            {/* Phone Body Frame */}
-            <div
-              className={`relative bg-[#090D1A] rounded-[42px] border-[5px] border-slate-700/80 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(37,99,235,0.2)] overflow-hidden transition-all duration-500 ${
-                aspectRatio === "vertical" ? "w-[280px] h-[460px]" : "w-[260px] h-[390px]"
-              }`}
-            >
-              {/* Dynamic Island / Speaker */}
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-950 rounded-full z-30 flex items-center justify-end px-2 gap-1 border border-slate-800">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          {/* Center Stage: Scene 1 (Logo Animation ② Particle Convergence) OR Phone Mockup */}
+          {isScene1 ? (
+            /* Scene 1: Logo Animation ② Particle Convergence */
+            <div className="relative my-auto flex flex-col items-center justify-center animate-fade-in">
+              {/* Converging Light Particles */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                {PARTICLES.map((p, i) => {
+                  const progress = Math.min(1, Math.max(0, (t - parseFloat(p.delay)) / 1.0));
+                  const curX = p.x * (1 - progress);
+                  const curY = p.y * (1 - progress);
+                  const op = progress > 0 ? (progress < 0.9 ? 1 : (1.0 - progress) * 10) : 0;
+                  return (
+                    <span
+                      key={i}
+                      className="absolute rounded-full transition-transform duration-75"
+                      style={{
+                        width: p.size,
+                        height: p.size,
+                        backgroundColor: p.color,
+                        boxShadow: `0 0 14px ${p.color}`,
+                        transform: `translate(${curX}px, ${curY}px)`,
+                        opacity: op,
+                      }}
+                    />
+                  );
+                })}
               </div>
 
-              {/* In-App Screen Content */}
-              <div className="w-full h-full bg-[#0B0F19] pt-8 px-3.5 pb-3 flex flex-col justify-between text-slate-100 select-none">
-                {/* App Header */}
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center font-bold text-[10px] text-white">
-                      S
-                    </div>
-                    <span className="text-xs font-black tracking-tight text-white">
-                      Shadow<span className="text-blue-400">Log</span>
-                    </span>
-                  </div>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    AI 1min診断
-                  </span>
+              {/* Flash Ring at convergence */}
+              {t >= 1.0 && t <= 2.2 && (
+                <div
+                  className="absolute rounded-full bg-blue-500/40 blur-2xl animate-ping"
+                  style={{ width: "160px", height: "160px" }}
+                />
+              )}
+
+              {/* Materializing Official Brand Icon & Text */}
+              <div
+                className="flex flex-col items-center transition-all duration-700"
+                style={{
+                  opacity: t < 0.9 ? 0 : Math.min(1, (t - 0.9) * 2),
+                  transform: `scale(${t < 0.9 ? 0.8 : Math.min(1, 0.8 + (t - 0.9) * 0.2)})`,
+                }}
+              >
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[24%] overflow-hidden shadow-[0_0_50px_rgba(37,99,235,0.7)] border-2 border-blue-400/40">
+                  <Image
+                    src="/icons/icon-512.png"
+                    alt="ShadowLog Official Icon"
+                    width={112}
+                    height={112}
+                    className="w-full h-full object-cover"
+                    priority
+                  />
                 </div>
-
-                {/* Scene 1 & 2: Prompt Card */}
-                {(isScene1 || isScene2) && (
-                  <div className="my-auto space-y-3 animate-fade-in">
-                    <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>Question 3 / 5</span>
-                      <span className="text-blue-400 font-bold">Business Level</span>
-                    </div>
-
-                    <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-800 space-y-2 shadow-inner">
-                      <p className="text-xs font-medium text-slate-200 leading-relaxed">
-                        We need to <span className="font-bold text-blue-400">/</span> discuss the
-                        project timeline <span className="font-bold text-blue-400">/</span> before
-                        the next release.
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        次のリリース前に、プロジェクトのスケジュールを話し合う必要があります。
-                      </p>
-                    </div>
-
-                    <div className="flex justify-center pt-2">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 animate-bounce">
-                        <Mic className="w-6 h-6" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Scene 3: Live Recording & Audio Waveform */}
-                {isScene3 && (
-                  <div className="my-auto space-y-3 animate-fade-in text-center">
-                    <div className="inline-flex items-center gap-1 text-[10px] text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
-                      Listening & Recording...
-                    </div>
-
-                    {/* Live Waveform Bars */}
-                    <div className="h-14 flex items-center justify-center gap-1 px-4 bg-slate-900/60 rounded-xl border border-purple-500/20">
-                      {[18, 36, 52, 28, 48, 64, 32, 58, 44, 22, 50, 30].map((h, i) => (
-                        <div
-                          key={i}
-                          className="w-1 bg-gradient-to-t from-purple-500 to-cyan-400 rounded-full animate-pulse"
-                          style={{
-                            height: `${Math.min(50, h * (0.6 + Math.sin(t * 8 + i) * 0.4))}px`,
-                            animationDuration: `${0.4 + (i % 3) * 0.2}s`,
-                          }}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Speed Meter Needle */}
-                    <div className="bg-slate-900/90 rounded-xl p-2.5 border border-slate-800 flex items-center justify-around">
-                      <div className="text-left">
-                        <div className="text-[9px] text-slate-400">Realtime Speed</div>
-                        <div className="text-lg font-black text-purple-400 font-mono">
-                          {wpmValue} <span className="text-[10px] font-normal text-slate-400">WPM</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[9px] text-slate-400">Target Level</div>
-                        <div className="text-xs font-bold text-emerald-400">Native Pace</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Scene 4: AI Feedback & Score Reveal */}
-                {isScene4 && (
-                  <div className="my-auto space-y-2.5 animate-fade-in">
-                    <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-3 text-center">
-                      <div className="text-[10px] font-bold text-emerald-400 flex items-center justify-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        AI Analysis Complete!
-                      </div>
-                      <div className="text-2xl font-black text-white mt-1">
-                        TOEIC <span className="text-emerald-400">780</span> 点相当
-                      </div>
-                      <div className="text-[10px] text-slate-300 font-medium mt-0.5">
-                        実効速度: <span className="font-bold text-blue-400">148 WPM</span>（A判定）
-                      </div>
-                    </div>
-
-                    {/* Diff Breakdown */}
-                    <div className="bg-slate-900/90 rounded-xl p-2.5 border border-slate-800 text-[10px] space-y-1">
-                      <div className="text-slate-400 text-[9px]">単語単位の発音・脱落チェック:</div>
-                      <div className="flex flex-wrap gap-1 font-mono text-[10px]">
-                        <span className="px-1 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">We</span>
-                        <span className="px-1 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">need</span>
-                        <span className="px-1 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">to</span>
-                        <span className="px-1 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">discuss</span>
-                        <span className="px-1 py-0.5 bg-blue-500/20 text-blue-300 rounded border border-blue-500/30">timeline</span>
-                        <span className="px-1 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">before</span>
-                        <span className="px-1 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">release</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Scene 5: Outro & App Dashboard */}
-                {isScene5 && (
-                  <div className="my-auto space-y-3 animate-fade-in text-center">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-xl mx-auto shadow-lg shadow-blue-500/40">
-                      S
-                    </div>
-                    <div>
-                      <div className="text-sm font-black text-white">ShadowLog</div>
-                      <div className="text-[10px] text-blue-300 font-medium">
-                        シャドーイング ＆ 発話測定SaaS
-                      </div>
-                    </div>
-
-                    <div className="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-blue-500/30 animate-pulse">
-                      無料で1分診断を試す →
-                    </div>
-                  </div>
-                )}
-
-                {/* App Bottom Navigation */}
-                <div className="flex items-center justify-around border-t border-slate-800/80 pt-1.5 text-slate-500 text-[9px]">
-                  <span className="text-blue-400 font-bold flex flex-col items-center">
-                    <Sparkles className="w-3 h-3" />
-                    <span>診断</span>
+                <div className="mt-4 text-center">
+                  <span className="font-extrabold text-3xl sm:text-4xl tracking-tight text-white select-none">
+                    Shadow<span className="text-blue-400">Log</span>
                   </span>
-                  <span className="flex flex-col items-center">
-                    <Activity className="w-3 h-3" />
-                    <span>練習</span>
-                  </span>
-                  <span className="flex flex-col items-center">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>記録</span>
-                  </span>
+                  <p className="text-xs text-blue-300/80 font-medium tracking-wide mt-1">
+                    AI SHADOWING COACH
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            /* Scenes 2〜5: 3D Smartphone Mockup with ShadowLog Main Practice Feature */
+            <div className="relative my-auto z-10 animate-fade-in">
+              {/* Phone Frame */}
+              <div
+                className={`relative bg-[#090D1A] rounded-[42px] border-[5px] border-slate-700/80 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_35px_rgba(37,99,235,0.22)] overflow-hidden transition-all duration-500 ${
+                  aspectRatio === "vertical" ? "w-[280px] h-[460px]" : "w-[260px] h-[390px]"
+                }`}
+              >
+                {/* Dynamic Island */}
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-950 rounded-full z-30 flex items-center justify-end px-2 gap-1 border border-slate-800">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+
+                {/* In-App Screen Content */}
+                <div className="w-full h-full bg-[#0B0F19] pt-8 px-3 pb-3 flex flex-col justify-between text-slate-100 select-none">
+                  {/* App Header Bar */}
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center font-bold text-[10px] text-white">
+                        S
+                      </div>
+                      <span className="text-xs font-black tracking-tight text-white">
+                        Shadow<span className="text-blue-400">Log</span>
+                      </span>
+                    </div>
+
+                    {/* Streak Badge */}
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 text-[10px] font-bold">
+                      <Flame className="w-3 h-3 fill-orange-500" />
+                      <span>14 Days</span>
+                    </div>
+                  </div>
+
+                  {/* Scene 2: Core Practice Screen with Chunk Slashes & Interactive Word Tap */}
+                  {isScene2 && (
+                    <div className="my-auto space-y-2.5 animate-fade-in">
+                      {/* Genre Selector Pills */}
+                      <div className="flex items-center gap-1 text-[9px] font-bold overflow-x-auto pb-1">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400">IT・テック</span>
+                        <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white shadow-sm">💼 ビジネス</span>
+                        <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400">マーケ</span>
+                        <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400">日常</span>
+                      </div>
+
+                      {/* Main Sentence Card with Chunk Slashes */}
+                      <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-800 space-y-2 shadow-inner">
+                        <div className="flex items-center justify-between text-[9px] text-slate-400">
+                          <span>中級 / Level 2</span>
+                          <span className="text-blue-400 font-bold flex items-center gap-1">
+                            <Volume2 className="w-3 h-3" /> 1.0x (140 WPM)
+                          </span>
+                        </div>
+
+                        <p className="text-xs font-semibold text-slate-100 leading-relaxed">
+                          We need to <span className="font-black text-blue-400">/</span> discuss the
+                          project{" "}
+                          <span className="bg-blue-500/20 text-blue-300 px-1 py-0.5 rounded underline decoration-blue-400 decoration-2">
+                            timeline
+                          </span>{" "}
+                          <span className="font-black text-blue-400">/</span> before the next release.
+                        </p>
+
+                        <p className="text-[10px] text-slate-400">
+                          次のリリース前に、プロジェクトのスケジュールを話し合う必要があります。
+                        </p>
+                      </div>
+
+                      {/* Word Tap 3D Dictionary Preview Modal */}
+                      <div className="bg-gradient-to-r from-blue-900/40 to-slate-900/90 border border-blue-500/30 rounded-xl p-2 flex items-center justify-between text-[10px] animate-fade-in shadow-md">
+                        <div>
+                          <div className="font-bold text-white flex items-center gap-1">
+                            <span>timeline</span>
+                            <span className="text-[9px] text-blue-400 font-mono">[táimlàin]</span>
+                          </div>
+                          <div className="text-[9px] text-slate-300">名 予定表、スケジュール</div>
+                        </div>
+                        <div className="w-6 h-6 rounded-full bg-blue-600/30 text-blue-400 flex items-center justify-center font-bold text-xs">
+                          🔊
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scene 3: 2-Button Recording & Live Audio Waveform / Speed Gauge */}
+                  {isScene3 && (
+                    <div className="my-auto space-y-2.5 animate-fade-in text-center">
+                      {/* Active Status Badge */}
+                      <div className="inline-flex items-center gap-1 text-[10px] text-purple-300 bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/30 font-bold">
+                        <div className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+                        🎧 シャドーイング録音中（同時発声）
+                      </div>
+
+                      {/* Live Waveform Visualizer */}
+                      <div className="h-14 flex items-center justify-center gap-1 px-3 bg-slate-900/70 rounded-xl border border-purple-500/20 shadow-inner">
+                        {[16, 32, 48, 26, 42, 60, 30, 54, 40, 20, 46, 28, 52, 22].map((h, i) => (
+                          <div
+                            key={i}
+                            className="w-1 bg-gradient-to-t from-purple-500 to-cyan-400 rounded-full animate-pulse"
+                            style={{
+                              height: `${Math.min(48, h * (0.65 + Math.sin(t * 9 + i) * 0.35))}px`,
+                              animationDuration: `${0.35 + (i % 3) * 0.2}s`,
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Dynamic Speed Meter (WPM Gauge) */}
+                      <div className="bg-slate-900/90 rounded-xl p-2 border border-slate-800 flex items-center justify-around">
+                        <div className="text-left">
+                          <div className="text-[9px] text-slate-400">現在のはなし速</div>
+                          <div className="text-base font-black text-purple-400 font-mono">
+                            {wpmValue} <span className="text-[9px] font-normal text-slate-400">WPM</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[9px] text-slate-400">判定基準</div>
+                          <div className="text-[10px] font-bold text-emerald-400">Native Speed 突破!</div>
+                        </div>
+                      </div>
+
+                      {/* 2 Recording Buttons in App */}
+                      <div className="grid grid-cols-2 gap-1.5 pt-1">
+                        <div className="py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-400 text-[10px] font-bold flex items-center justify-center gap-1">
+                          <Mic className="w-3 h-3 text-blue-400" />
+                          <span>リピーティング</span>
+                        </div>
+                        <div className="py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold flex items-center justify-center gap-1 shadow-md shadow-purple-500/30 animate-pulse">
+                          <Headphones className="w-3 h-3" />
+                          <span>シャドーイング中</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scene 4: Whisper AI Diff Score & Word-Level Accuracy Breakdown */}
+                  {isScene4 && (
+                    <div className="my-auto space-y-2 animate-fade-in">
+                      {/* Overall Accuracy Card */}
+                      <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-2.5 text-center">
+                        <div className="text-[10px] font-bold text-emerald-400 flex items-center justify-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          AI発話判定: Excellent!
+                        </div>
+                        <div className="text-xl font-black text-white mt-0.5">
+                          正確性 <span className="text-emerald-400 font-mono">96%</span>
+                          <span className="text-xs text-blue-400 ml-2 font-mono">142 WPM</span>
+                        </div>
+                      </div>
+
+                      {/* Word Diff Breakdown (Green for correct, Red for missed) */}
+                      <div className="bg-slate-900/90 rounded-xl p-2.5 border border-slate-800 text-[10px] space-y-1.5">
+                        <div className="text-slate-400 text-[9px] flex items-center justify-between">
+                          <span>単語別Diff（発音の脱落・詰まり判定）</span>
+                          <span className="text-emerald-400 font-bold">10/11 正解</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 font-mono text-[9px]">
+                          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">We</span>
+                          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">need</span>
+                          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">to</span>
+                          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">discuss</span>
+                          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">timeline</span>
+                          <span className="px-1.5 py-0.5 bg-red-500/20 text-red-300 rounded border border-red-500/30 line-through">before</span>
+                          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">release</span>
+                        </div>
+                      </div>
+
+                      {/* AI Coach Feedback Note */}
+                      <div className="bg-blue-950/30 border border-blue-500/20 rounded-xl p-2 text-[9px] text-blue-200 leading-tight">
+                        💬 <span className="font-bold text-white">AIコーチ:</span> 音の繋がり（リンキング）が非常に綺麗です！脱落した「before」だけ意識してもう1回声に出してみましょう。
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scene 5: Streaks & Habituation Dashboard Card */}
+                  {isScene5 && (
+                    <div className="my-auto space-y-2.5 animate-fade-in text-center">
+                      <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-lg mx-auto shadow-md shadow-blue-500/30">
+                        S
+                      </div>
+                      <div>
+                        <div className="text-sm font-black text-white">ShadowLog</div>
+                        <div className="text-[10px] text-blue-300">声に出して身につけるシャドーイングSaaS</div>
+                      </div>
+
+                      {/* Streak Heatmap preview */}
+                      <div className="bg-slate-900/90 rounded-xl p-2 border border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between text-[9px] text-slate-400">
+                          <span>🔥 14日連続練習中</span>
+                          <span className="text-emerald-400 font-bold">Total 35 Sessions</span>
+                        </div>
+                        {/* Mini grass cells */}
+                        <div className="flex items-center justify-center gap-1 pt-0.5">
+                          {[3, 4, 2, 5, 4, 3, 5, 2, 4, 5, 4, 5, 5, 5].map((lvl, idx) => (
+                            <div
+                              key={idx}
+                              className={`w-2.5 h-2.5 rounded-sm ${
+                                lvl === 5
+                                  ? "bg-emerald-400"
+                                  : lvl === 4
+                                  ? "bg-emerald-500"
+                                  : lvl === 3
+                                  ? "bg-emerald-600"
+                                  : "bg-emerald-800"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-1.5 px-3 rounded-xl text-xs shadow-md shadow-blue-500/30 animate-pulse">
+                        ベータ版を完全無料で試す →
+                      </div>
+                    </div>
+                  )}
+
+                  {/* App Bottom Navigation */}
+                  <div className="flex items-center justify-around border-t border-slate-800/80 pt-1 text-slate-500 text-[9px]">
+                    <span className="flex flex-col items-center">
+                      <Sparkles className="w-3 h-3" />
+                      <span>ホーム</span>
+                    </span>
+                    <span className="text-blue-400 font-bold flex flex-col items-center">
+                      <Activity className="w-3 h-3" />
+                      <span>練習</span>
+                    </span>
+                    <span className="flex flex-col items-center">
+                      <TrendingUp className="w-3 h-3" />
+                      <span>カルテ</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Bottom Call to Action Footer */}
           <div className="w-full text-center z-20 pb-2">
@@ -521,7 +685,7 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
-              <h3 className="font-bold text-sm text-white">プロモーション動画ディレクター</h3>
+              <h3 className="font-bold text-sm text-white">ShadowLog 本機能プロモ動画ディレクター</h3>
               <span className="text-xs text-slate-400 font-mono">
                 {currentTime.toFixed(1)}s / {duration.toFixed(1)}s
               </span>
@@ -558,11 +722,11 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
 
             {/* Scene Markers */}
             <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-              <span className={isScene1 ? "text-blue-400 font-bold" : ""}>0s 課題提起</span>
-              <span className={isScene2 ? "text-blue-400 font-bold" : ""}>3.5s 診断開始</span>
-              <span className={isScene3 ? "text-purple-400 font-bold" : ""}>7.5s 録音・WPM</span>
-              <span className={isScene4 ? "text-emerald-400 font-bold" : ""}>12s TOEIC採点</span>
-              <span className={isScene5 ? "text-blue-400 font-bold" : ""}>15.5s CTA</span>
+              <span className={isScene1 ? "text-cyan-400 font-bold" : ""}>0s ロゴ②粒子集結</span>
+              <span className={isScene2 ? "text-blue-400 font-bold" : ""}>3.2s チャンク(/)練習</span>
+              <span className={isScene3 ? "text-purple-400 font-bold" : ""}>7.2s シャドーイング/WPM</span>
+              <span className={isScene4 ? "text-emerald-400 font-bold" : ""}>11.5s AI Diff採点</span>
+              <span className={isScene5 ? "text-blue-400 font-bold" : ""}>15s 継続草生やし/CTA</span>
             </div>
           </div>
 
