@@ -17,12 +17,13 @@ function LoginContent() {
       : "login";
   const [authMode, setAuthMode] = useState<"login" | "signup">(initialMode);
   const [isVipInvited, setIsVipInvited] = useState(false);
+  const [isVipUrlAccess, setIsVipUrlAccess] = useState(false);
 
   useEffect(() => {
-    const vipParam = searchParams.get("vip");
-    const testerParam = searchParams.get("tester");
-    const inviteParam = searchParams.get("invite");
-    const modeParam = searchParams.get("mode");
+    const vipParam = searchParams.get("vip")?.toLowerCase();
+    const testerParam = searchParams.get("tester")?.toLowerCase();
+    const inviteParam = searchParams.get("invite")?.toLowerCase();
+    const modeParam = searchParams.get("mode")?.toLowerCase();
 
     const hasVipParam =
       vipParam === "true" ||
@@ -34,11 +35,14 @@ function LoginContent() {
     if (hasVipParam) {
       setInvitedVip(true);
       setIsVipInvited(true);
+      setIsVipUrlAccess(true);
       if (modeParam === "vip" || vipParam === "true" || vipParam === "1") {
         setAuthMode("signup");
       }
-    } else if (isInvitedVip()) {
-      setIsVipInvited(true);
+    } else {
+      // General access from Threads or direct link - do not show VIP banners or quick login
+      setIsVipUrlAccess(false);
+      setIsVipInvited(false);
     }
 
     if (searchParams.get("mode") === "signup") {
@@ -198,8 +202,8 @@ function LoginContent() {
           </div>
         </div>
 
-        {/* VIP Invite Notification Banner */}
-        {isVipInvited && (
+        {/* VIP Invite Notification Banner (Only visible when accessed via dedicated secret VIP link) */}
+        {isVipUrlAccess && (
           <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border border-amber-500/30 text-center space-y-1.5 animate-in fade-in slide-in-from-top-1 shadow-xs">
             <div className="text-xs font-black text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1.5">
               <Crown className="w-4 h-4 text-amber-500" />
@@ -358,27 +362,29 @@ function LoginContent() {
           </p>
         </form>
 
-        {/* Quick Tester VIP Sign-in */}
-        <div className="pt-2">
-          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-2">
-            <div className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1.5">
-              <span>👑</span>
-              <span>オーナー・テスター専用モード</span>
+        {/* Quick Tester VIP Sign-in (Dedicated link only: ?mode=vip or ?vip=true) */}
+        {isVipUrlAccess && (
+          <div className="pt-2">
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-2">
+              <div className="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1.5">
+                <span>👑</span>
+                <span>オーナー・テスター専用モード</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                チケット無制限・全機能解放のVIPテスターアカウントで即時ログインできます
+              </p>
+              <button
+                type="button"
+                onClick={handleVipQuickLogin}
+                disabled={isSubmitting}
+                className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>🧪</span>
+                <span>VIPテスターとしてクイックログイン</span>
+              </button>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              チケット無制限・全機能解放のVIPテスターアカウントで即時ログインできます
-            </p>
-            <button
-              type="button"
-              onClick={handleVipQuickLogin}
-              disabled={isSubmitting}
-              className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>🧪</span>
-              <span>VIPテスターとしてクイックログイン</span>
-            </button>
           </div>
-        </div>
+        )}
 
         <div className="pt-2 border-t border-border text-center">
           <Link
