@@ -653,21 +653,32 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
                     </div>
                   )}
 
-                  {/* Scene 5: Streaks & Habituation Dashboard Card */}
+                  {/* Scene 5: Streaks & 11月配信開始 Waitlist Highlight */}
                   {isScene5 && (
-                    <div className="my-auto space-y-2.5 animate-fade-in text-center">
-                      <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-lg mx-auto shadow-md shadow-blue-500/30">
-                        S
+                    <div className="my-auto space-y-2 animate-fade-in text-center">
+                      <div className="relative w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-blue-500/30 border border-blue-400/40 mx-auto">
+                        <Image
+                          src="/icons/icon-512.png"
+                          alt="ShadowLog Official Icon"
+                          width={44}
+                          height={44}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div>
-                        <div className="text-sm font-black text-white">ShadowLog</div>
-                        <div className="text-[10px] text-blue-300">声に出して身につけるシャドーイングSaaS</div>
+                        <div className="text-sm font-black text-white font-sans">
+                          Shadow<span className="text-blue-500">Log</span>
+                        </div>
+                        <div className="text-[10px] text-blue-300 font-medium">AIシャドーイング ＆ 発話習熟SaaS</div>
                       </div>
 
                       {/* Streak Heatmap preview */}
                       <div className="bg-slate-900/90 rounded-xl p-2 border border-slate-800 space-y-1">
                         <div className="flex items-center justify-between text-[9px] text-slate-400">
-                          <span>🔥 14日連続練習中</span>
+                          <span className="text-orange-400 font-bold flex items-center gap-1">
+                            <Flame className="w-3 h-3 fill-orange-400" />
+                            14日連続達成
+                          </span>
                           <span className="text-emerald-400 font-bold">Total 35 Sessions</span>
                         </div>
                         {/* Mini grass cells */}
@@ -689,8 +700,18 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-1.5 px-3 rounded-xl text-xs shadow-md shadow-blue-500/30 animate-pulse">
-                        ベータ版を完全無料で試す →
+                      {/* 11月配信開始 Waitlist Highlight Card */}
+                      <div className="bg-gradient-to-b from-amber-500/20 via-orange-500/15 to-transparent border border-amber-500/40 rounded-xl p-2 space-y-1 shadow-lg shadow-amber-500/10">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wide border border-amber-500/30">
+                          <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                          2026年11月 正式リリース
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-200">
+                          先行登録で【全Pro機能 1ヶ月無料】
+                        </p>
+                        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black py-1.5 px-3 rounded-lg text-[10px] shadow-md shadow-orange-500/30 tracking-tight animate-bounce">
+                          🚀 Waitlistに今すぐ登録 →
+                        </div>
                       </div>
                     </div>
                   )}
@@ -717,12 +738,21 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
 
           {/* Bottom Call to Action Footer */}
           <div className="w-full text-center z-20 pb-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md shadow-lg">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-xs font-bold text-slate-200">
-                URL: <span className="text-blue-400">shadowlog.vercel.app</span>
-              </span>
-            </div>
+            {isScene5 ? (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border-2 border-amber-400/60 backdrop-blur-md shadow-[0_0_25px_rgba(245,158,11,0.35)] animate-pulse">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+                <span className="text-xs sm:text-sm font-black text-white tracking-wide">
+                  🎉 11月配信開始！Waitlistに登録 ➔ <span className="text-amber-300 underline font-mono">shadowlog.vercel.app/waitlist</span>
+                </span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+                <span className="text-xs font-bold text-slate-200">
+                  URL: <span className="text-blue-400">shadowlog.vercel.app</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -786,7 +816,7 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
               <span className={isScene2 ? "text-blue-400 font-bold" : ""}>3.2s チャンク(/)練習</span>
               <span className={isScene3 ? "text-purple-400 font-bold" : ""}>7.2s シャドーイング/WPM</span>
               <span className={isScene4 ? "text-emerald-400 font-bold" : ""}>11.5s AI Diff採点</span>
-              <span className={isScene5 ? "text-blue-400 font-bold" : ""}>15s 継続草生やし/CTA</span>
+              <span className={isScene5 ? "text-amber-400 font-bold" : ""}>15s 11月配信Waitlist</span>
             </div>
           </div>
 
