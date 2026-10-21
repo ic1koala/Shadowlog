@@ -21,6 +21,7 @@ import {
   Flame,
   Video,
   Award,
+  Music,
 } from "lucide-react";
 
 interface PromoVideoSimulatorProps {
@@ -43,11 +44,143 @@ const PARTICLES = [
   { x: -32, y: 64, size: 5, color: "#818CF8", delay: "0.07s" },
 ];
 
+// Web Audio POP & Stylish Nu-Disco BGM Synthesizer Settings
+const CHORDS_BY_BAR = [
+  { freqs: [174.61, 220.0, 261.63, 329.63], bass: 87.31 },  // Bar 1: Fmaj7 (Bright Pop)
+  { freqs: [196.0, 246.94, 293.66, 392.0],  bass: 98.0 },   // Bar 2: G7 (Uplifting)
+  { freqs: [164.81, 196.0, 246.94, 293.66], bass: 82.41 },  // Bar 3: Em7 (Stylish Emotional)
+  { freqs: [220.0, 261.63, 329.63, 392.0],  bass: 110.0 },  // Bar 4: Am7 (Catchy Groove)
+];
+const PENTATONIC_ARP = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5]; // C5, D5, E5, G5, A5, C6
+
+function playKick(ctx: AudioContext, dest: AudioNode, time: number) {
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(dest);
+    osc.frequency.setValueAtTime(140, time);
+    osc.frequency.exponentialRampToValueAtTime(42, time + 0.08);
+    gain.gain.setValueAtTime(0.32, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.14);
+    osc.start(time);
+    osc.stop(time + 0.14);
+  } catch {}
+}
+
+function playClap(ctx: AudioContext, dest: AudioNode, time: number) {
+  try {
+    const bufferSize = Math.floor(ctx.sampleRate * 0.09);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(1900, time);
+    filter.Q.setValueAtTime(1.4, time);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.18, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.11);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(dest);
+    noise.start(time);
+    noise.stop(time + 0.11);
+  } catch {}
+}
+
+function playHiHat(ctx: AudioContext, dest: AudioNode, time: number, isOpen = false) {
+  try {
+    const dur = isOpen ? 0.11 : 0.035;
+    const bufferSize = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.setValueAtTime(7500, time);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(isOpen ? 0.07 : 0.045, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(dest);
+    noise.start(time);
+    noise.stop(time + dur);
+  } catch {}
+}
+
+function playChord(ctx: AudioContext, dest: AudioNode, freqs: number[], time: number, dur = 0.18) {
+  try {
+    freqs.forEach((freq) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, time);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(2600, time);
+      filter.frequency.exponentialRampToValueAtTime(750, time + dur);
+      gain.gain.setValueAtTime(0.05, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(dest);
+      osc.start(time);
+      osc.stop(time + dur);
+    });
+  } catch {}
+}
+
+function playBass(ctx: AudioContext, dest: AudioNode, freq: number, time: number, dur = 0.17) {
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(freq, time);
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(650, time);
+    filter.frequency.exponentialRampToValueAtTime(140, time + dur);
+    gain.gain.setValueAtTime(0.11, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(dest);
+    osc.start(time);
+    osc.stop(time + dur);
+  } catch {}
+}
+
+function playArp(ctx: AudioContext, dest: AudioNode, freq: number, time: number) {
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, time);
+    gain.gain.setValueAtTime(0.045, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.14);
+    osc.connect(gain);
+    gain.connect(dest);
+    osc.start(time);
+    osc.stop(time + 0.14);
+  } catch {}
+}
+
 export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0); // in seconds
   const [aspectRatio, setAspectRatio] = useState<"vertical" | "horizontal">("vertical");
   const [isMuted, setIsMuted] = useState(false);
+  const [isBgmEnabled, setIsBgmEnabled] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showRecordingGuide, setShowRecordingGuide] = useState(false);
@@ -56,6 +189,82 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
   const animFrameRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const bgmGainRef = useRef<GainNode | null>(null);
+  const lastBgmStepRef = useRef<number>(-1);
+
+  // Sync BGM Master Gain with Mute / Enabled State
+  useEffect(() => {
+    if (bgmGainRef.current && audioCtxRef.current) {
+      const targetGain = !isMuted && isBgmEnabled ? 0.35 : 0;
+      bgmGainRef.current.gain.setValueAtTime(targetGain, audioCtxRef.current.currentTime);
+    }
+  }, [isMuted, isBgmEnabled]);
+
+  // BGM Trigger for 16th-note Lookahead (120 BPM: 1 beat = 0.5s, 16th = 0.125s)
+  const triggerBgm = useCallback((timeSec: number) => {
+    if (!isBgmEnabled || isMuted) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+
+      if (!bgmGainRef.current) {
+        const bgmGain = ctx.createGain();
+        bgmGain.gain.setValueAtTime(!isMuted && isBgmEnabled ? 0.35 : 0, ctx.currentTime);
+        bgmGain.connect(ctx.destination);
+        bgmGainRef.current = bgmGain;
+      }
+
+      const step = Math.floor(timeSec / 0.125);
+      if (step === lastBgmStepRef.current) return;
+      lastBgmStepRef.current = step;
+
+      const bar = Math.floor((step % 64) / 16);
+      const beatInBar = step % 16;
+      const chordInfo = CHORDS_BY_BAR[bar];
+      const now = ctx.currentTime;
+      const dest = bgmGainRef.current;
+
+      // 1. Kick (0, 6, 8, 14 - funky groove)
+      if (beatInBar === 0 || beatInBar === 6 || beatInBar === 8 || beatInBar === 14) {
+        playKick(ctx, dest, now);
+      }
+
+      // 2. Clap / Snare (4, 12 - 2nd & 4th beat)
+      if (beatInBar === 4 || beatInBar === 12) {
+        playClap(ctx, dest, now);
+      }
+
+      // 3. Hi-Hat (Every 2 steps, offbeat accent)
+      if (beatInBar % 2 === 0) {
+        const isOpen = beatInBar === 2 || beatInBar === 10;
+        playHiHat(ctx, dest, now, isOpen);
+      }
+
+      // 4. Bassline (Bouncy groovy bass with octave accents)
+      if (beatInBar === 0 || beatInBar === 3 || beatInBar === 6 || beatInBar === 8 || beatInBar === 10 || beatInBar === 14) {
+        const isOctave = beatInBar === 3 || beatInBar === 10;
+        playBass(ctx, dest, chordInfo.bass * (isOctave ? 2 : 1), now, 0.16);
+      }
+
+      // 5. Synth Chords Stab (0, 3, 8, 11)
+      if (beatInBar === 0 || beatInBar === 3 || beatInBar === 8 || beatInBar === 11) {
+        playChord(ctx, dest, chordInfo.freqs, now, 0.18);
+      }
+
+      // 6. Crystal Sparkle Arp (Pentatonic melody)
+      const arpNotes = [0, 2, 3, 1, 4, 2, 5, 3];
+      if (beatInBar % 2 === 0) {
+        const noteIdx = arpNotes[(beatInBar / 2) % arpNotes.length];
+        playArp(ctx, dest, PENTATONIC_ARP[noteIdx], now);
+      }
+    } catch {}
+  }, [isBgmEnabled, isMuted]);
 
   // Sound Synthesizer via Web Audio API
   const playSound = useCallback((type: "particle" | "click" | "beep" | "success" | "transition") => {
@@ -132,6 +341,7 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
   useEffect(() => {
     if (!isPlaying) {
       lastTimestampRef.current = null;
+      lastBgmStepRef.current = -1;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       return;
     }
@@ -149,6 +359,7 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
           setIsPlaying(false);
           return duration;
         }
+        triggerBgm(next);
         return next;
       });
 
@@ -159,7 +370,7 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isPlaying, playbackSpeed, duration]);
+  }, [isPlaying, playbackSpeed, duration, triggerBgm]);
 
   // Sound triggers at scene boundaries
   const lastSceneRef = useRef<number>(-1);
@@ -207,28 +418,25 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
   const isScene4 = t >= 11.5 && t < 15.0; // Whisper AI Diff Analysis & Word Accuracy Breakdown
   const isScene5 = t >= 15.0 && t <= 18.0; // Streaks (Heatmap) & Brand Outro CTA
 
-  // Camera zoom dynamics
+  // Smooth Cinematic Camera Zoom Dynamics (Jank-Free 60fps GPU Accelerated)
   let cameraScale = 1.0;
-  let cameraTranslateY = 0;
-  if (isScene1) {
+  if (t < 7.2) {
     cameraScale = 1.0;
-    cameraTranslateY = 0;
-  } else if (isScene2) {
-    const p = (t - 3.2) / 4.0;
-    cameraScale = 1.0 + p * 0.1;
-    cameraTranslateY = -p * 15;
-  } else if (isScene3) {
-    const p = (t - 7.2) / 4.3;
-    cameraScale = 1.1 + p * 0.08;
-    cameraTranslateY = -15 - p * 15;
-  } else if (isScene4) {
-    const p = (t - 11.5) / 3.5;
-    cameraScale = 1.18 - p * 0.06;
-    cameraTranslateY = -30 + p * 10;
-  } else if (isScene5) {
-    const p = (t - 15.0) / 3.0;
-    cameraScale = 1.12 - p * 0.15;
-    cameraTranslateY = -20 + p * 20;
+  } else if (t < 8.8) {
+    // 7.2s -> 8.8s: Smoothstep focus into recording & live WPM (1.00 -> 1.045)
+    const p = (t - 7.2) / 1.6;
+    const smoothP = p * p * (3 - 2 * p);
+    cameraScale = 1.0 + smoothP * 0.045;
+  } else if (t < 14.5) {
+    // Hold focus on recording & AI Diff results
+    cameraScale = 1.045;
+  } else if (t < 16.0) {
+    // 14.5s -> 16.0s: Smoothstep pull back to 1.00 for Waitlist finale
+    const p = (t - 14.5) / 1.5;
+    const smoothP = p * p * (3 - 2 * p);
+    cameraScale = 1.045 - smoothP * 0.045;
+  } else {
+    cameraScale = 1.0;
   }
 
   // 3D Horizontal Flip Transition on Feature Changes (3.2s, 7.2s, 11.5s, 15.0s)
@@ -315,14 +523,8 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
           <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:24px_24px]" />
         </div>
 
-        {/* Dynamic Scene Stage */}
-        <div
-          className="relative w-full h-full flex flex-col items-center justify-between p-4 sm:p-6 transition-transform ease-out"
-          style={{
-            transform: `scale(${cameraScale}) translateY(${cameraTranslateY}px)`,
-            transformOrigin: "center center",
-          }}
-        >
+        {/* Dynamic Scene Stage (Stable Frame) */}
+        <div className="relative w-full h-full flex flex-col items-center justify-between p-4 sm:p-6">
           {/* Top Overlaid Subtitles / Copy */}
           <div className="w-full text-center z-20 pt-2 sm:pt-4 min-h-[70px] flex items-center justify-center">
             {isScene1 && (
@@ -386,17 +588,20 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
             )}
 
             {isScene5 && (
-              <div className="animate-fade-in space-y-1">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur-md animate-pulse">
+              <div className="animate-fade-in space-y-1 text-center">
+                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur-md animate-pulse">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   🎉 2026年11月 正式配信スタート！
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  AIシャドーイングの新習慣を、最速で。<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-orange-400 font-black">
-                    Waitlist登録受付中（無料先行特典つき）
-                  </span>
+                <h2 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug">
+                  AIシャドーイングの新習慣を、最速で。
                 </h2>
+                <div className="text-sm sm:text-base font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-orange-400 leading-tight">
+                  Waitlist先行登録受付中
+                </div>
+                <p className="text-[11px] text-amber-200/90 font-medium">
+                  （限定特典：全Pro機能 1ヶ月無料）
+                </p>
               </div>
             )}
           </div>
@@ -467,7 +672,14 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
             </div>
           ) : (
             /* Scenes 2〜5: 3D Smartphone Mockup (iPhone 15 Pro 19.5:9 Aspect Ratio) */
-            <div className="relative my-auto z-10 animate-fade-in">
+            <div
+              className="relative my-auto z-10 animate-fade-in"
+              style={{
+                transform: `scale(${cameraScale.toFixed(4)})`,
+                willChange: "transform",
+                transformOrigin: "center center",
+              }}
+            >
               {/* iPhone 15 Pro Frame (19.5:9 Ratio) */}
               <div
                 className={`relative bg-[#090D1A] rounded-[46px] border-[3.5px] border-slate-700/90 ring-1 ring-slate-600/40 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(37,99,235,0.22)] overflow-hidden transition-all duration-500 ${
@@ -848,6 +1060,19 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
                 title={isMuted ? "音声をONにする" : "ミュートにする"}
               >
                 {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+
+              <button
+                onClick={() => setIsBgmEnabled(!isBgmEnabled)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                  isBgmEnabled
+                    ? "bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-sm"
+                    : "bg-slate-800 text-slate-400"
+                }`}
+                title={isBgmEnabled ? "BGMをOFFにする" : "BGMをONにする"}
+              >
+                <Music className="w-3.5 h-3.5" />
+                <span>BGM: {isBgmEnabled ? "ON" : "OFF"}</span>
               </button>
             </div>
 
