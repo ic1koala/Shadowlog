@@ -1461,6 +1461,7 @@ export default function AdminCustomersPage() {
           <div className="space-y-6">
             <ThreadsPerformanceSection
               authToken={authToken}
+              adminEmail={adminEmail}
               onRefreshParent={() => fetchCustomers(authToken || undefined)}
             />
           </div>

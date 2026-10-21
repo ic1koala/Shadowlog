@@ -29,6 +29,7 @@ import { ThreadsPerformanceResponse } from "@/app/api/admin/threads-performance/
 interface ThreadsPerformanceSectionProps {
   onRefreshParent?: () => void;
   authToken?: string | null;
+  adminEmail?: string | null;
 }
 
 type MobileTab = "posts" | "queue" | "insights";
@@ -37,6 +38,7 @@ type PostFilter = "all" | "top_views" | "with_image";
 export function ThreadsPerformanceSection({
   onRefreshParent,
   authToken,
+  adminEmail,
 }: ThreadsPerformanceSectionProps) {
   const [data, setData] = useState<ThreadsPerformanceResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,13 +77,22 @@ export function ThreadsPerformanceSection({
           headers["Authorization"] = `Bearer ${token}`;
         }
         const quickEmail =
-          typeof window !== "undefined" ? localStorage.getItem("shadowlog_user_email") : null;
+          adminEmail ||
+          (typeof window !== "undefined" ? localStorage.getItem("shadowlog_user_email") : null);
         if (quickEmail) {
           headers["x-admin-quick-email"] = quickEmail;
         }
 
+        const queryParams = new URLSearchParams({
+          refresh: forceRefresh ? "true" : "false",
+          _t: Date.now().toString(),
+        });
+        if (quickEmail) {
+          queryParams.set("quick_admin", quickEmail);
+        }
+
         const res = await fetch(
-          `/api/admin/threads-performance?refresh=${forceRefresh ? "true" : "false"}&_t=${Date.now()}`,
+          `/api/admin/threads-performance?${queryParams.toString()}`,
           {
             headers,
             cache: "no-store",
