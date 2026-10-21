@@ -74,6 +74,11 @@ export function ThreadsPerformanceSection({
         if (token) {
           headers["Authorization"] = `Bearer ${token}`;
         }
+        const quickEmail =
+          typeof window !== "undefined" ? localStorage.getItem("shadowlog_user_email") : null;
+        if (quickEmail) {
+          headers["x-admin-quick-email"] = quickEmail;
+        }
 
         const res = await fetch(
           `/api/admin/threads-performance?refresh=${forceRefresh ? "true" : "false"}&_t=${Date.now()}`,
