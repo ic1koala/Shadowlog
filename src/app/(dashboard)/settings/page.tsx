@@ -199,8 +199,15 @@ export default function SettingsPage() {
           setTicketStatus(getTicketStatus());
         });
       } else {
-        setIsLoggedIn(false);
-        setUserEmail(null);
+        const localEmail =
+          typeof window !== "undefined" ? localStorage.getItem("shadowlog_user_email") : null;
+        if (localEmail) {
+          setIsLoggedIn(true);
+          setUserEmail(localEmail);
+        } else {
+          setIsLoggedIn(false);
+          setUserEmail(null);
+        }
       }
     });
 

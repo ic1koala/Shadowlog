@@ -1,18 +1,40 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
-  LayoutDashboard,
   ExternalLink,
   RefreshCw,
   Calculator,
   Sparkles,
+  Users,
 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
-export function ManagementDashboardSection() {
+interface ManagementDashboardSectionProps {
+  onOpenCustomersTab?: () => void;
+}
+
+export function ManagementDashboardSection({
+  onOpenCustomersTab,
+}: ManagementDashboardSectionProps) {
   const [key, setKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === "SHADOWLOG_OPEN_CUSTOMERS") {
+        if (onOpenCustomersTab) {
+          onOpenCustomersTab();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          window.location.href = "/admin/customers";
+        }
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [onOpenCustomersTab]);
 
   const handleRefresh = () => {
     setIsLoading(true);
@@ -24,9 +46,7 @@ export function ManagementDashboardSection() {
       {/* Top Banner / Actions Bar */}
       <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-emerald-500/10 border border-primary/20 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-bold shrink-0 shadow-xs">
-            <LayoutDashboard className="w-5 h-5" />
-          </div>
+          <BrandLogo variant="icon" size="md" priority className="shrink-0" />
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-sm sm:text-base font-bold text-foreground">
@@ -45,6 +65,20 @@ export function ManagementDashboardSection() {
 
         {/* Quick External Links & Controls */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {onOpenCustomersTab && (
+            <button
+              type="button"
+              onClick={() => {
+                onOpenCustomersTab();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 transition shadow-xs cursor-pointer"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>顧客管理タブへ</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleRefresh}

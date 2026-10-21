@@ -15,6 +15,9 @@ function getSupabaseAdmin() {
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
@@ -105,6 +108,14 @@ export async function GET(req: NextRequest) {
       } catch (e) {
         // Cookie parsing or session error
         console.warn("[Admin API] Failed to retrieve session from cookies:", e);
+      }
+    }
+
+    // Fallback: Check quick-login admin header if session cookie/token wasn't available on mobile
+    if (!requesterEmail) {
+      const quickEmail = req.headers.get("x-admin-quick-email");
+      if (quickEmail && isAdminEmail(quickEmail)) {
+        requesterEmail = quickEmail;
       }
     }
 

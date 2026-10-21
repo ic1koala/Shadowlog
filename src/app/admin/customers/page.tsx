@@ -98,13 +98,20 @@ export default function AdminCustomersPage() {
           userEmail = user?.email;
         }
 
+        if (!userEmail && typeof window !== "undefined") {
+          const localEmail = localStorage.getItem("shadowlog_user_email");
+          if (localEmail && isAdminEmail(localEmail)) {
+            userEmail = localEmail;
+          }
+        }
+
         if (userEmail && isAdminEmail(userEmail)) {
           if (mounted) {
             setIsAuthorized(true);
             setAdminEmail(userEmail);
             setAuthToken(accessToken || null);
             setAuthChecking(false);
-            fetchCustomers(accessToken);
+            fetchCustomers(accessToken, userEmail);
           }
         } else {
           if (mounted) {
@@ -129,7 +136,7 @@ export default function AdminCustomersPage() {
   }, []);
 
   // 2. Fetch Customer Data
-  async function fetchCustomers(token?: string) {
+  async function fetchCustomers(token?: string, fallbackEmail?: string) {
     setLoading(true);
     setErrorMessage(null);
 
@@ -146,6 +153,13 @@ export default function AdminCustomersPage() {
       const headers: Record<string, string> = {};
       if (authToken) {
         headers["Authorization"] = `Bearer ${authToken}`;
+      }
+      const quickEmail =
+        fallbackEmail ||
+        adminEmail ||
+        (typeof window !== "undefined" ? localStorage.getItem("shadowlog_user_email") : null);
+      if (quickEmail && isAdminEmail(quickEmail)) {
+        headers["x-admin-quick-email"] = quickEmail;
       }
 
       const res = await fetch(`/api/admin/customers?t=${Date.now()}`, {
@@ -1431,7 +1445,9 @@ export default function AdminCustomersPage() {
           </div>
         ) : activeTab === "management" ? (
           <div className="space-y-6">
-            <ManagementDashboardSection />
+            <ManagementDashboardSection
+              onOpenCustomersTab={() => setActiveTab("customers")}
+            />
           </div>
         ) : activeTab === "logic_tree" ? (
           <div className="space-y-6">
