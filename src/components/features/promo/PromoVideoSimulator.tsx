@@ -437,58 +437,72 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
                 />
               )}
 
-              {/* Materializing Official Brand Icon & Text */}
+              {/* Materializing Official Brand Icon & Text (Scaled down 20% by user request) */}
               <div
                 className="flex flex-col items-center transition-all duration-700"
                 style={{
                   opacity: t < 0.9 ? 0 : Math.min(1, (t - 0.9) * 2),
-                  transform: `scale(${t < 0.9 ? 0.8 : Math.min(1, 0.8 + (t - 0.9) * 0.2)})`,
+                  transform: `scale(${t < 0.9 ? 0.64 : Math.min(0.8, 0.64 + (t - 0.9) * 0.16)})`,
                 }}
               >
-                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[24%] overflow-hidden shadow-[0_0_50px_rgba(37,99,235,0.7)] border-2 border-blue-400/40">
+                <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-[24%] overflow-hidden shadow-[0_0_40px_rgba(37,99,235,0.7)] border-2 border-blue-400/40">
                   <Image
                     src="/icons/icon-512.png"
                     alt="ShadowLog Official Icon"
-                    width={112}
-                    height={112}
+                    width={88}
+                    height={88}
                     className="w-full h-full object-cover"
                     priority
                   />
                 </div>
-                <div className="mt-4 text-center">
-                  <span className="font-extrabold text-3xl sm:text-4xl tracking-tight text-white select-none">
+                <div className="mt-3 text-center">
+                  <span className="font-extrabold text-2xl sm:text-3xl tracking-tight text-white select-none">
                     Shadow<span className="text-blue-400">Log</span>
                   </span>
-                  <p className="text-xs text-blue-300/80 font-medium tracking-wide mt-1">
+                  <p className="text-[11px] text-blue-300/80 font-medium tracking-wide mt-0.5">
                     AI SHADOWING COACH
                   </p>
                 </div>
               </div>
             </div>
           ) : (
-            /* Scenes 2〜5: 3D Smartphone Mockup with ShadowLog Main Practice Feature */
+            /* Scenes 2〜5: 3D Smartphone Mockup (iPhone 15 Pro 19.5:9 Aspect Ratio) */
             <div className="relative my-auto z-10 animate-fade-in">
-              {/* Phone Frame */}
+              {/* iPhone 15 Pro Frame (19.5:9 Ratio) */}
               <div
-                className={`relative bg-[#090D1A] rounded-[42px] border-[5px] border-slate-700/80 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_35px_rgba(37,99,235,0.22)] overflow-hidden transition-all duration-500 ${
-                  aspectRatio === "vertical" ? "w-[280px] h-[460px]" : "w-[260px] h-[390px]"
+                className={`relative bg-[#090D1A] rounded-[46px] border-[3.5px] border-slate-700/90 ring-1 ring-slate-600/40 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(37,99,235,0.22)] overflow-hidden transition-all duration-500 ${
+                  aspectRatio === "vertical" ? "w-[240px] h-[520px]" : "w-[184px] h-[398px]"
                 }`}
               >
-                {/* Dynamic Island */}
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-950 rounded-full z-30 flex items-center justify-end px-2 gap-1 border border-slate-800">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {/* iPhone 15 Pro Dynamic Island */}
+                <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-30 flex items-center justify-between px-2 border border-slate-800/80 shadow-xs">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-900 border border-slate-700" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
 
-                {/* In-App Screen Content */}
-                <div className="w-full h-full bg-[#0B0F19] pt-8 px-3 pb-3 flex flex-col justify-between text-slate-100 select-none">
-                  {/* App Header Bar */}
-                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                {/* In-App Screen Content (with 3D Horizontal Flip on Feature Transition) */}
+                <div
+                  className="w-full h-full bg-[#0B0F19] pt-8 px-3 pb-2.5 flex flex-col justify-between text-slate-100 select-none transition-all"
+                  style={{
+                    transform: flipStyle.transform,
+                    opacity: flipStyle.opacity,
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  {/* App Header Bar with Official Brand Logo */}
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center font-bold text-[10px] text-white">
-                        S
+                      <div className="relative w-5 h-5 rounded-md overflow-hidden shadow-xs shrink-0 border border-blue-500/30">
+                        <Image
+                          src="/icons/icon-512.png"
+                          alt="ShadowLog Official Icon"
+                          width={20}
+                          height={20}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <span className="text-xs font-black tracking-tight text-white">
-                        Shadow<span className="text-blue-400">Log</span>
+                      <span className="text-xs font-black tracking-tight text-white font-sans">
+                        Shadow<span className="text-blue-500">Log</span>
                       </span>
                     </div>
 
