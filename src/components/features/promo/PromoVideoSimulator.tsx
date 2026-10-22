@@ -183,6 +183,7 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showRecordingGuide, setShowRecordingGuide] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const duration = 18.0; // Total 18 seconds
   const animFrameRef = useRef<number | null>(null);
@@ -190,6 +191,16 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
   const audioCtxRef = useRef<AudioContext | null>(null);
   const bgmGainRef = useRef<GainNode | null>(null);
   const lastBgmStepRef = useRef<number>(-1);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear countdown interval on unmount
+  useEffect(() => {
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+    };
+  }, []);
 
   // Sync BGM Master Gain with Mute / Enabled State
   useEffect(() => {
@@ -391,16 +402,66 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
     }
   }, [currentTime, isPlaying, playSound]);
 
-  const togglePlay = () => {
+  const cancelCountdown = useCallback(() => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    setCountdown(null);
+  }, []);
+
+  const playImmediately = useCallback(() => {
+    cancelCountdown();
     if (currentTime >= duration) {
       setCurrentTime(0);
     }
-    setIsPlaying(!isPlaying);
+    setIsPlaying(true);
+  }, [cancelCountdown, currentTime, duration]);
+
+  const startCountdown = useCallback(() => {
+    cancelCountdown();
+    if (currentTime >= duration) {
+      setCurrentTime(0);
+    }
+    setCountdown(5);
+    playSound("beep");
+
+    let count = 5;
+    countdownTimerRef.current = setInterval(() => {
+      count -= 1;
+      if (count > 0) {
+        setCountdown(count);
+        playSound("click");
+      } else if (count === 0) {
+        setCountdown(0);
+        playSound("transition");
+      } else {
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
+        setCountdown(null);
+        setIsPlaying(true);
+      }
+    }, 1000);
+  }, [cancelCountdown, currentTime, duration, playSound]);
+
+  const togglePlay = () => {
+    if (countdown !== null) {
+      cancelCountdown();
+      return;
+    }
+    if (isPlaying) {
+      setIsPlaying(false);
+    } else {
+      startCountdown();
+    }
   };
 
   const handleRestart = () => {
+    setIsPlaying(false);
     setCurrentTime(0);
-    setIsPlaying(true);
+    startCountdown();
   };
 
   const toggleFullScreen = () => {
@@ -967,6 +1028,60 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
           </div>
         </div>
 
+        {/* Screen Recording Countdown Overlay (5s Delay for clean mobile capture) */}
+        {countdown !== null && (
+          <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in select-none">
+            <div className="relative flex items-center justify-center mb-5">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-blue-500/30 animate-ping absolute" />
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-blue-500 flex items-center justify-center bg-blue-950/60 shadow-[0_0_50px_rgba(37,99,235,0.7)]">
+                <span className="text-5xl sm:text-6xl font-black text-white font-mono drop-shadow-xl">
+                  {countdown === 0 ? "🎬" : countdown}
+                </span>
+              </div>
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+              {countdown === 0 ? "START!" : "画面収録を開始してください"}
+            </h3>
+            <p className="text-xs text-blue-300/90 mt-1.5 max-w-[260px] leading-relaxed">
+              {countdown === 0
+                ? "動画がスタートします..."
+                : "スマホの画面録画を開始し、コントロールセンターを閉じるための5秒待機中です"}
+            </p>
+
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                onClick={playImmediately}
+                className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition"
+              >
+                待たずに開始 ➔
+              </button>
+              <button
+                onClick={cancelCountdown}
+                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition border border-slate-700"
+              >
+                キャンセル
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Fullscreen Mode Overlay when Paused */}
+        {isFullScreen && !isPlaying && countdown === null && (
+          <div className="absolute inset-0 z-40 bg-black/50 backdrop-blur-[2px] flex flex-col items-center justify-center p-4 pointer-events-auto">
+            <button
+              onClick={startCountdown}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-sm shadow-2xl shadow-blue-500/50 flex items-center gap-2.5 transition transform hover:scale-105"
+            >
+              <Play className="w-5 h-5 fill-current" />
+              <span>5秒後にスタートして全画面収録</span>
+            </button>
+            <p className="text-xs text-slate-300/90 mt-2.5 font-medium drop-shadow text-center max-w-[280px]">
+              タップ後5秒のカウントダウン中に、スマホのコントロールセンターを綺麗に閉じられます
+            </p>
+          </div>
+        )}
+
         {/* Minimal Fullscreen Floating Exit Button */}
         {isFullScreen && (
           <button
@@ -1037,10 +1152,30 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
             <div className="flex items-center gap-2">
               <button
                 onClick={togglePlay}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-md shadow-blue-500/20"
+                className={`px-4 py-2 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 transition shadow-md ${
+                  countdown !== null
+                    ? "bg-amber-600 hover:bg-amber-500 shadow-amber-500/20 animate-pulse"
+                    : "bg-blue-600 hover:bg-blue-500 shadow-blue-500/20"
+                }`}
               >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
-                <span>{isPlaying ? "一時停止" : currentTime >= duration ? "もう一度再生" : "動画を再生"}</span>
+                {countdown !== null ? (
+                  <>
+                    <RotateCcw className="w-4 h-4 animate-spin" />
+                    <span>キャンセル ({countdown}s...)</span>
+                  </>
+                ) : isPlaying ? (
+                  <>
+                    <Pause className="w-4 h-4" />
+                    <span>一時停止</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>
+                      {currentTime >= duration ? "もう一度再生（5秒後）" : "動画を再生（5秒待機）"}
+                    </span>
+                  </>
+                )}
               </button>
 
               <button
