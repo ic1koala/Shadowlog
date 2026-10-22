@@ -33,7 +33,6 @@ function LoginContent() {
 
     if (hasVipParam) {
       setInvitedVip(true);
-      setIsVipInvited(true);
       setIsVipUrlAccess(true);
       if (modeParam === "vip" || vipParam === "true" || vipParam === "1") {
         setAuthMode("signup");
@@ -41,7 +40,6 @@ function LoginContent() {
     } else {
       // General access from Threads or direct link - do not show VIP banners or quick login
       setIsVipUrlAccess(false);
-      setIsVipInvited(false);
     }
 
     if (searchParams.get("mode") === "signup") {

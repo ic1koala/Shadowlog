@@ -50,14 +50,14 @@ export function AppLaunchSplash({
     // Show once per tab/reload session unless forceShow is true
     setIsVisible(true);
 
-    // Auto fade-out after logo materializes (2.1s duration + 400ms fade)
+    // Auto dissolve fade-out: Total 5.0s (4.0s display + 1.0s dissolve) per user request
     fadeTimerRef.current = setTimeout(() => {
       setIsFading(true);
       closeTimerRef.current = setTimeout(() => {
         setIsVisible(false);
         if (onFinished) onFinished();
-      }, 400);
-    }, 2100);
+      }, 1000);
+    }, 4000);
 
     return () => {
       if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
@@ -72,7 +72,7 @@ export function AppLaunchSplash({
       role="dialog"
       aria-label="アプリ起動ロゴアニメーション"
       onClick={handleDismiss}
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#060911] text-white select-none cursor-pointer transition-opacity duration-400 ease-out ${
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#060911] text-white select-none cursor-pointer transition-opacity duration-1000 ease-in-out ${
         isFading ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"
       }`}
     >
