@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useStats } from "@/hooks/use-stats";
 import { StreakBadge } from "@/components/features/dashboard/StreakBadge";
@@ -10,16 +10,27 @@ import { GuestSignupBanner } from "@/components/features/dashboard/GuestSignupBa
 import { PersonaPromptBanner } from "@/components/features/dashboard/PersonaPromptBanner";
 import { ActivityWpmCard } from "@/components/features/dashboard/ActivityWpmCard";
 import { Mic, ArrowRight, History, Sparkles, AlertCircle, GraduationCap } from "lucide-react";
+import { getCurrentUserEmail } from "@/lib/storage/ticket-store";
+import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 export default function DashboardPage() {
   const { stats, sessions, error, refresh } = useStats();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Handle OAuth callback login success or general login sync
+  // Handle OAuth callback login success or general login sync & Admin detection
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const email = getCurrentUserEmail();
+      if (email && isAdminEmail(email)) {
+        setIsAdmin(true);
+      }
+
       import("@/lib/storage/sync-service").then(async ({ getAuthenticatedUser, migrateGuestDataToSupabase, syncLocalSessionsToSupabase, syncUserPlanFromSupabase }) => {
         const user = await getAuthenticatedUser();
         if (user && user.email) {
+          if (isAdminEmail(user.email)) {
+            setIsAdmin(true);
+          }
           const { upgradeGuestToRegisteredUser } = await import("@/lib/storage/ticket-store");
           upgradeGuestToRegisteredUser(user.email, user.created_at);
           await migrateGuestDataToSupabase();
@@ -36,6 +47,13 @@ export default function DashboardPage() {
   const currentStreak = stats?.currentStreak || 0;
   const bestStreak = stats?.bestStreak || 0;
   const dailyCounts = stats?.dailyCounts || {};
+
+  // 今日の日付 (YYYY-MM-DD) にセッションが存在するか判定
+  const todayKey = new Date().toISOString().split("T")[0];
+  const isPracticedToday = Boolean(
+    (dailyCounts[todayKey] && dailyCounts[todayKey] > 0) ||
+    (stats?.lastPracticedDate && stats.lastPracticedDate.startsWith(todayKey))
+  );
 
   const avgAccuracy =
     sessions.length > 0
@@ -61,6 +79,9 @@ export default function DashboardPage() {
         bestStreak={bestStreak}
         lastPracticedDate={stats?.lastPracticedDate}
         variant="compact"
+        totalWords={totalWords}
+        isPracticedToday={isPracticedToday}
+        isAdmin={isAdmin}
       />
 
       {/* 3. 直近14日間のアクティビティ（Streakのすぐ下に配置） */}
