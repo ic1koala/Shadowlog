@@ -4,11 +4,11 @@ Threads（@shadowlog_official）の投稿パフォーマンス・インプレッ
 
 ---
 
-## 1. アカウント全体サマリー（最終更新: 2026-10-16 21:08）
+## 1. アカウント全体サマリー（最終更新: 2026-10-24 12:00）
 
 | 計測日時 | アカウント名 | 総投稿数 | 累計インプレッション | 累計いいね | 累計返信 | 累計リポスト |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **2026-10-16 21:08** | **@shadowlog_official** | **25件** | **826回** | **17件** | **14件** | **1件** |
+| **2026-10-24 12:00** | **@shadowlog_official** | **25件** | **1,528回** | **33件** | **11件** | **2件** |
 
 ---
 
@@ -16,31 +16,31 @@ Threads（@shadowlog_official）の投稿パフォーマンス・インプレッ
 
 | 投稿日時 | 閲覧数 (Views) | いいね | 返信 | リポスト | 投稿内容（抜粋） | リンク |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 2026-10-16 12:07:07 | **0** | 0 | 5 | 0 | 【どれが好き？】英語学習アプリ「ShadowLog」のロゴオープニングアニメーシ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DejftLwj1rL) |
-| 2026-10-16 08:24:50 | **4** | 0 | 0 | 0 | ハッピーフライデー！昼休み何してますか？🍱  「高額なスクールに通わなくても、A... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DejGRXUGyml) |
-| 2026-10-15 23:37:18 | **10** | 1 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  金曜日！今週ラ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeiJ5fUjsKa) |
-| 2026-10-15 15:23:38 | **13** | 0 | 0 | 0 | 【大型リニューアル速報】AI英語TOEIC診断を大幅アップデートしました！🔥  ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DehRZwSGhX6) |
-| 2026-10-15 12:36:23 | **13** | 0 | 0 | 0 | アプリ開発しててユーザーさんから「自分の得意・苦手が数値で分かって面白い！」って... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Deg-Q0HlmXu) |
-| 2026-10-15 06:59:39 | **94** | 3 | 0 | 0 | 英語の音変化あるある💡  ・Water ➔ ワラ ・An apple ➔ アナッ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DegXum1lHMZ) |
-| 2026-10-15 05:42:38 | **24** | 1 | 2 | 0 | こんにちは！いつも見てくださりありがとうございます☀️  実は「ShadowLo... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DegO6UeoD1z) |
-| 2026-10-14 23:07:57 | **12** | 1 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  木曜日の朝！あ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DefhvzMlgRE) |
-| 2026-10-14 21:47:49 | **20** | 1 | 0 | 0 | Threadsでのやりとりを英語勉強に使ってもらえてて、しかもこの勉強方法とても... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DefYlivE7ph) |
-| 2026-10-14 11:15:32 | **14** | 0 | 0 | 0 | 英語が聞き取れない原因って、実は3段階あるんです。  1. 単語の意味がわからな... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeeQNmZoFg3) |
-| 2026-10-14 05:50:52 | **32** | 0 | 0 | 0 | お昼休み30秒チェック！  「シャドーイングって難しそう…」という声をもらったの... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DedrD8Lm1fi) |
-| 2026-10-14 00:53:02 | **10** | 0 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  水曜日、折り返... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DedI-ksFox5) |
-| 2026-10-13 16:51:58 | **11** | 0 | 0 | 0 | 【先着20名限定】初期VIPモニター募集中！  実は30秒AI診断を受けてくれた... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DecR6ynIIsR) |
-| 2026-10-13 11:03:32 | **10** | 0 | 0 | 0 | まだシャドーイング習慣化アプリでVIPモニター枠募集中です！ 残りも限られてきて... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DebqDwxGcKV) |
-| 2026-10-13 08:58:31 | **53** | 0 | 0 | 0 | ランチタイム英語クイズ！  "What do you want to do?" ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DebbvctmzFo) |
-| 2026-10-13 01:49:52 | **9** | 0 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  火曜日の朝！み... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Deaqr_qDFwZ) |
-| 2026-10-12 19:38:23 | **9** | 0 | 0 | 0 | 月曜日の夜、いかがお過ごしですか？  「英語を話す時、頭の中で英作文しちゃって言... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeaAKxSD_Hv) |
-| 2026-10-12 09:35:23 | **142** | 0 | 0 | 0 | お昼休みにちょっと英語小ネタ💡  英語の発音スピード目安： ・初級者: 90〜1... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeY7KfSFW0C) |
-| 2026-10-12 02:24:16 | **9** | 1 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️ 今更だけど…笑 ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeYJ1qQmXAv) |
-| 2026-10-11 10:07:55 | **20** | 0 | 0 | 0 | 【ShadowLog】今日の英語シャドーイング完了！ ⏱️ 学習時間: 8分48... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeWaGrxmTf6) |
-| 2026-10-10 22:47:26 | **64** | 1 | 0 | 0 | みなさんこんにちは！今朝はカフェで英語の発声練習してました☕️ 30秒で自分の発... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeVMNzrkzF0) |
-| 2026-10-10 11:27:37 | **218** | 8 | 7 | 1 | インサイト祭りに色々助けられて色んな方の投稿見れて楽しい！ 100％フォロバしま... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeT-biZGfCt) |
-| 2026-10-10 11:25:56 | **0** | 0 | 0 | 0 |  | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeT-PP3mQaE) |
-| 2026-10-09 03:48:51 | **27** | 0 | 0 | 0 | 【英語発音スピードの目安知ってますか？】  ・初級者: 90〜110 WPM ・... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeQlH-DkyoX) |
-| 2026-10-08 15:14:00 | **8** | 0 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  今日から英語学... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DePOvKvEyaU) |
+| 2026-10-23 22:55:04 | **2** | 0 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  2週間のThr... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/De2rbRCkbkP) |
+| 2026-10-23 15:09:16 | **98** | 0 | 0 | 0 | museをダウンロードしたのだけどどう使おう！ー | [投稿リンク](https://www.threads.com/@shadowlog_official/post/De12IVhGb9t) |
+| 2026-10-23 11:03:57 | **8** | 1 | 0 | 1 | 1週間本当にお疲れ様でした！🍻  週末の短時間学習に、現在の自分の英語力（WPM... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/De1aCt1IC5Y) |
+| 2026-10-23 07:48:49 | **2** | 0 | 0 | 0 | 名前、住所、電話番号、メールアドレスなどの情報流出が騒がれているけど昔にハローペ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/De1DuW4GaF2) |
+| 2026-10-23 05:45:32 | **70** | 0 | 0 | 0 | 金曜日の昼休み！  文字で英語を読むのではなく、「聞こえた音そのまま」を真似して... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/De01mt1lvAm) |
+| 2026-10-22 23:30:04 | **6** | 0 | 0 | 0 | ようやくインスタ初投稿 | [投稿リンク](https://www.threads.com/@shadowlog_official/post/De0KoIOE2JP) |
+| 2026-10-22 22:07:03 | **7** | 0 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  華金ですね！今... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/De0BIqsEbeE) |
+| 2026-10-22 14:22:11 | **25** | 0 | 0 | 0 | 【いよいよラスト枠！】初期VIPモニター募集  Pro機能無制限使い放題のVIP... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DezL7yfFriB) |
+| 2026-10-22 11:56:23 | **6** | 0 | 0 | 0 | プロモ動画できたけど、なんかもうちょい頑張りたい… | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Dey7Ni6DbHW) |
+| 2026-10-22 11:55:33 | **970** | 15 | 6 | 1 | 100日後に英語をものにするっていう本が流行っていて店頭でも見かけて気になり過ぎ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Dey7KpjGWYp) |
+| 2026-10-22 11:19:44 | **10** | 0 | 0 | 0 | たくさん読んでいただきありがとうございます😊 しっかりまとめたので読んでもらえる... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Dey3EWgmV_0) |
+| 2026-10-22 08:50:52 | **6** | 0 | 0 | 0 | ランチタイム！  「TOEICスコア伸ばしたいけど時間がない…」という方にこそ、... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeymBOTG-sK) |
+| 2026-10-22 03:37:52 | **3** | 0 | 0 | 0 | アプリ開発なんでしているの？っていう質問を時々受けるので、その疑問に答えたものを... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeyCNfamR8A) |
+| 2026-10-21 23:31:47 | **9** | 0 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  木曜日！週末ま... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DexmCgmlgID) |
+| 2026-10-21 21:16:58 | **1** | 0 | 0 | 0 | おはようございます！ PHPってなんだ？ 昨日広まったPHP関連のニュースについ... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DexWnsik_1q) |
+| 2026-10-21 11:13:03 | **6** | 0 | 0 | 0 | 個人開発でShadowLogを作ってから、色んな英語学習者さんと繋がれて本当に嬉... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DewRfrnmwLe) |
+| 2026-10-21 05:44:39 | **60** | 0 | 0 | 0 | 昼休み英語小ネタ💡  英語のスピーキングで大切なのは「完璧な文法」よりも「相手に... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Devr6SCG-LN) |
+| 2026-10-20 22:50:28 | **14** | 0 | 0 | 0 | 朝の通学中や通勤中の勉強はiPhoneやスマホでぽちぽち学べるの重要よね。 また... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Deu8hneE_Ve) |
+| 2026-10-20 22:19:03 | **7** | 0 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  水曜日！週の折... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Deu47lwE9-N) |
+| 2026-10-20 21:15:18 | **2** | 1 | 0 | 0 | おはようございます☀ 皆さん朝活スタート出来てますか？？ ロゴアニメーションの投... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Deuxorvk_9i) |
+| 2026-10-20 14:25:48 | **3** | 0 | 0 | 0 | 【残りわずか】先着20名初期VIPモニター！  全Pro機能無制限使い放題のVI... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DeuCwe8GibL) |
+| 2026-10-20 03:32:03 | **5** | 0 | 0 | 0 | みんな昼休みリフレッシュできてますか？☕️  英語の聞き取りで「音が消える（Re... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Des38fulHT3) |
+| 2026-10-19 23:52:07 | **4** | 0 | 0 | 0 | おはようございます！というと皆と仲良くなれると聞きました！☀️  火曜日！朝の1... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DesexliAPuW) |
+| 2026-10-19 23:24:59 | **8** | 0 | 2 | 0 | おはようございます！朝活頑張っていきましょう♪ 今日も素晴らしい一日のスタートで... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/Desbqt_n0qC) |
+| 2026-10-19 21:39:24 | **196** | 16 | 3 | 0 | 皆さんおはようございまーす！ 挨拶文化大好きになりました♪ 何もないのももったい... | [投稿リンク](https://www.threads.com/@shadowlog_official/post/DesPmO7k6u-) |
 
 ---
 

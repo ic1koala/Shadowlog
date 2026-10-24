@@ -172,9 +172,26 @@ export async function processQueue(): Promise<{ processedCount: number; results:
   for (const item of queue) {
     const itemScheduledMs = new Date(item.scheduledAt).getTime();
     if (item.status === "pending" && itemScheduledMs <= nowMs) {
+      let resolvedReplyToId = item.replyToId;
+      if (resolvedReplyToId) {
+        const parentItem = queue.find((q) => q.id === resolvedReplyToId);
+        if (parentItem) {
+          if (parentItem.status === "published" && parentItem.postId) {
+            resolvedReplyToId = parentItem.postId;
+          } else if (parentItem.status === "pending") {
+            console.log(`[Threads Publisher] Parent item ${resolvedReplyToId} is still pending. Deferring ${item.id}.`);
+            continue;
+          } else if (parentItem.status === "failed" || parentItem.status === "skipped") {
+            item.status = "skipped";
+            item.error = `Parent item ${resolvedReplyToId} was ${parentItem.status}`;
+            continue;
+          }
+        }
+      }
+
       processedCount++;
       console.log(`[Threads Publisher] Publishing queue item ${item.id} scheduled for ${item.scheduledAt}...`);
-      const result = await postToThreads(item.text, item.imageUrl, item.replyToId, item.pollOptions);
+      const result = await postToThreads(item.text, item.imageUrl, resolvedReplyToId, item.pollOptions);
 
       if (result.success) {
         item.status = "published";
