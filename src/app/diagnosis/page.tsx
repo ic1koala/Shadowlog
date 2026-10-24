@@ -6,21 +6,22 @@ import { ToeicDiagnosisClient } from "@/components/features/assessment/ToeicDiag
 import { VipRemainingBadge } from "@/components/features/waitlist/VipRemainingBadge";
 
 export const metadata: Metadata = {
-  title: "【無料 1min】AI英語発話スピード（WPM）＆本格TOEICスコア診断テスト（全5問） | ShadowLog",
+  title: "【無料 1min】AI英語発話スピード（WPM）＆TOEIC実力レンジ診断テスト（全5問） | ShadowLog",
   description:
-    "登録不要・全5問（約1分 / 1min）英語を声に出すだけで、Whisper AIがあなたの実効WPM・音の連結（リンキング）再現力・高精度TOEIC換算スコア（300〜990点）を厳密診断！",
+    "登録不要・全5問（約1分）英語を声に出すだけで、Whisper AIがあなたの実効WPM・音の連結（リンキング）再現力・TOEIC推定実力レンジ（例: 650〜740点レベル）を算出！",
   keywords: [
     "英語 WPM 測定",
     "TOEIC スコア 診断 無料",
+    "TOEIC 実力 レンジ",
     "英語 発音 テスト AI",
     "シャドーイング レベル診断",
     "英語 スピーキング 速度 テスト",
     "ShadowLog 診断",
   ],
   openGraph: {
-    title: "【無料 1min】AI英語発話スピード（WPM）＆本格TOEICスコア診断（全5問）",
+    title: "【無料 1min】AI英語発話スピード（WPM）＆TOEIC実力レンジ診断（全5問）",
     description:
-      "全5問（約1分 / 1min）声に出すだけで、あなたの有効WPMと推定TOEICスコア・弱点リンキングをAIが厳密カルテ化！",
+      "全5問（約1分）声に出すだけで、あなたの有効WPMとTOEIC推定実力帯・弱点リンキングをAIが客観的に可視化！",
     type: "website",
     url: "https://shadowlog.vercel.app/diagnosis",
     images: [
@@ -28,14 +29,14 @@ export const metadata: Metadata = {
         url: "https://shadowlog.vercel.app/og-image.png",
         width: 1200,
         height: 630,
-        alt: "【無料 1min】AI英語発話スピード（WPM）＆本格TOEICスコア診断 | ShadowLog",
+        alt: "【無料 1min】AI英語発話スピード（WPM）＆TOEIC実力レンジ診断 | ShadowLog",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "【無料 1min】AI英語発話スピード（WPM）＆本格TOEICスコア診断（全5問）",
-    description: "全5問声を吹き込むだけで、WPMや連結音の弱点、厳密TOEICスコアをAIが即時判定！",
+    title: "【無料 1min】AI英語発話スピード（WPM）＆TOEIC実力レンジ診断（全5問）",
+    description: "全5問声を吹き込むだけで、WPMや連結音の弱点、TOEIC推定実力レンジをAIが即時判定！",
     images: ["https://shadowlog.vercel.app/og-image.png"],
   },
 };
@@ -44,7 +45,7 @@ export default function PublicDiagnosisPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: "ShadowLog AI英語WPM＆推定TOEICスコア診断ツール",
+    name: "ShadowLog AI英語WPM＆推定TOEIC実力レンジ診断ツール",
     applicationCategory: "EducationalApplication",
     operatingSystem: "All",
     offers: {
@@ -53,7 +54,7 @@ export default function PublicDiagnosisPage() {
       priceCurrency: "JPY",
     },
     description:
-      "全5問の英文を発声するだけで、Whisper AIが有効WPM・リンキング再現率・厳密TOEICスコアを無料診断するWebツール。",
+      "全5問の英文を発声するだけで、Whisper AIが有効WPM・リンキング再現率・TOEIC推定実力レンジを無料診断するWebツール。",
   };
 
   return (
@@ -96,12 +97,12 @@ export default function PublicDiagnosisPage() {
         <VipRemainingBadge variant="compact" />
 
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground leading-tight pt-1">
-          全5問で本格判定！AI英語スピード＆TOEIC実力診断
+          全5問で判定！AI英語スピード＆TOEIC実力レンジ診断
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
-          登録不要・わずか1min（約1分 / 全5問）完結。あなたの声をWhisper AIが1単語単位で厳密解析し、
-          <strong className="text-foreground">「有効WPM」「リンキング再現率」「高精度TOEICスコア」</strong>
-          を即時算出します。
+          登録不要・わずか1分（全5問）完結。あなたの声をWhisper AIが1単語単位で解析し、
+          <strong className="text-foreground">「有効WPM」「リンキング再現率」「TOEIC推定実力レンジ」</strong>
+          を客観的に可視化します。
         </p>
       </section>
 

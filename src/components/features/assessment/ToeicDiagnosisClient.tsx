@@ -318,7 +318,7 @@ export function ToeicDiagnosisClient({
   // ── Result Screen (5問完了後の高精度TOEIC診断カルテ) ──
   if (isComplete && result) {
     const shareText = encodeURIComponent(
-      `🎙️ AI英語発話診断（全5問）の結果、私の推定TOEICスコアは【${result.estimatedToeicScore}点相当】（実効速度: ${result.effectiveWPM} WPM / CEFR ${result.recommendedLevel}・上位${result.percentileTop}%）でした！\n\nたった1分で自分の英語スピードと弱点リンキングが測れます👇\nhttps://shadowlog.vercel.app/diagnosis\n#ShadowLog #英語学習 #TOEIC #シャドーイング`
+      `🎙️ AI英語発話診断（全5問）の結果、私の推定TOEIC実力レンジは【${result.toeicRangeDisplay}】（実効速度: ${result.effectiveWPM} WPM / CEFR ${result.recommendedLevel}・上位${result.percentileTop}%）でした！\n\nたった1分で自分の英語スピードと弱点リンキングが測れます👇\nhttps://shadowlog.vercel.app/diagnosis\n#ShadowLog #英語学習 #TOEIC #シャドーイング`
     );
     const threadsShareUrl = `https://www.threads.net/intent/post?text=${shareText}`;
     const xShareUrl = `https://twitter.com/intent/tweet?text=${shareText}`;
@@ -336,17 +336,14 @@ export function ToeicDiagnosisClient({
 
           <div className="space-y-1">
             <p className="text-xs sm:text-sm font-bold text-muted-foreground">
-              あなたの発話速度・リンキング再現力からの推定スコア
+              発話スピード・音の再現力から測るリスニング基礎体力＆実力帯
             </p>
             <div className="flex items-baseline justify-center gap-2 pt-1">
               <span className="text-xs sm:text-sm font-bold text-primary">
-                推定TOEIC
+                推定実力帯
               </span>
-              <span className="text-5xl sm:text-6xl font-black tracking-tight text-foreground">
-                {result.estimatedToeicScore}
-              </span>
-              <span className="text-base sm:text-lg font-bold text-muted-foreground">
-                点相当
+              <span className="text-4xl sm:text-5xl font-black tracking-tight text-foreground">
+                {result.toeicRangeDisplay}
               </span>
             </div>
           </div>
@@ -354,7 +351,7 @@ export function ToeicDiagnosisClient({
           {/* Sub Badges: Listening Score, CEFR Level, Percentile */}
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             <span className="px-3 py-1 rounded-xl text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20">
-              リスニング換算: {result.estimatedListeningScore} / 495点
+              リスニング基礎力: {result.listeningRangeDisplay}
             </span>
             <span
               className={`px-3 py-1 rounded-xl text-xs font-bold border ${result.levelInfo.bg} ${result.levelInfo.color}`}
@@ -364,6 +361,11 @@ export function ToeicDiagnosisClient({
             <span className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               上位 {result.percentileTop}%
             </span>
+          </div>
+
+          {/* Integrity Note */}
+          <div className="p-3 rounded-xl bg-muted/40 border border-border/60 text-[11px] text-muted-foreground text-center leading-relaxed">
+            💡 本診断は5問の発話音声から「英語の聴解・発話速度（WPM）」および「機能語・リンキング再現力」を推計した実力帯です。マークシート読解力（リーディング等）を直接代替するものではありません。
           </div>
 
           {/* Effective WPM vs TOEIC Part 3 Standard (150 WPM) */}

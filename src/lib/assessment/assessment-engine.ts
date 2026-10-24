@@ -388,6 +388,12 @@ export interface AssessmentResult {
   // Enriched TOEIC Diagnostic Metrics
   estimatedToeicScore: number; // 300 - 990 (5点刻み)
   estimatedListeningScore: number; // 150 - 495 (5点刻み)
+  toeicRangeMin: number; // スコア帯下限
+  toeicRangeMax: number; // スコア帯上限
+  toeicRangeDisplay: string; // e.g. "650〜740点レベル"
+  listeningRangeMin: number;
+  listeningRangeMax: number;
+  listeningRangeDisplay: string; // e.g. "340〜390点相当"
   effectiveWPM: number; // スピード × 正確性
   toeicNativeWpmGap: number; // TOEIC Part3標準 (150 WPM) までの差分
   percentileTop: number; // 上位何%か (1 - 99)
@@ -628,6 +634,12 @@ export function calculateAssessmentResult(
       overallWPMFollowRate: 0,
       estimatedToeicScore: 450,
       estimatedListeningScore: 240,
+      toeicRangeMin: 410,
+      toeicRangeMax: 490,
+      toeicRangeDisplay: "410〜490点レベル",
+      listeningRangeMin: 220,
+      listeningRangeMax: 260,
+      listeningRangeDisplay: "220〜260点相当",
       effectiveWPM: 0,
       toeicNativeWpmGap: 150,
       percentileTop: 65,
@@ -779,6 +791,15 @@ export function calculateAssessmentResult(
     Math.min(495, Math.round(rawListening / 5) * 5)
   );
 
+  // Score Range Calculation (to provide honest, statistically robust band rather than false point precision)
+  const toeicRangeMin = Math.max(300, Math.round((estimatedToeicScore - 45) / 10) * 10);
+  const toeicRangeMax = Math.min(990, Math.round((estimatedToeicScore + 45) / 10) * 10);
+  const toeicRangeDisplay = `${toeicRangeMin}〜${toeicRangeMax}点レベル`;
+
+  const listeningRangeMin = Math.max(150, Math.round((estimatedListeningScore - 25) / 5) * 5);
+  const listeningRangeMax = Math.min(495, Math.round((estimatedListeningScore + 25) / 5) * 5);
+  const listeningRangeDisplay = `${listeningRangeMin}〜${listeningRangeMax}点相当`;
+
   const toeicNativeWpmGap = Math.max(0, 150 - effectiveWPM);
 
   // Percentile calculation calibrated to official IIBC TOEIC score distribution
@@ -816,6 +837,12 @@ export function calculateAssessmentResult(
     overallWPMFollowRate,
     estimatedToeicScore,
     estimatedListeningScore,
+    toeicRangeMin,
+    toeicRangeMax,
+    toeicRangeDisplay,
+    listeningRangeMin,
+    listeningRangeMax,
+    listeningRangeDisplay,
     effectiveWPM,
     toeicNativeWpmGap,
     percentileTop,
