@@ -99,16 +99,22 @@ describe("Persona Feature & Prompt Integration", () => {
 
       // System Prompt checks
       expect(systemPrompt).toContain("USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE");
+      expect(systemPrompt).toContain("Hyper-Realism & Distinctive Originality Mandate");
       expect(systemPrompt).toContain("海外営業");
       expect(systemPrompt).toContain("半導体");
       expect(systemPrompt).toContain("海外パートナーとの契約交渉");
       expect(systemPrompt).toContain("納期交渉, 価格調整");
       expect(systemPrompt).toContain("executive");
+      expect(systemPrompt).toContain("Terminology Exception");
 
       // User Prompt checks
       expect(userPrompt).toContain("Target User Persona");
       expect(userPrompt).toContain("海外営業");
       expect(userPrompt).toContain("海外パートナーとの契約交渉");
+      expect(userPrompt).toContain("Hyper-Realistic Persona Immersion");
+      expect(userPrompt).toContain("Distinctive & Original");
+      // Seasonal timing should be omitted when persona is active to prevent dilution
+      expect(userPrompt).not.toContain("Seasonal Timing & Cycle");
     });
 
     it("does NOT inject persona when enabled is false", () => {

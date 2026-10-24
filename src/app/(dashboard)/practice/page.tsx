@@ -59,6 +59,11 @@ import {
   Send,
 } from "lucide-react";
 
+function getPersonaSignature(p: UserPersonaProfile | null | undefined): string {
+  if (!p || p.enabled === false) return "none";
+  return `${p.jobRole || ""}:${p.industryField || ""}:${p.targetScenario || ""}:${p.interestedTopics || ""}:${p.customTone || ""}`;
+}
+
 export default function PracticePage() {
   const [industry, setIndustry] = useState<Industry>("tech");
   const [level, setLevel] = useState<DifficultyLevel>("intermediate");
@@ -116,6 +121,7 @@ export default function PracticePage() {
     industry: Industry;
     level: DifficultyLevel;
     mode: PracticeMode;
+    personaSignature: string;
   } | null>(null);
   const seenSentenceIdsRef = useRef<Set<string>>(new Set());
   const prefetchRequestIdRef = useRef<number>(0);
@@ -137,6 +143,8 @@ export default function PracticePage() {
       } else {
         setActivePersona(null);
       }
+      // Invalidate prefetched cache on persona switch to avoid showing outdated sentences
+      prefetchedSentenceRef.current = null;
     };
     syncPersona();
 
@@ -230,19 +238,21 @@ export default function PracticePage() {
         seenSentenceIdsRef.current.add(currentId);
       }
 
+      const currentPlan = getTicketStatus().plan;
+      const personaToSend = isPersonaEligible(currentPlan) ? getPersonaProfile() : null;
+      const currentPersonaSig = getPersonaSignature(personaToSend);
+
       const existing = prefetchedSentenceRef.current;
       if (
         existing &&
         existing.industry === targetIndustry &&
         existing.level === targetLevel &&
         existing.mode === targetMode &&
+        existing.personaSignature === currentPersonaSig &&
         existing.sentence.id !== currentId
       ) {
         return;
       }
-
-      const currentPlan = getTicketStatus().plan;
-      const personaToSend = isPersonaEligible(currentPlan) ? getPersonaProfile() : null;
 
       const pId = ++prefetchRequestIdRef.current;
       try {
@@ -268,6 +278,7 @@ export default function PracticePage() {
             industry: targetIndustry,
             level: targetLevel,
             mode: targetMode,
+            personaSignature: currentPersonaSig,
           };
         }
       } catch {
@@ -298,6 +309,7 @@ export default function PracticePage() {
       setTicketStatus(currentStatus);
 
       const personaToSend = isPersonaEligible(currentStatus.plan) ? getPersonaProfile() : null;
+      const currentPersonaSig = getPersonaSignature(personaToSend);
       if (isPersonaEligible(currentStatus.plan)) {
         setActivePersona(personaToSend);
       } else {
@@ -329,14 +341,15 @@ export default function PracticePage() {
       setAzureAssessment(undefined);
       setCustomUpsellNotice(null);
 
-      // 0.0s instant swap if background-prefetched sentence is ready for the same conditions (and not a custom word generation)
+      // 0.0s instant swap if background-prefetched sentence is ready for the same conditions and persona (and not a custom word generation)
       const prefetched = prefetchedSentenceRef.current;
       if (
         !isCustomGeneration &&
         prefetched &&
         prefetched.industry === targetIndustry &&
         prefetched.level === targetLevel &&
-        prefetched.mode === targetMode
+        prefetched.mode === targetMode &&
+        prefetched.personaSignature === currentPersonaSig
       ) {
         prefetchedSentenceRef.current = null;
         seenSentenceIdsRef.current.add(prefetched.sentence.id);

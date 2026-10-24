@@ -257,7 +257,10 @@ export function getSentenceGenerationPrompt(
   const isPersonaActive = Boolean(
     persona &&
     persona.enabled !== false &&
-    (persona.jobRole?.trim() || persona.industryField?.trim() || persona.targetScenario?.trim())
+    (persona.jobRole?.trim() ||
+      persona.industryField?.trim() ||
+      persona.targetScenario?.trim() ||
+      persona.interestedTopics?.trim())
   );
 
   const spec = TOEIC_LEVEL_SPECS[level];
@@ -314,16 +317,21 @@ ${
 ${
   isPersonaActive
     ? `
-USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE (CRITICAL):
+USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE (CRITICAL - HIGHEST PRIORITY):
 - Target Learner Profile:
   - Professional Role: ${persona!.jobRole || "Professional"}
   - Specialized Field/Industry: ${persona!.industryField || normInd}
   - Realistic Communication Scenario: ${persona!.targetScenario || "Workplace situation"}
   ${persona!.interestedTopics ? `- Specific Topics/Interests: ${persona!.interestedTopics}` : ""}
-  - Preferred Communication Tone: ${persona!.customTone || "natural professional"}
-- Realism Requirement: Tailor the phrase directly to someone working in this role (${persona!.jobRole}) and industry (${persona!.industryField}).
-- If terms in the persona are written in Japanese (e.g., "海外営業", "半導体", "商談・契約交渉"), translate and contextualize them into natural, idiomatic international business English.
-- The sentence must remain within the ${spec.name} vocabulary rules.`
+  - Preferred Communication Tone: ${persona!.customTone || "executive"}
+- Hyper-Realism & Distinctive Originality Mandate:
+  - You MUST write from the perspective of an active practitioner in this exact role (${persona!.jobRole}) and industry (${persona!.industryField}).
+  - STRICTLY FORBIDDEN: Do NOT generate bland, generic, textbook corporate clichés (e.g., BAN "We have a meeting today to discuss the project schedule", "Please check the attachment", "Let's review the quarterly targets").
+  - Instead, produce vivid, concrete, authentic spoken dialogue or statements that a professional in this field would genuinely utter in this scenario (${persona!.targetScenario}).
+  - Include specific real-world operational details (e.g., actual technical constraints, negotiation points, client dilemmas, performance metrics, regulatory considerations, or product deliverables relevant to this industry).
+  - Terminology Exception: Standard industry and domain terms (e.g., wafer yield, lead time, bottleneck, backlog, API latency, SLA, compliance, rollout, conversion rate, patent, due diligence) are actively encouraged when relevant to the persona, even if abstract.
+  - If terms in the persona are written in Japanese (e.g., "海外営業", "半導体", "商談・契約交渉"), translate and contextualize them into natural, idiomatic international business English.
+  - The sentence structure must conform to ${spec.name} guidelines while preserving intense practical authenticity.`
     : ""
 }
 
@@ -359,27 +367,45 @@ Return ONLY a valid JSON object with the following schema:
 }
 Do NOT include markdown fences, extra commentary, or additional fields.`;
 
-  const userPrompt = `Generate a unique shadowing practice sentence with the following specifications:
+  const userPrompt = isPersonaActive
+    ? `Generate an authentic, highly specialized shadowing practice sentence for this specific professional:
+- Target User Persona (PRIMARY DRIVER):
+  - Role: ${persona!.jobRole || "Professional"}
+  - Specialty/Industry: ${persona!.industryField || normInd}
+  - Target Scenario: ${topic ? topic : persona!.targetScenario || "Workplace communication"}
+  ${persona!.interestedTopics ? `- Focus Themes & Key Topics: ${persona!.interestedTopics}` : ""}
+  - Communication Tone: ${persona!.customTone || "executive"}
+- Difficulty Level: ${level} (${levelGuidelines[level]})
+- Variation Seed: ${randomSeed}${
+        hasCustomWords
+          ? `\n- Required Custom Words (translate to natural English if Japanese): ${customWordList}`
+          : hasWeakWords
+          ? `\n- Weak Words to reinforce: ${weakWordList}`
+          : ""
+      }
+
+Requirements:
+- Hyper-Realistic Persona Immersion: Embody someone in the role of "${persona!.jobRole || "Professional"}" in the "${persona!.industryField || normInd}" field during "${topic ? topic : persona!.targetScenario || "Workplace communication"}".
+- Distinctive & Original: Completely avoid bland corporate templates or generic textbook phrases. Introduce concrete, realistic operational context and domain-specific terminology that brings this workplace moment to life.
+- Level Calibration: Adhere to ${spec.name} (~${spec.toeicScore} points, CEFR ${spec.cefr}) grammar patterns while welcoming natural industry vocabulary.
+- Spoken Cadence: Ensure natural phrasing and rhythm that a real professional would speak out loud.${
+        hasCustomWords
+          ? `\n- Seamlessly weave [${customWordList}] into a natural 1-to-2 sentence flow within the target word count (${level === "beginner" ? "10-14 words" : level === "intermediate" ? "15-20 words" : "21-28 words"}).`
+          : ""
+      }`
+    : `Generate a unique shadowing practice sentence with the following specifications:
 - Industry/Domain: ${normInd}
-- Context/Situation: ${topic ? topic : isPersonaActive && persona!.targetScenario ? persona!.targetScenario : randomSituation}
+- Context/Situation: ${topic ? topic : randomSituation}
 - Seasonal Timing & Cycle (Optional - omit if unnatural): ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
 - Modern Trend Angle (Optional reference): ${seasonal.trendingTopic}
 - Difficulty Level: ${level} (${levelGuidelines[level]})
 - Variation Seed: ${randomSeed}${
-    isPersonaActive
-      ? `\n- Target User Persona:
-  - Role: ${persona!.jobRole || "Professional"}
-  - Specialty/Industry: ${persona!.industryField || normInd}
-  - Target Scenario: ${persona!.targetScenario || "Workplace communication"}
-  ${persona!.interestedTopics ? `- Focus Themes: ${persona!.interestedTopics}` : ""}`
-      : ""
-  }${
-    hasCustomWords
-      ? `\n- Required Custom Words (translate to natural English if Japanese): ${customWordList}`
-      : hasWeakWords
-      ? `\n- Weak Words to reinforce: ${weakWordList}`
-      : ""
-  }
+        hasCustomWords
+          ? `\n- Required Custom Words (translate to natural English if Japanese): ${customWordList}`
+          : hasWeakWords
+          ? `\n- Weak Words to reinforce: ${weakWordList}`
+          : ""
+      }
 
 Requirements:
 - Strictly adhere to ${spec.name} (~${spec.toeicScore} points, CEFR ${spec.cefr}):
@@ -389,10 +415,10 @@ Requirements:
 - Make the vocabulary, syntax, and sentence structure novel and distinct from typical textbook examples.
 - Only include a subtle seasonal or trend cue if it fits the core situation naturally; otherwise omit it completely.
 - Strictly avoid poetic seasonal clichés ("As we embrace the vibrant colors of autumn...") and abstract buzzwords ("work-life harmony", "digital wellness", "paradigm shift").${
-    hasCustomWords
-      ? `\n- Seamlessly weave [${customWordList}] into a natural 1-to-2 sentence flow within the target word count (${level === "beginner" ? "10-14 words" : level === "intermediate" ? "15-20 words" : "21-28 words"}).`
-      : ""
-  }
+        hasCustomWords
+          ? `\n- Seamlessly weave [${customWordList}] into a natural 1-to-2 sentence flow within the target word count (${level === "beginner" ? "10-14 words" : level === "intermediate" ? "15-20 words" : "21-28 words"}).`
+          : ""
+      }
 - Ensure authentic spoken cadence and rhythm that a real native speaker would say out loud.`;
 
   return { systemPrompt, userPrompt };
@@ -420,7 +446,10 @@ export function getPassageGenerationPrompt(
   const isPersonaActive = Boolean(
     persona &&
     persona.enabled !== false &&
-    (persona.jobRole?.trim() || persona.industryField?.trim() || persona.targetScenario?.trim())
+    (persona.jobRole?.trim() ||
+      persona.industryField?.trim() ||
+      persona.targetScenario?.trim() ||
+      persona.interestedTopics?.trim())
   );
 
   const personaIntro = isDaily
@@ -445,16 +474,20 @@ TOEIC Score & Vocabulary Ceiling Calibration (STRICT):
 ${
   isPersonaActive
     ? `
-USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE (CRITICAL):
+USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE (CRITICAL - HIGHEST PRIORITY):
 - Target Learner Profile:
   - Professional Role: ${persona!.jobRole || "Professional"}
   - Specialized Field/Industry: ${persona!.industryField || normInd}
   - Realistic Communication Scenario: ${persona!.targetScenario || "Workplace presentation or team discussion"}
   ${persona!.interestedTopics ? `- Specific Topics/Interests: ${persona!.interestedTopics}` : ""}
   - Preferred Communication Tone: ${persona!.customTone || "executive professional"}
-- Realism Requirement: Tailor the entire speech/presentation paragraph directly to someone in this role (${persona!.jobRole}) and industry (${persona!.industryField}).
-- If terms in the persona are written in Japanese (e.g., "海外営業", "半導体", "商談・契約交渉"), translate and contextualize them into natural, idiomatic international business English.
-- The entire passage must strictly conform to ${spec.name} vocabulary rules.`
+- Hyper-Realism & Distinctive Originality Mandate:
+  - You MUST craft this spoken passage from the perspective of an active, credible professional in this role (${persona!.jobRole}) and industry (${persona!.industryField}).
+  - STRICTLY FORBIDDEN: Do NOT write generic, textbook corporate speeches (e.g., BAN "Today I want to talk about teamwork and collaboration", "We achieved our goals last quarter").
+  - Instead, dive directly into concrete, authentic workplace substance: actual operational challenges, real project milestones, technical trade-offs, cross-functional dependencies, customer feedback, or strategic decisions.
+  - Terminology Exception: Domain-specific expressions and industry terminology (e.g., pipeline velocity, sprint backlog, SLA breach, latency spike, conversion funnel, clinical endpoints, supply chain bottlenecks) are highly encouraged and permitted to maximize professional authenticity.
+  - If terms in the persona are written in Japanese (e.g., "海外営業", "半導体", "商談・契約交渉"), translate and contextualize them into natural, idiomatic international business English.
+  - The entire passage must strictly conform to ${spec.name} vocabulary rules.`
     : ""
 }
 
@@ -478,22 +511,35 @@ Return ONLY a valid JSON object with the following schema:
 }
 Do NOT include markdown fences, extra commentary, or additional fields.`;
 
-  const userPrompt = `Generate an authentic spoken English passage with the following specifications:
+  const userPrompt = isPersonaActive
+    ? `Generate an authentic spoken English passage for this specific professional:
+- Target User Persona (PRIMARY DRIVER):
+  - Role: ${persona!.jobRole || "Professional"}
+  - Specialty/Industry: ${persona!.industryField || normInd}
+  - Target Scenario: ${topic ? topic : persona!.targetScenario || "Workplace presentation or team discussion"}
+  ${persona!.interestedTopics ? `- Focus Themes & Key Topics: ${persona!.interestedTopics}` : ""}
+  - Communication Tone: ${persona!.customTone || "executive professional"}
 - Industry/Domain: ${normInd}
-- Scenario/Topic: ${topic ? topic : isPersonaActive && persona!.targetScenario ? persona!.targetScenario : randomSituation}
+- Difficulty Level: ${level} (${spec.name}, ~${spec.toeicScore} pts)
+- Target Word Count: 60 to 90 words (3 to 5 clear, rhythmic sentences)
+- Variation Seed: ${randomSeed}
+
+Requirements & Vocabulary Calibration:
+- Hyper-Realistic Persona Immersion: Write as a credible ${persona!.jobRole || "Professional"} in ${persona!.industryField || normInd}. Deliver a substantive, realistic presentation or update on ${topic ? topic : persona!.targetScenario || "their core work"}.
+- Distinctive & Original: Completely avoid generic corporate platitudes. Use concrete operational context and natural domain terminology.
+- Strictly adhere to ${spec.name} (~${spec.toeicScore} pts):
+  - Vocabulary Limit: ${spec.wordCeiling}
+  - Prohibitions: ${spec.forbiddenRules}
+  - Structure: ${spec.structureRules}
+- Ensure natural spoken pauses and clear chunking for continuous shadowing.`
+    : `Generate an authentic spoken English passage with the following specifications:
+- Industry/Domain: ${normInd}
+- Scenario/Topic: ${topic ? topic : randomSituation}
 - Seasonal Timing & Cycle (Optional - omit if unnatural): ${seasonal.seasonLabel} (${seasonal.quarter}) - ${seasonal.seasonalTheme}
 - Modern Trend Angle (Optional reference): ${seasonal.trendingTopic}
 - Difficulty Level: ${level} (${spec.name}, ~${spec.toeicScore} pts)
 - Target Word Count: 60 to 90 words (3 to 5 clear, rhythmic sentences)
-- Variation Seed: ${randomSeed}${
-    isPersonaActive
-      ? `\n- Target User Persona:
-  - Role: ${persona!.jobRole || "Professional"}
-  - Specialty/Industry: ${persona!.industryField || normInd}
-  - Target Scenario: ${persona!.targetScenario || "Workplace communication"}
-  ${persona!.interestedTopics ? `- Focus Themes: ${persona!.interestedTopics}` : ""}`
-      : ""
-  }
+- Variation Seed: ${randomSeed}
 
 Requirements & Vocabulary Ceiling:
 - Strictly adhere to ${spec.name} (~${spec.toeicScore} pts):
