@@ -297,6 +297,55 @@ button, a, [role="button"] {
   }
 }
 
+/* App Launch Splash (Candidate #2 Optimized: Dead 0.5s trimmed) */
+@keyframes splashParticleConverge {
+  0% {
+    opacity: 1;
+    transform: translate(var(--start-x, 0px), var(--start-y, 0px)) scale(0.6);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(0px, 0px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0px, 0px) scale(0);
+  }
+}
+
+@keyframes splashConvergeFlash {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.4);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.6);
+  }
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+}
+
+@keyframes splashConvergeLogoMaterialize {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+    filter: brightness(2.2) blur(8px);
+  }
+  15% {
+    opacity: 0.35;
+    transform: scale(0.82);
+    filter: brightness(2.0) blur(6px);
+  }
+  45%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1) blur(0px);
+  }
+}
+
 /* Pattern 3: Mist & Blur Focus */
 @keyframes blurFocusIcon {
   0%, 8% {

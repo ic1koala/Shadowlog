@@ -41,20 +41,20 @@ describe("AppLaunchSplash (Candidate #2 Particle Convergence on App Launch)", ()
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("automatically dissolves out after 5 seconds (4s display + 1s dissolve) and calls onFinished", () => {
+  it("automatically dissolves out after 4.5 seconds (3.5s display + 1s dissolve) and calls onFinished", () => {
     const onFinished = vi.fn();
     render(<AppLaunchSplash onFinished={onFinished} />);
 
     expect(screen.getByRole("dialog")).toBeTruthy();
 
-    // Fast-forward 3900ms (still visible before dissolve)
+    // Fast-forward 3400ms (still visible before dissolve)
     act(() => {
-      vi.advanceTimersByTime(3900);
+      vi.advanceTimersByTime(3400);
     });
     expect(onFinished).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeTruthy();
 
-    // Fast-forward duration to 5100ms (4000ms + 1000ms dissolve completed)
+    // Fast-forward duration to 4600ms (3500ms + 1000ms dissolve completed)
     act(() => {
       vi.advanceTimersByTime(1200);
     });

@@ -24,6 +24,17 @@ export const metadata: Metadata = {
 
 const ARTICLES = [
   {
+    slug: "hybrid-shadowing-pro-features",
+    title: "【満員電車のスキマ特訓×夜の声出し】社会人の挫折を防ぐ新しい英語習慣と、論文・IR記事から「自分専用の教材」を作る方法",
+    description:
+      "仕事で英語を話す機会がない社会人が無理なく毎日英語を口に出すためのハイブリッド学習法。電車内Silent Drillと夜のAIシャドーイング、さらに論文・IR記事から実践英語を生み出す新機能を解説。",
+    date: "2026.10.24",
+    readTime: "5分",
+    category: "メソッド・新機能",
+    tags: ["習慣化", "スキマ特訓", "論文・IR解析", "Pro新機能"],
+    isFeatured: true,
+  },
+  {
     slug: "why-i-built-shadowlog",
     title: "社会人が英語を口に出す「きっかけ」を作るために。ShadowLogを開発した理由",
     description:
@@ -32,7 +43,7 @@ const ARTICLES = [
     readTime: "4分",
     category: "開発ストーリー",
     tags: ["開発秘話", "習慣化", "社会人英語"],
-    isFeatured: true,
+    isFeatured: false,
   },
   {
     slug: "wpm-guide",
@@ -43,7 +54,7 @@ const ARTICLES = [
     readTime: "5分",
     category: "ノウハウ",
     tags: ["チャンク", "WPM", "シャドーイング"],
-    isFeatured: true,
+    isFeatured: false,
   },
 ];
 

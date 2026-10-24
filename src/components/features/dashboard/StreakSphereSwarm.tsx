@@ -364,7 +364,7 @@ export function StreakSphereSwarm({
 
           let px = effectiveRadius * Math.cos(angle) * Math.cos(phi);
           let py = effectiveRadius * Math.sin(angle) * Math.cos(phi);
-          let pz =
+          const pz =
             effectiveRadius * Math.sin(phi) * 0.45 +
             Math.sin(clock * 1.8 + phase) * 2;
 

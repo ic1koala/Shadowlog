@@ -4,7 +4,6 @@ import {
   Sparkles,
   CheckCircle2,
   Zap,
-  TrendingUp,
   Coffee,
   ArrowRight,
 } from "lucide-react";
@@ -14,13 +13,13 @@ import { VipRemainingBadge } from "@/components/features/waitlist/VipRemainingBa
 import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const metadata: Metadata = {
-  title: "ShadowLog - 気軽な価格で、生活に英語を発する機会を。",
+  title: "ShadowLog - 電車内のスキマ特訓×夜の声出しで、あなたの仕事の英語が話せるAIシャドーイング",
   description:
-    "音声AIがあなたの発音・話速を1単語単位で可視化。1回3分から始めるシャドーイング習慣化アプリ「ShadowLog」の事前登録・先着20名VIPモニター受付中。",
+    "仕事で英語を話す機会がない社会人へ。満員電車では声出し不要のSilent Drill、夜はWhisper AI即時発音判定。職種・業界特化の実践英語が月額500円〜で身につく次世代シャドーイング習慣化アプリ「ShadowLog」。",
   openGraph: {
-    title: "ShadowLog - 気軽な価格で、生活に英語を発する機会を。",
+    title: "ShadowLog - 電車内のスキマ特訓×夜の声出しで、あなたの仕事の英語が話せるAIシャドーイング",
     description:
-      "音声AIがあなたの発音・話速を1単語単位で可視化。1回3分から始めるシャドーイング習慣化アプリ「ShadowLog」の事前登録受付中。",
+      "仕事で英語を話す機会がない社会人へ。朝の電車内スキマ特訓×夜のAI即時判定シャドーイング。職種特化フレーズが月額500円〜で身につく習慣化アプリ。",
   },
 };
 
@@ -71,14 +70,18 @@ export default function WaitlistPage() {
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground leading-[1.2] sm:leading-[1.15]">
-              気軽な価格で、<br className="hidden sm:inline" />
-              生活に英語を発する機会を。
+              仕事で英語を話す機会がない社会人へ。<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-primary to-emerald-400">
+                「電車内のスキマ特訓」×「夜の声出し」
+              </span><br className="hidden sm:inline" />
+              で、あなたの仕事の英語が自然と口から出る。
             </h1>
 
             {/* Subtitle */}
             <p className="max-w-2xl mx-auto text-sm sm:text-lg text-muted-foreground leading-relaxed">
-              音声AIがあなたの発音・話速を1単語単位で可視化。
-              1回3分からスキマ時間で無理なく続けられる、次世代シャドーイング習慣化アプリ「ShadowLog」
+              月額2万円のスクールに通わなくても大丈夫。
+              朝の満員電車では声出し不要の「Silent Drill（チャンク並べ替え）」、夜は自宅でWhisper AIによる「0秒即時発音判定」。
+              あなたの職種・業界に超特化した実践フレーズが、月額500円〜で身につく次世代シャドーイング習慣化アプリ「ShadowLog」
             </p>
 
             {/* VIP 20-User Cap Status & Diagnosis Handoff Banner */}
@@ -181,36 +184,36 @@ export default function WaitlistPage() {
               {/* Feature 1 */}
               <div className="p-6 rounded-3xl bg-card border border-border shadow-sm flex flex-col justify-between space-y-4">
                 <div className="space-y-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-indigo-500" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground">
-                    音声AIによるリアルタイム色分け判定
+                    あなたの職種・業界に超特化した実践英文
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    言えていない単語や読み飛ばしを1単語単位で瞬時に色分け可視化。自分の発音のクセや弱点がひと目でわかります。
+                    「半導体営業の価格交渉」「エンジニアのAPI障害対応」「製薬の治験説明」など、明日使える生々しい英語が自動生成。教科書の定型文ではない実践直結のフレーズで練習できます。
                   </p>
                 </div>
-                <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <span>単語ごとの正誤判定</span>
+                <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                  <span>🎯 ペルソナ完全特化生成</span>
                 </div>
               </div>
 
               {/* Feature 2 */}
               <div className="p-6 rounded-3xl bg-card border border-border shadow-sm flex flex-col justify-between space-y-4">
                 <div className="space-y-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground">
-                    話速（WPM）と発音スコアの見える化
+                    満員電車でも挫折ゼロ「朝夜ハイブリッド特訓」
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    1分間の発話単語数（WPM）と正解率を毎回グラフに記録。ネイティブスピードへの到達度が可視化され、日々の成長を実感できます。
+                    声が出せない電車内は親指タップの「Silent Drill（チャンク並べ替え）」で語順定着。夜は自宅でWhisper AI即時発音判定。忙しい社会人の継続率を最大化します。
                   </p>
                 </div>
-                <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-                  <span>WPM & スコア推移グラフ</span>
+                <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <span>🚆 電車内Silent Drill ＆ 夜の声出し</span>
                 </div>
               </div>
 
@@ -221,14 +224,14 @@ export default function WaitlistPage() {
                     <Coffee className="w-5 h-5" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground">
-                    続けやすい価格設定（月額500円〜）
+                    続けやすい月額500円〜（いつでも差額でProへ）
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    高額な人件費を最新AIで自動化。カフェ1杯分の手軽な価格設定により、お財布の負担なく毎日の習慣として継続できます。
+                    月2万円のスクール費用を最新AIで自動化。カフェ1杯分でペルソナ短文が使い放題。より深い長文スピーチや資料解析を試したい時は、いつでも日割り差額でProへアップグレード可能です。
                   </p>
                 </div>
                 <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <span>月額500円で短文使い放題</span>
+                  <span>安心のStripe日割り差額決済</span>
                 </div>
               </div>
             </div>
@@ -299,20 +302,24 @@ export default function WaitlistPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span><strong>職種・専門業界ペルソナ設定（実務英語）</strong></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span><strong>電車内スキマ特訓（Silent Drill）完全無制限</strong></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>苦手単語の自動抽出 ＆ パーソナライズ復習</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>学習アクティビティ・WPMトレンド永続保存</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <span>広告なし・ストレスフリーな学習環境</span>
-                    </li>
                   </ul>
                 </div>
                 <div className="pt-4 border-t border-border/50 text-xs text-center font-bold text-primary">
-                  カフェ1杯分で毎日使い放題
+                  カフェ1杯分で自分の仕事の英語を習慣化
                 </div>
               </div>
 
@@ -328,24 +335,28 @@ export default function WaitlistPage() {
                   <ul className="space-y-2 text-xs text-muted-foreground pt-2">
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                      <span>ベーシックの全機能使い放題</span>
+                      <span>ベーシックの全機能使い放題（ペルソナ＋スキマ特訓）</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                      <span>長文パッセージ（60〜120語）本格練習</span>
+                      <span>長文パッセージ（60〜90語）本格スピーチ練習</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                      <span>AIコーチによる発音・イントネーション指導</span>
+                      <span>AIコーチによる発音・イントネーション・息継ぎ指導</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                      <span>業界特化・長文スピーチモード</span>
+                      <span><strong>【先行アクセス】最高峰GPT-4o搭載・論文/IR記事解析（Doc Shadow）</strong></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span>いつでも差額日割りでアップグレード可能</span>
                     </li>
                   </ul>
                 </div>
                 <div className="pt-4 border-t border-border/50 text-xs text-center font-medium text-muted-foreground">
-                  本格的なスピーチ・プレゼン力へ
+                  会議やプレゼンで堂々と話す実戦力へ
                 </div>
               </div>
             </div>
