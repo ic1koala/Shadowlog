@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { cn } from "@/lib/utils";
 
 export interface StreakSphereSwarmProps {
   wordsCount: number;
@@ -134,14 +135,13 @@ export function StreakSphereSwarm({
 
     try {
       // 1. Scene & Camera
+      const initialWidth = container.clientWidth || 300;
+      const initialHeight = container.clientHeight || 300;
+      const initialAspect = initialWidth / initialHeight;
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(
-        55,
-        container.clientWidth / (container.clientHeight || 260),
-        0.1,
-        1000
-      );
-      camera.position.z = 180;
+      const camera = new THREE.PerspectiveCamera(55, initialAspect, 0.1, 1000);
+      // 縦型画面（アスペクト比 < 1）の場合、左右が見切れないようカメラ位置を後退
+      camera.position.z = initialAspect < 1 ? Math.min(320, 180 / Math.max(0.55, initialAspect)) : 180;
 
       // 2. Renderer
       renderer = new THREE.WebGLRenderer({
@@ -150,7 +150,7 @@ export function StreakSphereSwarm({
         alpha: true,
         powerPreference: "high-performance",
       });
-      renderer.setSize(container.clientWidth, container.clientHeight || 260);
+      renderer.setSize(initialWidth, initialHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
       // 3. Textures
@@ -255,8 +255,13 @@ export function StreakSphereSwarm({
       const handleResize = () => {
         if (!container || !renderer) return;
         const width = container.clientWidth;
-        const height = container.clientHeight || 260;
+        const height = container.clientHeight || 300;
         camera.aspect = width / height;
+        if (camera.aspect < 1) {
+          camera.position.z = Math.min(320, 180 / Math.max(0.55, camera.aspect));
+        } else {
+          camera.position.z = 180;
+        }
         camera.updateProjectionMatrix();
         renderer.setSize(width, height);
       };
@@ -432,7 +437,10 @@ export function StreakSphereSwarm({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-[220px] sm:h-[260px] rounded-2xl overflow-hidden bg-gradient-to-b from-[#080d1a] to-[#04060a] border border-slate-800/80 shadow-inner flex items-center justify-center ${className}`}
+      className={cn(
+        "relative w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-[#080d1a] to-[#04060a] border border-slate-800/80 shadow-inner flex items-center justify-center",
+        className
+      )}
     >
       <canvas ref={canvasRef} className="w-full h-full block outline-none cursor-grab active:cursor-grabbing" />
     </div>
