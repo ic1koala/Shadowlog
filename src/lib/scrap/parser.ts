@@ -101,7 +101,7 @@ export function isSafeExternalUrl(url: URL): boolean {
   // Disallow private IPv4 ranges (10.x, 192.168.x, 172.16-31.x, 169.254.x [cloud metadata])
   const ipv4Match = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (ipv4Match) {
-    const [_, a, b] = ipv4Match.map(Number);
+    const [, a, b] = ipv4Match.map(Number);
     if (a === 10) return false;
     if (a === 127) return false;
     if (a === 169 && b === 254) return false;

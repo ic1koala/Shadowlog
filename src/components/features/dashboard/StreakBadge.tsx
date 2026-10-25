@@ -11,7 +11,6 @@ interface StreakBadgeProps {
   variant?: "default" | "compact";
   totalWords?: number;
   isPracticedToday?: boolean;
-  isAdmin?: boolean;
 }
 
 export function StreakBadge({

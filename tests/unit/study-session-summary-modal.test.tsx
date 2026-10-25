@@ -158,4 +158,29 @@ describe("StudySessionSummaryModal Component", () => {
       "noopener,noreferrer"
     );
   });
+
+  it("renders StreakSphereSwarm and opens fullscreen sphere modal on click", () => {
+    render(
+      <StudySessionSummaryModal
+        isOpen={true}
+        onClose={vi.fn()}
+        elapsedSeconds={180}
+        streakDays={14}
+        totalWords={3450}
+      />
+    );
+
+    expect(screen.getByText("ストリークスフィア成長中")).toBeDefined();
+    expect(screen.getByText("3,450")).toBeDefined();
+
+    const fullscreenBtn = screen.getByLabelText("スフィア全画面表示");
+    fireEvent.click(fullscreenBtn);
+
+    expect(screen.getByRole("dialog", { name: "ストリークスフィア全画面表示" })).toBeDefined();
+
+    const closeFullscreenBtn = screen.getByLabelText("全画面表示を閉じる");
+    fireEvent.click(closeFullscreenBtn);
+
+    expect(screen.queryByRole("dialog", { name: "ストリークスフィア全画面表示" })).toBeNull();
+  });
 });

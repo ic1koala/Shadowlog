@@ -1532,13 +1532,19 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       )}
 
       {/* Study Session Summary Modal */}
-      <StudySessionSummaryModal
-        isOpen={showFinishModal}
-        onClose={() => setShowFinishModal(false)}
-        elapsedSeconds={Math.max(60, Math.round((Date.now() - sessionStartTimeRef.current) / 1000))}
-        streakDays={calculateUserStats(loadAllSessions()).currentStreak}
-        lastDiffResult={diffResult}
-      />
+      {(() => {
+        const currentStats = calculateUserStats(loadAllSessions());
+        return (
+          <StudySessionSummaryModal
+            isOpen={showFinishModal}
+            onClose={() => setShowFinishModal(false)}
+            elapsedSeconds={Math.max(60, Math.round((Date.now() - sessionStartTimeRef.current) / 1000))}
+            streakDays={currentStats.currentStreak}
+            totalWords={currentStats.totalWords}
+            lastDiffResult={diffResult}
+          />
+        );
+      })()}
 
       {/* Interactive Onboarding Tour (Admin Test Mode) */}
       <OnboardingTourModal
