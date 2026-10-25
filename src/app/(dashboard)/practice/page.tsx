@@ -42,6 +42,10 @@ import {
   getPersonaProfile,
   UserPersonaProfile,
 } from "@/lib/storage/persona-store";
+import {
+  getActiveScrapSource,
+  ScrapSource,
+} from "@/lib/storage/scrap-store";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
 import { StudySessionSummaryModal } from "@/components/features/practice/StudySessionSummaryModal";
 import { OnboardingTourModal } from "@/components/features/practice/OnboardingTourModal";
@@ -514,6 +518,49 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       const indParam = urlParams.get("industry");
       const lvlParam = urlParams.get("level") as DifficultyLevel;
       const modeParam = urlParams.get("mode") as PracticeMode;
+      const sourceParam = urlParams.get("source");
+
+      // Check if user clicked practice from a Scrap source
+      if (sourceParam === "scrap") {
+        const activeScrap = getActiveScrapSource();
+        if (activeScrap) {
+          setPracticeMode("passage");
+          setIsLoadingSentence(true);
+          const scrapId = `scrap-${activeScrap.id}`;
+          seenSentenceIdsRef.current.add(scrapId);
+
+          void (async () => {
+            let audioBase64: string | undefined;
+            try {
+              const ttsRes = await fetch("/api/tts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: activeScrap.extractedPassage, level: "intermediate" }),
+              });
+              if (ttsRes.ok) {
+                const ttsData = (await ttsRes.json()) as { audioBase64?: string };
+                if (ttsData.audioBase64) {
+                  audioBase64 = ttsData.audioBase64;
+                }
+              }
+            } catch {}
+
+            const scrapSentence: SentenceResponse = {
+              id: scrapId,
+              english: activeScrap.extractedPassage,
+              japanese: activeScrap.japaneseTranslation || activeScrap.summary || "",
+              audioBase64,
+              wordCount: activeScrap.extractedPassage.trim().split(/\s+/).length,
+              industry: "business",
+              level: "intermediate",
+              mode: "passage",
+            };
+            setSentence(scrapSentence);
+            setIsLoadingSentence(false);
+          })();
+          return;
+        }
+      }
 
       if (retryText) {
         const ind = normalizeIndustry(indParam);
@@ -1111,6 +1158,15 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold text-[11px] sm:text-xs transition"
                     >
                       <span>✨ カスタム設定</span>
+                    </Link>
+                  )}
+
+                  {practiceMode === "passage" && (
+                    <Link
+                      href="/settings?section=learning#section-doc-shadow"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] sm:text-xs transition"
+                    >
+                      <span>📑 スクラップ管理</span>
                     </Link>
                   )}
 

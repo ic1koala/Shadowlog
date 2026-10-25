@@ -55,6 +55,7 @@ import { PlanComparisonSection } from "@/components/features/settings/PlanCompar
 import { AnnouncementHistorySection } from "@/components/features/announcements/AnnouncementHistorySection";
 import { ReminderSettingsSection } from "@/components/features/settings/ReminderSettingsSection";
 import { CustomWordsSection } from "@/components/features/settings/CustomWordsSection";
+import { DocShadowSection } from "@/components/features/settings/DocShadowSection";
 import { AppFeatureGuide } from "@/components/features/settings/AppFeatureGuide";
 import { PersonaSettingsSection } from "@/components/features/settings/PersonaSettingsSection";
 import { isPersonaEligible } from "@/lib/storage/persona-store";
@@ -1098,6 +1099,16 @@ export default function SettingsPage() {
                   industry={industry}
                   plan={ticketStatus?.plan || "free"}
                   isLoggedIn={isLoggedIn}
+                />
+              </div>
+
+              {/* Doc Shadow (My Scrap) Section */}
+              <div className="pt-2 border-t border-border/60">
+                <DocShadowSection
+                  plan={ticketStatus?.plan || "free"}
+                  onSelectScrapPassage={() => {
+                    router.push("/practice?mode=passage&source=scrap");
+                  }}
                 />
               </div>
 
