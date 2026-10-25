@@ -459,14 +459,18 @@
     "id": "queue_20261025_night_parent",
     "text": "シャドーイングのスクールや添削サービス、効果はめちゃくちゃ高いんだけど「月額2万円」はさすがに財布に厳しすぎる…って悩み、英語学習仲間から本当によく聞きます。\n\n英語学習で一番大事なのは「高額なサービス」よりも「毎日1分でも無理なく続けられる仕組み」ですよね。\nみんなどの教材やアプリで継続してますか？\n\n#英語学習 #社会人の勉強垢 #シャドーイング",
     "scheduledAt": "2026-10-25T19:00:00+09:00",
-    "status": "pending"
+    "status": "published",
+    "publishedAt": "2026-10-25T10:47:31.171Z",
+    "postId": "18108880982210105"
   },
   {
     "id": "queue_20261025_night_tree",
     "text": "まさに自分自身が「月2万は払えないけど、毎日のAI発音・WPMフィードバックが欲しい！」と思って個人開発したのが「ShadowLog」です。\n\n30秒の無料AIスコア判定もできるので、夜の学習の現在地チェックにぜひ覗いてみてください👇\nhttps://shadowlog.vercel.app/diagnosis",
     "replyToId": "queue_20261025_night_parent",
     "scheduledAt": "2026-10-25T19:02:00+09:00",
-    "status": "pending"
+    "status": "published",
+    "publishedAt": "2026-10-25T10:47:41.225Z",
+    "postId": "18079419989395450"
   },
   {
     "id": "queue_20261026_morning_parent",
