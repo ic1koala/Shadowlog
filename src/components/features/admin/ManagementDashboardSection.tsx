@@ -7,15 +7,18 @@ import {
   Calculator,
   Sparkles,
   Users,
+  TrendingUp,
 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 
 interface ManagementDashboardSectionProps {
   onOpenCustomersTab?: () => void;
+  onOpenThreadsTab?: () => void;
 }
 
 export function ManagementDashboardSection({
   onOpenCustomersTab,
+  onOpenThreadsTab,
 }: ManagementDashboardSectionProps) {
   const [key, setKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,11 +33,18 @@ export function ManagementDashboardSection({
         } else {
           window.location.href = "/admin/customers";
         }
+      } else if (event.data && event.data.type === "SHADOWLOG_OPEN_THREADS") {
+        if (onOpenThreadsTab) {
+          onOpenThreadsTab();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          window.location.href = "/admin/customers?tab=threads";
+        }
       }
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [onOpenCustomersTab]);
+  }, [onOpenCustomersTab, onOpenThreadsTab]);
 
   const handleRefresh = () => {
     setIsLoading(true);
@@ -76,6 +86,20 @@ export function ManagementDashboardSection({
             >
               <Users className="w-3.5 h-3.5" />
               <span>顧客管理タブへ</span>
+            </button>
+          )}
+
+          {onOpenThreadsTab && (
+            <button
+              type="button"
+              onClick={() => {
+                onOpenThreadsTab();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20 transition shadow-xs cursor-pointer"
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Threads投稿分析へ</span>
             </button>
           )}
 

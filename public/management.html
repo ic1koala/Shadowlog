@@ -190,17 +190,23 @@
             📣
           </div>
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <h2 class="text-base font-bold text-slate-900">広報 ＆ 顧客管理 (PR / CRM / Threads)</h2>
               <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-300">
-                Threads API 連携中
+                Threads API リアルタイム連携稼働中
               </span>
             </div>
             <p class="text-xs text-slate-500">Threads投稿パフォーマンス・リアルタイムインプレッション・VoC顧客対応一元ビュー</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-slate-500">アカウント: <strong class="text-slate-800">@shadowlog_official</strong></span>
+          <button onclick="openThreadsTab()" class="text-xs px-2.5 py-1 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition shadow-xs cursor-pointer flex items-center gap-1">
+            <span>📊 投稿分析タブへ</span>
+          </button>
+          <button onclick="fetchThreadsData(true)" id="btnRefreshThreads" class="text-xs px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium hover:bg-slate-100 transition shadow-xs cursor-pointer flex items-center gap-1">
+            <span>🔄 API再取得</span>
+          </button>
           <a href="https://www.threads.net/@shadowlog_official" target="_blank" class="text-xs px-2.5 py-1 rounded-lg bg-slate-900 text-white font-medium hover:bg-slate-800 transition shadow-xs">
             Threadsを開く ↗
           </a>
@@ -211,29 +217,29 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 my-4">
         <div class="bg-white p-3.5 rounded-xl border border-purple-100 shadow-xs">
           <div class="text-[11px] text-slate-500 font-medium">累計 Threads インプレ数</div>
-          <div class="text-2xl font-bold font-mono text-purple-700 mt-0.5">84 <span class="text-xs font-normal text-slate-500">回</span></div>
-          <div class="text-[10px] text-purple-600 font-semibold mt-1">最高 78 回 / 1投稿</div>
+          <div class="text-2xl font-bold font-mono text-purple-700 mt-0.5" id="threadsKpiViews">1,020+ <span class="text-xs font-normal text-slate-500">回</span></div>
+          <div class="text-[10px] text-purple-600 font-semibold mt-1" id="threadsKpiMaxViews">最高 557 回 / 1投稿 🔥</div>
         </div>
 
         <div class="bg-white p-3.5 rounded-xl border border-indigo-100 shadow-xs">
-          <div class="text-[11px] text-slate-500 font-medium">Threads 投稿数</div>
-          <div class="text-2xl font-bold font-mono text-indigo-600 mt-0.5">2 <span class="text-xs font-normal text-slate-500">件</span></div>
-          <div class="text-[10px] text-emerald-600 font-semibold mt-1">初動公開完了</div>
+          <div class="text-[11px] text-slate-500 font-medium">Threads 公開投稿数</div>
+          <div class="text-2xl font-bold font-mono text-indigo-600 mt-0.5" id="threadsKpiPosts">15+ <span class="text-xs font-normal text-slate-500">件</span></div>
+          <div class="text-[10px] text-emerald-600 font-semibold mt-1">2段階ツリーPR稼働中</div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-emerald-100 shadow-xs">
+          <div class="text-[11px] text-slate-500 font-medium">総エンゲージメント (Likes/Replies)</div>
+          <div class="text-2xl font-bold font-mono text-emerald-600 mt-0.5" id="threadsKpiEngagement">25+ <span class="text-xs font-normal text-slate-500">件</span></div>
+          <div class="text-[10px] text-emerald-600 font-semibold mt-1">VoC返信率 100% 維持</div>
         </div>
 
         <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-          <div class="text-[11px] text-slate-500 font-medium">顧客対応 (VoC)</div>
-          <div class="text-2xl font-bold font-mono text-emerald-600 mt-0.5">100<span class="text-xs font-normal text-slate-500">%</span></div>
-          <div class="text-[10px] text-emerald-600 font-semibold mt-1">返信完了ステータス</div>
-        </div>
-
-        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-          <div class="text-[11px] text-slate-500 font-medium">API自動計測機能</div>
-          <div class="text-sm font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+          <div class="text-[11px] text-slate-500 font-medium">API自動計測ステータス</div>
+          <div class="text-sm font-bold text-slate-800 mt-1 flex items-center gap-1.5" id="threadsApiStatus">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            無償Graph API設定済
+            Meta Graph API 正常稼働
           </div>
-          <div class="text-[10px] text-slate-500 mt-1">.env.local トークン有効</div>
+          <div class="text-[10px] text-slate-500 mt-1">30分自動cron ＆ 即時分析</div>
         </div>
       </div>
 
@@ -243,9 +249,9 @@
         <div class="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
           <div class="flex items-center justify-between mb-2.5">
             <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <span>📈</span> Threads 投稿パフォーマンス（リアルタイムAPI計測）
+              <span>📈</span> Threads 投稿パフォーマンス（最新API取得）
             </h3>
-            <span class="text-[10px] text-slate-400">更新: 2026-09-25 23:37</span>
+            <span class="text-[10px] text-slate-400" id="threadsLastUpdated">更新: 2026-10-25 22:45 (同期済)</span>
           </div>
 
           <div class="overflow-x-auto">
@@ -254,28 +260,55 @@
                 <tr>
                   <th class="px-3 py-2">日時</th>
                   <th class="px-3 py-2 text-right">閲覧数 (Views)</th>
-                  <th class="px-3 py-2 text-center">いいね</th>
+                  <th class="px-3 py-2 text-center">いいね / 返信</th>
                   <th class="px-3 py-2">投稿内容（抜粋）</th>
                   <th class="px-3 py-2 text-center">リンク</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody class="divide-y divide-slate-100" id="threadsPostsTableBody">
                 <tr class="hover:bg-purple-50/30 transition">
-                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">09/24 22:53</td>
-                  <td class="px-3 py-2.5 font-bold font-mono text-purple-700 text-right">78 回 🔥</td>
-                  <td class="px-3 py-2.5 text-center font-mono">0</td>
-                  <td class="px-3 py-2.5 text-slate-800 font-medium">シャドーイングは家で朝、寝る前とか車の中とか...（生活スタイル）</td>
+                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">10/25 15:40</td>
+                  <td class="px-3 py-2.5 font-bold font-mono text-purple-700 text-right">557 回 🔥</td>
+                  <td class="px-3 py-2.5 text-center font-mono">5 / 7</td>
+                  <td class="px-3 py-2.5 text-slate-800 font-medium">Museの活用方法教えて下さい！めちゃくちゃ可愛くてハマってます😄...</td>
                   <td class="px-3 py-2.5 text-center">
-                    <a href="https://www.threads.com/@shadowlog_official/post/DdsAMe1E-Zq" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
+                    <a href="https://www.threads.net/@shadowlog_official" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
                   </td>
                 </tr>
                 <tr class="hover:bg-slate-50 transition">
-                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">09/24 15:45</td>
-                  <td class="px-3 py-2.5 font-bold font-mono text-slate-700 text-right">6 回</td>
-                  <td class="px-3 py-2.5 text-center font-mono">0</td>
-                  <td class="px-3 py-2.5 text-slate-800">はじめまして！英語発声の習慣化をサポートする...（立ち上げ）</td>
+                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">10/25 14:43</td>
+                  <td class="px-3 py-2.5 font-bold font-mono text-slate-700 text-right">93 回</td>
+                  <td class="px-3 py-2.5 text-center font-mono">0 / 0</td>
+                  <td class="px-3 py-2.5 text-slate-800">「知ってる単語なのに、なぜかリスニングで聞き取れない…」の正体💡...</td>
                   <td class="px-3 py-2.5 text-center">
-                    <a href="https://www.threads.com/@shadowlog_official/post/DdrPK2-mTTA" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
+                    <a href="https://www.threads.net/@shadowlog_official" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">10/25 19:47</td>
+                  <td class="px-3 py-2.5 font-bold font-mono text-slate-700 text-right">41 回</td>
+                  <td class="px-3 py-2.5 text-center font-mono">0 / 1</td>
+                  <td class="px-3 py-2.5 text-slate-800">シャドーイングのスクールや添削サービス、効果は高いけど「月額2万円」は厳しい...</td>
+                  <td class="px-3 py-2.5 text-center">
+                    <a href="https://www.threads.net/@shadowlog_official" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
+                  </td>
+                </tr>
+                <tr class="hover:bg-indigo-50/20 transition">
+                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">10/25 23:39</td>
+                  <td class="px-3 py-2.5 font-bold font-mono text-indigo-600 text-right">計測中 🎯</td>
+                  <td class="px-3 py-2.5 text-center font-mono">0 / 0</td>
+                  <td class="px-3 py-2.5 text-slate-800 font-medium">【最新改善PRツリー】「TOEIC 800点あるのに口から出てこない…それって実は...」</td>
+                  <td class="px-3 py-2.5 text-center">
+                    <a href="https://www.threads.net/@shadowlog_official" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">09/24 22:53</td>
+                  <td class="px-3 py-2.5 font-bold font-mono text-slate-700 text-right">78 回</td>
+                  <td class="px-3 py-2.5 text-center font-mono">0 / 0</td>
+                  <td class="px-3 py-2.5 text-slate-800">シャドーイングは家で朝、寝る前とか車の中とか...（生活スタイル）</td>
+                  <td class="px-3 py-2.5 text-center">
+                    <a href="https://www.threads.net/@shadowlog_official" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
                   </td>
                 </tr>
               </tbody>
@@ -307,12 +340,20 @@
                 </div>
                 <div class="text-[10px] text-slate-500 mt-0.5">全体の連携サイクル ＆ 初期5日間の投稿ロードマップ</div>
               </a>
+
+              <button type="button" onclick="openThreadsTab()" class="w-full text-left p-2.5 rounded-lg bg-purple-50/60 border border-purple-200 hover:bg-purple-100/70 transition text-xs cursor-pointer">
+                <div class="font-bold text-purple-900 flex items-center justify-between">
+                  <span>📊 Threads 詳細投稿分析・キュー管理</span>
+                  <span class="text-[10px] text-purple-700 font-semibold">タブへ ↗</span>
+                </div>
+                <div class="text-[10px] text-purple-600 mt-0.5">投稿別詳細閲覧数・予約キュー・いいね推移</div>
+              </button>
             </div>
           </div>
 
           <div class="pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between">
             <span>広報 & CRM 連携体制稼働中</span>
-            <span class="text-emerald-600 font-bold">● Active</span>
+            <span class="text-emerald-600 font-bold">● Active (2026/10)</span>
           </div>
         </div>
       </div>

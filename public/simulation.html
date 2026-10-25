@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShadowLog 総合収支試算シミュレーター（2026/10/06 最新仕様・問題バンク＆カスタム生成＆GMO固定費連動版）</title>
+  <title>ShadowLog 総合収支試算シミュレーター（2026/10/25 最新確定仕様・500円/1,000円 2段階プラン＆Doc Shadow連携版）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     input[type=range] {
@@ -24,7 +24,7 @@
       <div class="flex items-center gap-2">
         <span class="font-bold text-slate-700">ShadowLog 管理コンソール</span>
         <span>/</span>
-        <span class="text-blue-600 font-semibold">総合収支・損益シミュレーター（2026/10/06 最新仕様反映・FB-039迄同期済）</span>
+        <span class="text-blue-600 font-semibold">総合収支・損益シミュレーター（2026/10/25 最新確定仕様・500円/1,000円プラン同期済）</span>
       </div>
       <div class="flex items-center gap-3">
         <a href="javascript:void(0)" onclick="openManagement()" class="hover:text-blue-600 underline font-medium cursor-pointer">
@@ -42,23 +42,26 @@
         <div>
           <div class="flex items-center gap-2 mb-2 flex-wrap">
             <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
-              🏦 300文問題バンク＆週10%自動入替対応
+              🏦 3,600文問題バンク＆週10%自動入替対応
             </span>
             <span class="inline-block px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold">
-              ✨ 3単語カスタム生成 (Base:3回/日・Pro:10回/日)
-            </span>
-            <span class="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
-              🎙️ 2ボタン録音＆判定前無制限録り直し (無駄打ちゼロ)
+              💎 2段階プラン（Base 500円 / Pro 1,000円）
             </span>
             <span class="inline-block px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-bold">
-              🏢 GMOバーチャルオフィス固定費連動
+              📄 Pro限定Doc Shadow（論文・決算サマリーGPT-4o解析）
+            </span>
+            <span class="inline-block px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold">
+              🚇 朝のSilent Drill × 夜の声出し（ハイブリッド）
+            </span>
+            <span class="inline-block px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
+              🏢 GMOオフィス固定費連動（月1,650円）
             </span>
           </div>
           <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             ShadowLog 総合収支試算シミュレーター
           </h1>
           <p class="text-sm text-slate-500 mt-1">
-            OpenAI API実測原価 ＋ 3,600文バンク定常運用 ＋ 3単語カスタム生成(FB-035) ＋ GMO固定費（月1,650円）に基づく最新事業損益モデル
+            OpenAI API実測原価 ＋ 3,600文バンク定常運用 ＋ Pro限定最高峰GPT-4o資料解析(Doc Shadow) ＋ GMO固定費（月1,650円）に基づく最新事業損益モデル
           </p>
         </div>
         <div class="text-right bg-blue-50/60 p-4 rounded-xl border border-blue-100 shrink-0">
@@ -78,23 +81,23 @@
           <span class="text-[11px] text-slate-400">※ボタンを押すと全パラメーターが即座に切り替わります</span>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="applyPreset(50, 20, 598, 1650, 'bank', 'realistic')" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-bold transition text-white shadow-xs">
-            🏦 【本命・バンク定常＋カスタム実効】50名 (Basic45+Pro5 / 利益+23,620円)
+          <button onclick="applyPreset(50, 20, 600, 1650, 'bank', 'realistic')" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-bold transition text-white shadow-xs">
+            🌟 【本命モデル】50名 (Base40+Pro10 / ARPU 600円 / 利益+24,200円)
           </button>
-          <button onclick="applyPreset(50, 20, 598, 1650, 'bank', 'max')" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold transition text-indigo-800 border border-indigo-200">
-            🔥 【定常＋カスタム毎日上限フル】50名 (全員毎日上限利用でも利益+22,967円)
-          </button>
-          <button onclick="applyPreset(50, 20, 598, 1650, 'optimized', 'none')" class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-xs font-semibold transition text-blue-800 border border-blue-200">
-            📘 【蓄積期・保守上限】50名 (Basic45+Pro5 / MRR 27,500円)
+          <button onclick="applyPreset(50, 25, 700, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold transition text-indigo-800 border border-indigo-200">
+            👑 【Pro伸長モデル】50名 (Base30+Pro20 / ARPU 700円 / 利益+28,500円)
           </button>
           <button onclick="applyPreset(50, 20, 500, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold transition text-emerald-800 border border-emerald-200">
-            ✨ ベース単体50名 (50人 × 20回 × 500円)
+            ✨ 【Base単体モデル】50名 (全員500円 / 利益+19,900円)
           </button>
-          <button onclick="applyPreset(50, 40, 1000, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition text-amber-800 border border-amber-200">
-            👑 Pro単体50名 (50人 × 40回 × 1,000円)
+          <button onclick="applyPreset(50, 35, 1000, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition text-amber-800 border border-amber-200">
+            💎 【Pro単体モデル】50名 (全員1,000円 / 利益+42,700円)
+          </button>
+          <button onclick="applyPreset(50, 20, 600, 1650, 'bank', 'max')" class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-xs font-semibold transition text-purple-800 border border-purple-200">
+            🔥 【毎日カスタム上限フル】50名 (Base40+Pro10 / 全員毎日上限利用でも利益+23,500円)
           </button>
           <button onclick="applyPreset(5, 20, 500, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-semibold transition text-rose-700 border border-rose-200">
-            🎯 損益分岐点（わずか5〜6名で固定費完全回収）
+            🎯 損益分岐点（わずか4〜5名でGMO固定費完全回収）
           </button>
         </div>
       </div>
@@ -125,19 +128,19 @@
           </p>
         </div>
 
-        <!-- Custom 3-Word Generation Selector (FB-035) -->
+        <!-- Custom 3-Word Generation & Doc Shadow Selector (FB-035 & FB-074) -->
         <div class="space-y-1.5 p-3.5 bg-indigo-50/50 rounded-xl border border-indigo-200">
           <label class="block text-xs font-bold text-indigo-900 flex items-center justify-between">
-            <span class="flex items-center gap-1.5"><span>✨</span> 3単語カスタム生成枠の利用想定 (FB-035)</span>
-            <span class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-bold">約0.174円/生成</span>
+            <span class="flex items-center gap-1.5"><span>✨</span> カスタム生成＆Doc Shadow利用想定</span>
+            <span class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-bold">Base:0.17円 / Pro:0.33円</span>
           </label>
           <select id="customWordsSelect" onchange="calculate()" class="w-full text-xs font-semibold p-2 rounded-lg border border-indigo-300 bg-white text-slate-800 focus:ring-2 focus:ring-indigo-500">
-            <option value="realistic" selected>📊 実効平均利用（Base:平均1回/日 +¥5.2/月 ｜ Pro:平均3回/日 +¥15.7/月）</option>
-            <option value="max">🔥 毎日上限フル利用（Base:毎日3回 +¥15.7/月 ｜ Pro:毎日10回 +¥52.2/月）</option>
+            <option value="realistic" selected>📊 実効平均利用（Base:平均1回/日 +¥5.2/月 ｜ Pro:Doc Shadow平均3回/日 +¥33/月）</option>
+            <option value="max">🔥 毎日上限フル利用（Base:毎日3回 +¥15.7/月 ｜ Pro:Doc Shadow毎日10回 +¥99/月）</option>
             <option value="none">⏸️ カスタム生成なし（通常問題バンク出題のみで試算: +¥0/月）</option>
           </select>
           <p class="text-[11px] text-indigo-800/80 leading-relaxed mt-1" id="customWordsDesc">
-            カスタム単語指定時はバンクを使わずGPT-4o-mini＋TTS-1で都度生成（1回約0.174円）。厳格な日次上限（Base 3回/日・Pro 10回/日）により、50名全員が毎日上限まで使っても月最大+966円（実効平均+313円）に完全制御されます。
+            Baseは3単語カスタム（GPT-4o-mini / 0.17円）。Proは論文・決算サマリーの資料解析（最高峰GPT-4o / 約0.33円）。厳格な日次上限とスロット保持により、50名利用時でもAI原価は月数百円〜千数百円に抑えられ、利益率80〜85%超を堅持します。
           </p>
         </div>
 
@@ -171,13 +174,13 @@
           <div class="flex justify-between items-center text-sm">
             <label class="font-bold text-slate-700">平均月額単価（税込 ARPU）</label>
             <div class="flex items-center gap-1 font-mono font-bold text-blue-600">
-              <input type="number" id="numPrice" min="100" max="10000" step="1" value="598" class="w-24 px-2 py-1 text-right border rounded-lg text-sm" />
+              <input type="number" id="numPrice" min="100" max="10000" step="1" value="600" class="w-24 px-2 py-1 text-right border rounded-lg text-sm" />
               <span>円/月</span>
             </div>
           </div>
-          <input type="range" id="rangePrice" min="100" max="3000" step="1" value="598" class="w-full" />
+          <input type="range" id="rangePrice" min="100" max="3000" step="1" value="600" class="w-full" />
           <div class="flex justify-between text-[11px] text-slate-400">
-            <span>Basic: 500円 / 目標加重平均(9:1): 598円</span>
+            <span>Base: 500円 / 本命加重平均(Base40:Pro10): 600円</span>
             <span>Pro: 1,000円</span>
           </div>
         </div>
@@ -373,17 +376,23 @@
 
         <!-- 2026/10/06 New Features Cost Impact Card -->
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-indigo-200 space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <span>🛡️</span> 2026/10/01〜10/06 実装機能のAI原価影響 ＆ コスト防衛設計まとめ (FB-022〜FB-039)
+              <span>🛡️</span> 2026/10 実装機能のAI原価影響 ＆ コスト防衛設計まとめ (FB-022〜FB-076)
             </h3>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">検証完了</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">最新確定仕様</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div class="p-3 rounded-xl bg-indigo-50/40 border border-indigo-100 space-y-1">
-              <p class="font-bold text-indigo-900">✨ 3単語カスタム例文生成 (FB-035)</p>
+              <p class="font-bold text-indigo-900">✨ 3単語カスタム(Base) ＆ Doc Shadow(Pro) (FB-035/074)</p>
               <p class="text-slate-600 leading-relaxed text-[11px]">
-                バンクをバイパスしGPT-4o-mini＋TTS-1を直叩き（1生成あたり<strong>約0.174円</strong>）。JST 0:00リセットの日次上限（<strong>無料:累計2回 / Base:1日3回 / Pro:1日10回</strong>）により、1人あたりの月間最大追加原価はBaseで<strong>+15.7円</strong>、Proで<strong>+52.2円</strong>に完全キャップ。
+                Baseは3単語カスタム（約0.17円）。Proは論文・決算サマリーの資料解析に<strong>最高峰GPT-4o</strong>を採用（1回約0.33円）。スロット保持UIにより何回でも反復練習でき、<strong>1人月間原価+33円程度で利益率96%以上</strong>を完全維持。
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-amber-50/40 border border-amber-100 space-y-1">
+              <p class="font-bold text-amber-900">🚇 スキマ特訓「Silent Drill」チャンクパズル (FB-060)</p>
+              <p class="text-slate-600 leading-relaxed text-[11px]">
+                朝の満員電車など声が出せない環境向けの語順並べ替えパズル。クライアント側のDOM処理で完結するため<strong>API追加原価は完全 0円</strong>。夜の声出しシャドーイングとの朝夜ハイブリッドで継続率を飛躍的に高めます。
               </p>
             </div>
             <div class="p-3 rounded-xl bg-emerald-50/40 border border-emerald-100 space-y-1">
@@ -393,15 +402,9 @@
               </p>
             </div>
             <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <p class="font-bold text-slate-800">🔊 単語タップ発音・動的WPM・Bluetooth対策 (FB-022/029/032/036)</p>
+              <p class="font-bold text-slate-800">🎯 TOEIC実力レンジ診断 ＆ レート制御 (FB-031/076)</p>
               <p class="text-slate-600 leading-relaxed text-[11px]">
-                単語タップ発音はブラウザ標準 <code>Web Speech API</code> を採用、速度別WPMやBluetooth無音プライマー・音量増幅も <code>Web Audio API</code> クライアント処理のため <strong>OpenAI API追加原価は完全 0円</strong>。
-              </p>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <p class="font-bold text-slate-800">🔔 習慣化Web Push通知 ＆ APIレート制限 (FB-031/033/034)</p>
-              <p class="text-slate-600 leading-relaxed text-[11px]">
-                メールではなくService WorkerによるWeb Push通知を採用し <strong>Resendメール原価 0円</strong>。さらに全AIエンドポイントに30/20 RPM制限と10MB上限を設け、<strong>F5連打や不正スクリプトによる原価爆発を完全遮断</strong>。
+                5問発話から統計的測定誤差を考慮した実力レンジ（例: 650〜740点レベル）を即時算出。さらに全AIエンドポイントにRPM制限と10MB上限を設け、<strong>F5連打や不正スクリプトによる原価爆発を完全遮断</strong>。
               </p>
             </div>
           </div>
@@ -422,7 +425,7 @@
           </p>
         </div>
         <span class="text-xs font-mono bg-slate-100 text-slate-600 px-3 py-1 rounded-full w-fit">
-          2026年10月6日 最新仕様版
+          2026年10月25日 最新確定仕様版
         </span>
       </div>
 
@@ -574,13 +577,13 @@
               </td>
               <td class="p-3 font-mono font-extrabold text-blue-700 whitespace-nowrap">
                 ¥500 / ¥1,000
-                <div class="text-[10px] text-blue-600">無料体験20回+Pro2回</div>
+                <div class="text-[10px] text-blue-600">無料体験＋日割り切替</div>
               </td>
               <td class="p-3 leading-relaxed text-blue-950">
-                ・4ジャンル×3,600文バンク＆先読み0.0秒出題＋✨3単語カスタム例文生成<br>
-                ・2ボタン録音（リピーティング/シャドーイング）＆判定前無制限録り直し<br>
-                ・速度別リアルタイムWPM測定＆60〜90語エグゼクティブスピーチ指導<br>
-                ・単語タップ3Dフリップ辞書＆弱点単語自動注入＋Web Push習慣化リマインダー
+                ・朝のSilent Drill（満員電車チャンク並べ替え）× 夜の声出し（習慣化ハイブリッド）<br>
+                ・自分の仕事直結のペルソナ超特化 ＋ 4ジャンル×3,600文バンク＆先読み0.0秒出題<br>
+                ・Pro限定Doc Shadow（論文・決算サマリー・英文URLのGPT-4o解析＆保持反復）<br>
+                ・速度別リアルタイムWPM測定 ＆ 統計的誤差を考慮したTOEIC実力レンジ診断
               </td>
               <td class="p-3 whitespace-nowrap">
                 <span class="font-bold text-blue-900">3ヶ月目標: 50名</span>
@@ -590,9 +593,10 @@
                 <span class="px-2.5 py-1 rounded-full bg-blue-600 text-white font-extrabold text-[10px]">◎ AI即時自動</span>
               </td>
               <td class="p-3 leading-relaxed text-blue-950 font-semibold">
-                <strong>「シャドテン級の価値を圧倒的低価格（¥500〜）＆回数無制限で即時提供」</strong><br>
-                ・ベース500円：短文使い放題＋カスタム生成1日3回<br>
-                ・Pro 1,000円：短文＋長文スピーチ完全無制限＋カスタム生成1日10回
+                <strong>「シャドテン級の価値を圧倒的低価格（¥500〜）＆朝夜ハイブリッドで挫折ゼロ化」</strong><br>
+                ・Base（500円）：短文無制限＋Silent Drill無制限＋ペルソナ指定＋カスタム3回/日<br>
+                ・Pro（1,000円）：長文スピーチ＋Doc Shadow(論文/IR資料GPT-4o解析)＋カスタム10回/日<br>
+                <span class="text-[11px] text-indigo-700 font-normal">※Stripe日割り差額決済（Proration）で月途中の移行も安心</span>
               </td>
             </tr>
           </tbody>
@@ -604,22 +608,23 @@
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
           <p class="font-bold text-slate-800 mb-1">🎯 ターゲット顧客層</p>
           <p class="text-slate-600 leading-relaxed">
-            「シャドテン（月2.2万円）は高すぎて手が出ないが、自分の業務トピック（3単語カスタム生成）や実践ビジネス英語で本格的なシャドーイングとWPM指導を受けたい」ビジネスパーソン・エンジニア。
+            仕事で英語を話す機会がないが、月2万円超のコーチングや英会話スクールは高すぎて手が出ない・続かない一般社会人（TOEIC 500点〜）。「電車内のスキマ特訓×夜の声出し」で自分の実務英語を無理なく身につけたい層。
           </p>
         </div>
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <p class="font-bold text-slate-800 mb-1">💰 1日上限撤廃（使い放題）＆超高粗利2大プラン</p>
+          <p class="font-bold text-slate-800 mb-1">💰 2段階プラン ＆ 超高粗利（80%超）モデル</p>
           <p class="text-slate-600 leading-relaxed">
-            ・<strong>ベースプラン（月500円）</strong>: 短文使い放題＋3単語カスタム1日3回（定常時粗利 <strong>約84%</strong>）<br>
-            ・<strong>Proプラン（月1,000円）</strong>: 短文＋長文完全無制限＋3単語カスタム1日10回（定常時粗利 <strong>約83〜85%</strong>）
+            ・<strong>Baseプラン（月500円）</strong>: 短文無制限＋Silent Drill無制限＋ペルソナ職種指定（粗利 <strong>約84%</strong>）<br>
+            ・<strong>Proプラン（月1,000円）</strong>: 長文＋Doc Shadow(論文/決算サマリーGPT-4o解析)（粗利 <strong>約83〜85%</strong>）<br>
+            ・<strong>差額アップグレード</strong>: 月途中移行は日割り差額決済でスマート対応
           </p>
         </div>
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <p class="font-bold text-slate-800 mb-1">📈 登録者数ごとの営業利益（GMO代¥1,650＋カスタム生成控除後）</p>
+          <p class="font-bold text-slate-800 mb-1">📈 登録者数ごとの営業利益（GMO代¥1,650＋API原価控除後）</p>
           <p class="text-slate-600 leading-relaxed">
-            ・<strong>5〜6名（損益分岐点）</strong>: 月商 約3,000円 ➔ <strong>固定費完全回収・黒字化</strong><br>
-            ・<strong>50名（3ヶ月目標: MRR 27,500円）</strong>: ➔ <strong>営業利益 +¥21,220/月 (定常期 利益率77.2%)</strong><br>
-            ・<strong>200名（成長期: MRR 11.96万円）</strong>: ➔ <strong>営業利益 +約9.8万円/月</strong>
+            ・<strong>4〜5名（損益分岐点）</strong>: 月商 約2,500〜3,000円 ➔ <strong>固定費完全回収・黒字化</strong><br>
+            ・<strong>50名（本命モデル: Base40+Pro10 / MRR 30,000円）</strong>: ➔ <strong>営業利益 +¥24,200/月 (利益率 80.7%)</strong><br>
+            ・<strong>200名（成長期: MRR 12.0万円）</strong>: ➔ <strong>営業利益 +約9.9万円/月</strong>
           </p>
         </div>
       </div>
@@ -682,7 +687,7 @@
     }
 
     function resetDefaults() {
-      applyPreset(50, 20, 598, 1650, 'bank', 'realistic');
+      applyPreset(50, 20, 600, 1650, 'bank', 'realistic');
     }
 
     function applyPreset(users, dailyUses, price, officeFee = 1650, mode = 'bank', customMode = 'realistic') {
@@ -752,16 +757,23 @@
         reductionBadgeText = "従来フル計算";
       }
 
-      // Custom 3-Word Generation additional monthly cost (FB-035)
+      // Custom Generation & Doc Shadow additional monthly cost (FB-035 & FB-074)
       const customUnitJpy = CUSTOM_GEN_UNIT_JPY_AT_150 * (rate / 150.0);
-      let maxCustomDaily = 3.7;
-      let realCustomDaily = 1.2;
-      if (price >= 1200) {
+      let maxCustomDaily = 3.0;
+      let realCustomDaily = 1.0;
+      if (price >= 900) {
+        // Pro Plan (1,000円) 主体: 1日10回枠 & Doc Shadow資料解析
         maxCustomDaily = 10.0;
         realCustomDaily = 3.0;
       } else if (price <= 520) {
+        // Base Plan (500円) 主体: 1日3回枠
         maxCustomDaily = 3.0;
         realCustomDaily = 1.0;
+      } else {
+        // Hybrid (550〜850円): 加重平均補間
+        const proRatio = Math.max(0, Math.min(1, (price - 500) / 500));
+        maxCustomDaily = 3.0 + (10.0 - 3.0) * proRatio;
+        realCustomDaily = 1.0 + (3.0 - 1.0) * proRatio;
       }
 
       let customDailyPerUser = 0;

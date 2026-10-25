@@ -1448,6 +1448,7 @@ export default function AdminCustomersPage() {
           <div className="space-y-6">
             <ManagementDashboardSection
               onOpenCustomersTab={() => setActiveTab("customers")}
+              onOpenThreadsTab={() => setActiveTab("threads")}
             />
           </div>
         ) : activeTab === "logic_tree" ? (

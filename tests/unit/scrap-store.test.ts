@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   extractYouTubeVideoId,
   cleanHtmlText,
-} from "@/app/api/scrap/parse/route";
+} from "@/lib/scrap/parser";
 import {
   addScrapSource,
   getScrapStore,

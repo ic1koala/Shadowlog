@@ -24,6 +24,17 @@ export const metadata: Metadata = {
 
 const ARTICLES = [
   {
+    slug: "why-listening-is-hard-speech-perception",
+    title: "なぜ知っている単語なのに聞き取れないのか？英語リスニングの壁を壊す「音声知覚」の正体",
+    description:
+      "英文を文字で見ると中学レベルなのに、ネイティブが喋ると一瞬で置いていかれる理由とは？第二言語習得論（SLA）の「音声知覚と意味理解の二段階処理モデル」をもとに、リスニングの壁を突破する科学的シャドーイング法を解説。",
+    date: "2026.10.25",
+    readTime: "5分",
+    category: "リスニング科学",
+    tags: ["リスニング", "音声知覚", "第二言語習得論", "ワーキングメモリ"],
+    isFeatured: true,
+  },
+  {
     slug: "hybrid-shadowing-pro-features",
     title: "【満員電車のスキマ特訓×夜の声出し】社会人の挫折を防ぐ新しい英語習慣と、論文・IR記事から「自分専用の教材」を作る方法",
     description:
@@ -32,7 +43,7 @@ const ARTICLES = [
     readTime: "5分",
     category: "メソッド・新機能",
     tags: ["習慣化", "スキマ特訓", "論文・IR解析", "Pro新機能"],
-    isFeatured: true,
+    isFeatured: false,
   },
   {
     slug: "why-i-built-shadowlog",
