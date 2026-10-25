@@ -44,6 +44,29 @@ export function extractYouTubeVideoId(url: string): string | null {
 }
 
 /**
+ * Fetches video metadata via official YouTube oEmbed API (safe, never blocked)
+ */
+export async function fetchYouTubeOEmbed(videoId: string): Promise<{ title?: string; author?: string }> {
+  try {
+    const res = await fetch(
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+      {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+    if (!res.ok) return {};
+    const data = await res.json();
+    return {
+      title: typeof data.title === "string" ? data.title : undefined,
+      author: typeof data.author_name === "string" ? data.author_name : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+/**
  * Strips HTML tags and excessive whitespace from plain HTML
  */
 export function cleanHtmlText(html: string): string {
@@ -100,10 +123,22 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Fetch official video title & author via oEmbed
+      const oEmbed = await fetchYouTubeOEmbed(videoId);
+      sourceTitle = oEmbed.title || `YouTube (${videoId})`;
+
       try {
-        const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+        let transcriptItems;
+        // Attempt 1: Fetch with specific English language preference
+        try {
+          transcriptItems = await YoutubeTranscript.fetchTranscript(videoId, { lang: "en" });
+        } catch {
+          // Attempt 2: Fallback to default fetch
+          transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+        }
+
         if (!transcriptItems || transcriptItems.length === 0) {
-          throw new Error("字幕が空です");
+          throw new Error("字幕データが見つかりませんでした");
         }
 
         // Calculate actual native spoken WPM across first 60 seconds of transcript
@@ -128,14 +163,26 @@ export async function POST(req: NextRequest) {
         }
 
         extractedText = validLines.slice(0, 35).join(" ");
-        sourceTitle = `YouTube (${videoId})`;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
+        const rawMsg = err instanceof Error ? err.message : String(err);
+        const isIpBlocked =
+          rawMsg.includes("Transcript is disabled") ||
+          rawMsg.includes("No transcripts are available") ||
+          rawMsg.includes("429") ||
+          rawMsg.includes("TooManyRequest");
+
+        const errorMessage = isIpBlocked
+          ? `「${sourceTitle}」の字幕取得に失敗しました。YouTube側のクラウドアクセス制限（ボット保護・429）によりサーバーからの直接取得がブロックされた可能性があります。`
+          : "このYouTube動画から英語字幕を取得できませんでした。英語字幕（自動生成含む）が有効な動画URLをお試しください。";
+
         return NextResponse.json(
           {
-            error:
-              "このYouTube動画から英語字幕を取得できませんでした。英語字幕（自動生成含む）が有効な動画URLをお試しください。",
-            details: msg,
+            error: errorMessage,
+            title: sourceTitle,
+            videoId,
+            details: rawMsg,
+            suggestion:
+              "YouTubeの「文字起こしを表示」や動画の概要欄からテキストをコピーし、「PDF/テキスト」タブに貼り付けると、すぐにシャドーイング教材として生成できます。",
           },
           { status: 422 }
         );

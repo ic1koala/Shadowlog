@@ -44,6 +44,7 @@ export function DocShadowSection({
   const [inputVal, setInputVal] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorSuggestion, setErrorSuggestion] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [sources, setSources] = useState<ScrapSource[]>([]);
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
@@ -65,6 +66,7 @@ export function DocShadowSection({
     e.preventDefault();
     if (!inputVal.trim() || isLoading) return;
     setErrorMessage(null);
+    setErrorSuggestion(null);
     setSuccessMessage(null);
     setIsLoading(true);
 
@@ -80,6 +82,9 @@ export function DocShadowSection({
 
       const data = await res.json();
       if (!res.ok) {
+        if (data.suggestion) {
+          setErrorSuggestion(data.suggestion);
+        }
         throw new Error(data.error || "生成に失敗しました");
       }
 
@@ -191,6 +196,7 @@ export function DocShadowSection({
               onClick={() => {
                 setActiveTab("youtube");
                 setErrorMessage(null);
+                setErrorSuggestion(null);
               }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-bold transition ${
                 activeTab === "youtube"
@@ -210,6 +216,7 @@ export function DocShadowSection({
               onClick={() => {
                 setActiveTab("web");
                 setErrorMessage(null);
+                setErrorSuggestion(null);
               }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-bold transition ${
                 activeTab === "web"
@@ -226,6 +233,7 @@ export function DocShadowSection({
               onClick={() => {
                 setActiveTab("text");
                 setErrorMessage(null);
+                setErrorSuggestion(null);
               }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-bold transition ${
                 activeTab === "text"
@@ -303,9 +311,28 @@ export function DocShadowSection({
             )}
 
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs flex items-center gap-2 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMessage}</span>
+              <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs space-y-2 animate-in fade-in">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span className="font-medium leading-relaxed">{errorMessage}</span>
+                </div>
+                {errorSuggestion && (
+                  <div className="pt-2 border-t border-destructive/20 text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <p className="text-[11px] leading-relaxed text-foreground/80">💡 {errorSuggestion}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab("text");
+                        setInputVal("");
+                        setErrorMessage(null);
+                        setErrorSuggestion(null);
+                      }}
+                      className="self-start sm:self-auto shrink-0 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition shadow-2xs"
+                    >
+                      PDF/テキスト入力に切替
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
