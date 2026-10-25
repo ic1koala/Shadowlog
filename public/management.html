@@ -816,6 +816,9 @@
           { id: "s2-26", text: "【FB-060】外出先・声出し不可環境向け「スキマ特訓（Silent Mode）」＆弱点チャンクパズル「Silent Drill」実装（無料10問/日、累計3回で解放、BookOpenアイコン）", done: true },
           { id: "s2-27", text: "【FB-074】Pro限定長文マイスクラップ（Doc Shadow）機能新設（YouTube字幕・Web記事・PDFテキスト統合・ネイティブWPM計測・最大5件保存）", done: true },
           { id: "s2-28", text: "【FB-075】YouTube字幕自動取得ハイブリッド運用方針確定 ＆ oEmbed公式タイトル連携・429制限時ワンタップ救済導線配備", done: true },
+          { id: "s2-29", text: "【FB-076】TOEIC診断の統計的測定誤差（SEM±45点）に基づく実力レンジ表示（例: 650〜740点レベル）への適正化 ＆ 誠実な注釈追加", done: true },
+          { id: "s2-30", text: "【FB-077】Threads PR投稿（「それって実は...」親フック投稿＋URL子ツリー投稿の2段階構成）発行完了", done: true },
+          { id: "s2-31", text: "【FB-078】総合収支試算シミュレーター（最新500/1000円プラン）＆ 統括ダッシュボードThreads広報管理カードの最新確定同期", done: true },
           { id: "s2-4", text: "SNSシェア用OGP画像自動生成機能（「#今日のシャドーイング」拡散用）", done: false },
           { id: "s2-5", text: "βテスター（30〜50名拡大）への1on1ヒアリング・価格納得感（月500円/1,000円）の検証", done: false }
         ]
@@ -825,7 +828,7 @@
         title: "Stage 3: パブリックローンチ & 収益化始動",
         badge: "拡大フェーズ",
         badgeColor: "bg-purple-100 text-purple-800 border-purple-300",
-        description: "3ヶ月後目標：有料会員50名（Basic 45名 / Pro 5名、MRR ¥27,500、月間営業利益+¥21,220）の達成と本格PR。",
+        description: "3ヶ月後目標：有料会員50名（Base 40名 / Pro 10名、MRR ¥30,000、月間営業利益+¥24,200）の達成と本格PR。",
         tasks: [
           { id: "s3-1", text: "Zenn/Note開発ストーリー執筆「シャドテンが高すぎてAI版を個人開発した話」", done: false },
           { id: "s3-2", text: "Product Hunt & 各種SaaSディレクトリへの掲載・ローンチ", done: false },
@@ -1064,6 +1067,108 @@
       }
     }
 
+    function openThreadsTab() {
+      if (window.self !== window.top) {
+        try {
+          window.parent.postMessage({ type: "SHADOWLOG_OPEN_THREADS" }, "*");
+          return;
+        } catch (e) {}
+      }
+      if (window.location.protocol === "file:") {
+        window.open("https://shadowlog.vercel.app/admin/customers?tab=threads", "_blank");
+      } else {
+        window.open("/admin/customers?tab=threads", "_blank");
+      }
+    }
+
+    async function fetchThreadsData(isManual = false) {
+      const btn = document.getElementById("btnRefreshThreads");
+      if (btn && isManual) {
+        btn.innerHTML = `<span class="inline-block animate-spin">🔄</span> 更新中...`;
+        btn.disabled = true;
+      }
+
+      try {
+        const res = await fetch("/api/admin/threads-performance?refresh=true", {
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error("Network response was not ok");
+        const data = await res.json();
+
+        if (data && data.posts && Array.isArray(data.posts)) {
+          // 1. KPI Updates
+          const totalViews = data.accountInsights?.totalViews || data.posts.reduce((s, p) => s + (p.views || 0), 0);
+          const maxViews = Math.max(...data.posts.map(p => p.views || 0), 0);
+          const totalEngagement = (data.accountInsights?.totalLikes || 0) + (data.accountInsights?.totalReplies || 0);
+
+          const viewsEl = document.getElementById("threadsKpiViews");
+          if (viewsEl && totalViews > 0) {
+            viewsEl.innerHTML = `${totalViews.toLocaleString()} <span class="text-xs font-normal text-slate-500">回</span>`;
+          }
+
+          const maxViewsEl = document.getElementById("threadsKpiMaxViews");
+          if (maxViewsEl && maxViews > 0) {
+            maxViewsEl.innerText = `最高 ${maxViews.toLocaleString()} 回 / 1投稿 🔥`;
+          }
+
+          const postsEl = document.getElementById("threadsKpiPosts");
+          if (postsEl && data.posts.length > 0) {
+            postsEl.innerHTML = `${data.posts.length} <span class="text-xs font-normal text-slate-500">件</span>`;
+          }
+
+          const engEl = document.getElementById("threadsKpiEngagement");
+          if (engEl && totalEngagement > 0) {
+            engEl.innerHTML = `${totalEngagement} <span class="text-xs font-normal text-slate-500">件</span>`;
+          }
+
+          // 2. Table Render
+          const tbody = document.getElementById("threadsPostsTableBody");
+          if (tbody && data.posts.length > 0) {
+            tbody.innerHTML = data.posts.slice(0, 10).map((p) => {
+              const dt = new Date(p.timestamp);
+              const dateStr = !isNaN(dt.getTime())
+                ? `${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+                : "直近";
+              const isHot = (p.views || 0) >= 100;
+              const permalink = p.permalink || "https://www.threads.net/@shadowlog_official";
+              const snippet = (p.text || "").replace(/\n/g, " ").slice(0, 48) + ((p.text || "").length > 48 ? "..." : "");
+
+              return `
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-3 py-2.5 text-slate-500 whitespace-nowrap">${dateStr}</td>
+                  <td class="px-3 py-2.5 font-bold font-mono text-right ${isHot ? 'text-purple-700 font-extrabold' : 'text-slate-800'}">
+                    ${(p.views || 0).toLocaleString()} 回 ${isHot ? '🔥' : ''}
+                  </td>
+                  <td class="px-3 py-2.5 text-center font-mono text-slate-600">
+                    ${p.likes || 0} / ${p.replies || 0}
+                  </td>
+                  <td class="px-3 py-2.5 text-slate-800 font-medium truncate max-w-[280px]" title="${(p.text || '').replace(/"/g, '&quot;')}">
+                    ${snippet}
+                  </td>
+                  <td class="px-3 py-2.5 text-center">
+                    <a href="${permalink}" target="_blank" class="text-indigo-600 hover:underline font-bold">見る ↗</a>
+                  </td>
+                </tr>
+              `;
+            }).join("");
+          }
+
+          const lastUpdatedEl = document.getElementById("threadsLastUpdated");
+          if (lastUpdatedEl) {
+            const now = new Date();
+            lastUpdatedEl.innerText = `更新: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} (API同期成功)`;
+          }
+        }
+      } catch (err) {
+        console.warn("[Threads API Fetch Warning]:", err);
+      } finally {
+        if (btn && isManual) {
+          btn.innerHTML = `<span>🔄 API再取得</span>`;
+          btn.disabled = false;
+        }
+      }
+    }
+
     function openSimulation() {
       if (window.location.protocol === "file:") {
         // When opened directly as a file from Finder
@@ -1125,6 +1230,7 @@
     // Initialize
     init();
     fetchAnalytics();
+    fetchThreadsData();
 
     // Check URL Hash for Tab selection
     if (window.location.hash === "#spec") {
