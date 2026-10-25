@@ -85,13 +85,13 @@
             🔥 【定常＋カスタム毎日上限フル】50名 (全員毎日上限利用でも利益+22,967円)
           </button>
           <button onclick="applyPreset(50, 20, 598, 1650, 'optimized', 'none')" class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-xs font-semibold transition text-blue-800 border border-blue-200">
-            📘 【蓄積期・保守上限】50名 (Basic45+Pro5 / MRR 29,900円)
+            📘 【蓄積期・保守上限】50名 (Basic45+Pro5 / MRR 27,500円)
           </button>
           <button onclick="applyPreset(50, 20, 500, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold transition text-emerald-800 border border-emerald-200">
             ✨ ベース単体50名 (50人 × 20回 × 500円)
           </button>
-          <button onclick="applyPreset(50, 40, 1480, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition text-amber-800 border border-amber-200">
-            👑 Pro単体50名 (50人 × 40回 × 1,480円)
+          <button onclick="applyPreset(50, 40, 1000, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition text-amber-800 border border-amber-200">
+            👑 Pro単体50名 (50人 × 40回 × 1,000円)
           </button>
           <button onclick="applyPreset(5, 20, 500, 1650, 'bank', 'realistic')" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-semibold transition text-rose-700 border border-rose-200">
             🎯 損益分岐点（わずか5〜6名で固定費完全回収）
@@ -178,7 +178,7 @@
           <input type="range" id="rangePrice" min="100" max="3000" step="1" value="598" class="w-full" />
           <div class="flex justify-between text-[11px] text-slate-400">
             <span>Basic: 500円 / 目標加重平均(9:1): 598円</span>
-            <span>Pro: 1,480円</span>
+            <span>Pro: 1,000円</span>
           </div>
         </div>
 
@@ -251,7 +251,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
             <p class="text-xs text-slate-500 font-medium">月間総売上 (MRR)</p>
-            <p class="text-lg sm:text-xl font-black font-mono text-slate-900 mt-1" id="kpiRevenue">¥29,900</p>
+            <p class="text-lg sm:text-xl font-black font-mono text-slate-900 mt-1" id="kpiRevenue">¥27,500</p>
             <p class="text-[10px] text-slate-400 mt-0.5" id="kpiRevenueSub">50人 × 598円 (手取 ¥28,824)</p>
           </div>
 
@@ -311,7 +311,7 @@
               </p>
               <p class="text-2xl font-black text-purple-700 font-mono" id="valBreakEvenUsers">わずか 5 名</p>
               <p class="text-[11px] text-purple-800 leading-relaxed" id="valBreakEvenUsersNote">
-                ベースプラン（500円）なら<strong>たった5〜6人</strong>、Proプラン（1,480円）なら<strong>わずか2人</strong>の有料会員で、GMOオフィス代（¥1,650）＋バンク入替費（¥331）が完全ペイされます。
+                ベースプラン（500円）なら<strong>たった4〜5人</strong>、Proプラン（1,000円）なら<strong>わずか2人</strong>の有料会員で、GMOオフィス代（¥1,650）＋バンク入替費（¥331）が完全ペイされます。
               </p>
             </div>
 
@@ -330,7 +330,7 @@
             <table class="w-full text-left text-[11px] border-collapse border border-slate-200 rounded-xl overflow-hidden">
               <thead>
                 <tr class="bg-slate-100 text-slate-700 font-bold">
-                  <th class="p-2.5 border-b border-slate-200">運用フェーズ（50名目標: Basic45+Pro5 / MRR ¥29,900）</th>
+                  <th class="p-2.5 border-b border-slate-200">運用フェーズ（50名目標: Basic45+Pro5 / MRR ¥27,500）</th>
                   <th class="p-2.5 border-b border-slate-200">1練習あたり原価</th>
                   <th class="p-2.5 border-b border-slate-200">月間AI総原価</th>
                   <th class="p-2.5 border-b border-slate-200">月間営業利益 (GMO控除後)</th>
@@ -573,7 +573,7 @@
                 <span class="text-[10px] text-blue-600 font-bold">自社サービス</span>
               </td>
               <td class="p-3 font-mono font-extrabold text-blue-700 whitespace-nowrap">
-                ¥500 / ¥1,480
+                ¥500 / ¥1,000
                 <div class="text-[10px] text-blue-600">無料体験20回+Pro2回</div>
               </td>
               <td class="p-3 leading-relaxed text-blue-950">
@@ -592,7 +592,7 @@
               <td class="p-3 leading-relaxed text-blue-950 font-semibold">
                 <strong>「シャドテン級の価値を圧倒的低価格（¥500〜）＆回数無制限で即時提供」</strong><br>
                 ・ベース500円：短文使い放題＋カスタム生成1日3回<br>
-                ・Pro 1,480円：短文＋長文スピーチ完全無制限＋カスタム生成1日10回
+                ・Pro 1,000円：短文＋長文スピーチ完全無制限＋カスタム生成1日10回
               </td>
             </tr>
           </tbody>
@@ -611,14 +611,14 @@
           <p class="font-bold text-slate-800 mb-1">💰 1日上限撤廃（使い放題）＆超高粗利2大プラン</p>
           <p class="text-slate-600 leading-relaxed">
             ・<strong>ベースプラン（月500円）</strong>: 短文使い放題＋3単語カスタム1日3回（定常時粗利 <strong>約84%</strong>）<br>
-            ・<strong>Proプラン（月1,480円）</strong>: 短文＋長文完全無制限＋3単語カスタム1日10回（定常時粗利 <strong>約87%</strong>）
+            ・<strong>Proプラン（月1,000円）</strong>: 短文＋長文完全無制限＋3単語カスタム1日10回（定常時粗利 <strong>約83〜85%</strong>）
           </p>
         </div>
         <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
           <p class="font-bold text-slate-800 mb-1">📈 登録者数ごとの営業利益（GMO代¥1,650＋カスタム生成控除後）</p>
           <p class="text-slate-600 leading-relaxed">
             ・<strong>5〜6名（損益分岐点）</strong>: 月商 約3,000円 ➔ <strong>固定費完全回収・黒字化</strong><br>
-            ・<strong>50名（3ヶ月目標: MRR 29,900円）</strong>: ➔ <strong>営業利益 +¥23,620/月 (定常期 利益率79.0%)</strong><br>
+            ・<strong>50名（3ヶ月目標: MRR 27,500円）</strong>: ➔ <strong>営業利益 +¥21,220/月 (定常期 利益率77.2%)</strong><br>
             ・<strong>200名（成長期: MRR 11.96万円）</strong>: ➔ <strong>営業利益 +約9.8万円/月</strong>
           </p>
         </div>
