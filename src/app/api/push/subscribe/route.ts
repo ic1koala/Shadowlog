@@ -8,15 +8,40 @@ function getAdminClient() {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
     "";
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     "";
   if (!url || !key) return null;
   return createSupabaseAdmin(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+}
+
+function isValidPushEndpoint(endpoint: string): boolean {
+  try {
+    const parsed = new URL(endpoint);
+    if (parsed.protocol !== "https:") return false;
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      host === "[::1]" ||
+      /^127\./.test(host) ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^169\.254\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -52,9 +77,9 @@ export async function POST(req: NextRequest) {
         ? body.userAgent.slice(0, 500)
         : null;
 
-    if (!endpoint) {
+    if (!endpoint || !isValidPushEndpoint(endpoint)) {
       return NextResponse.json(
-        { error: "Subscription endpoint is required" },
+        { error: "Valid HTTPS subscription endpoint is required" },
         { status: 400 }
       );
     }

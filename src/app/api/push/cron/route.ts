@@ -15,10 +15,11 @@ function getAdminClient() {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
     "";
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     "";
   if (!url || !key) return null;
   return createSupabaseAdmin(url, key, {
@@ -28,7 +29,8 @@ function getAdminClient() {
 
 async function isAuthorizedCronOrAdmin(req: NextRequest): Promise<boolean> {
   const cronSecret =
-    process.env.CRON_SECRET || "shadowlog_push_cron_secret_2026";
+    process.env.CRON_SECRET ||
+    (process.env.NODE_ENV !== "production" ? "shadowlog_push_cron_secret_2026" : "");
   const authHeader = req.headers.get("authorization");
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
     return true;

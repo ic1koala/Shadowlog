@@ -13,8 +13,9 @@ function resolveSafeOrigin(rawOrigin: string | null): string {
       parsed.origin === process.env.NEXT_PUBLIC_APP_URL ||
       parsed.hostname === "localhost" ||
       parsed.hostname === "127.0.0.1" ||
-      parsed.hostname.endsWith(".vercel.app") ||
-      parsed.hostname.includes("shadowlog")
+      parsed.hostname === "shadowlog.app" ||
+      parsed.hostname.endsWith(".shadowlog.app") ||
+      parsed.hostname.endsWith(".vercel.app")
     ) {
       return parsed.origin;
     }
@@ -76,7 +77,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: portalSession.url });
   } catch (error: unknown) {
     console.error("Stripe Customer Portal Error:", error);
-    const msg = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json(
+      { error: "カスタマーポータルの起動中にエラーが発生しました。時間をおいて再度お試しください。" },
+      { status: 500 }
+    );
   }
 }

@@ -83,6 +83,31 @@ export function cleanHtmlText(html: string): string {
     .trim();
 }
 
+/**
+ * Validates that a URL is a public HTTP/HTTPS target and blocks SSRF (private/loopback/metadata IPs).
+ */
+export function isSafeExternalUrl(url: URL): boolean {
+  if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+  const host = url.hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host === "0.0.0.0" ||
+    host === "127.0.0.1" ||
+    host === "[::1]" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    host.endsWith(".localhost") ||
+    /^127\./.test(host) ||
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^169\.254\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const rateLimit = checkRateLimit(req, {
@@ -93,11 +118,22 @@ export async function POST(req: NextRequest) {
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "リクエスト上限に達しました。少し時間をおいて再試行してください。" },
-        { status: 429 }
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
       );
     }
 
-    const body = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = (await req.json()) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json(
+        { error: "リクエストの形式が正しくありません。" },
+        { status: 400 }
+      );
+    }
     const type = body.type as "youtube" | "web" | "text";
     const rawInput = typeof body.input === "string" ? body.input.trim() : "";
     const level = (body.level as string) || "intermediate";
@@ -180,7 +216,6 @@ export async function POST(req: NextRequest) {
             error: errorMessage,
             title: sourceTitle,
             videoId,
-            details: rawMsg,
             suggestion:
               "YouTubeの「文字起こしを表示」や動画の概要欄からテキストをコピーし、「PDF/テキスト」タブに貼り付けると、すぐにシャドーイング教材として生成できます。",
           },
@@ -192,12 +227,19 @@ export async function POST(req: NextRequest) {
     else if (type === "web") {
       try {
         const parsedUrl = new URL(rawInput.startsWith("http") ? rawInput : `https://${rawInput}`);
+        if (!isSafeExternalUrl(parsedUrl)) {
+          return NextResponse.json(
+            { error: "有効な外部Web記事のURL（https://...）を入力してください。" },
+            { status: 400 }
+          );
+        }
         const res = await fetch(parsedUrl.toString(), {
           headers: {
             "User-Agent":
               "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             Accept: "text/html,application/xhtml+xml",
           },
+          redirect: "follow",
           signal: AbortSignal.timeout(8000),
         });
 
@@ -205,11 +247,11 @@ export async function POST(req: NextRequest) {
           throw new Error(`HTTP ${res.status}`);
         }
 
-        const html = await res.text();
+        const html = (await res.text()).slice(0, 250_000);
         const text = cleanHtmlText(html);
         extractedText = text.slice(0, 4000);
         sourceTitle = parsedUrl.hostname;
-      } catch (err: unknown) {
+      } catch {
         return NextResponse.json(
           {
             error: "Web記事の取得に失敗しました。URLを確認するか、記事本文を直接コピーして「テキスト」タブに貼り付けてください。",
@@ -270,12 +312,16 @@ Return STRICT JSON matching this schema:
     }
 
     const parsedAi = JSON.parse(content);
+    const passageText = typeof parsedAi.passage === "string" ? parsedAi.passage.trim() : "";
+    if (!passageText) {
+      throw new Error("Empty passage returned from AI");
+    }
 
     return NextResponse.json({
       success: true,
       title: parsedAi.title || sourceTitle,
       summary: parsedAi.summary || "",
-      passage: parsedAi.passage || "",
+      passage: passageText,
       translation: parsedAi.translation || "",
       targetWpm: measuredWpm || (level === "advanced" ? 160 : level === "beginner" ? 120 : 140),
       sourceType: type,

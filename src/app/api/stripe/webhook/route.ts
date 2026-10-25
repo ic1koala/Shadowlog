@@ -15,17 +15,23 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event;
 
   try {
-    if (webhookSecret && signature) {
+    if (webhookSecret) {
+      if (!signature) {
+        return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
+      }
       event = stripe.webhooks.constructEvent(bodyText, signature, webhookSecret);
-    } else {
-      // In development or if webhook secret is not configured, parse payload directly with warning
-      console.warn("⚠️ STRIPE_WEBHOOK_SECRET is not configured or signature missing. Parsing unverified payload.");
+    } else if (process.env.NODE_ENV !== "production") {
+      // Only in non-production when webhook secret is not configured, parse payload directly with warning
+      console.warn("⚠️ STRIPE_WEBHOOK_SECRET is not configured. Parsing unverified payload in non-production.");
       event = JSON.parse(bodyText) as Stripe.Event;
+    } else {
+      console.error("❌ STRIPE_WEBHOOK_SECRET is missing in production.");
+      return NextResponse.json({ error: "Webhook secret is not configured" }, { status: 500 });
     }
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Unknown error";
     console.error("❌ Stripe Webhook signature verification failed:", errorMsg);
-    return NextResponse.json({ error: `Webhook Error: ${errorMsg}` }, { status: 400 });
+    return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 400 });
   }
 
   const adminDb = getSupabaseAdmin();

@@ -70,12 +70,9 @@ function getSupabaseAdmin() {
 
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     "placeholder-key";
 
   return createSupabaseClient(supabaseUrl, supabaseServiceKey, {
@@ -102,7 +99,9 @@ async function isAuthorizedAdmin(req: NextRequest): Promise<boolean> {
 
   // 2. Cron secret
   const authHeader = req.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET || "shadowlog_push_cron_secret_2026";
+  const cronSecret =
+    process.env.CRON_SECRET ||
+    (process.env.NODE_ENV !== "production" ? "shadowlog_push_cron_secret_2026" : "");
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
     return true;
   }

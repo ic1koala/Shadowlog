@@ -19,7 +19,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = (await req.json()) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
     const word = typeof body.word === "string" ? body.word.trim().slice(0, 60) : "";
     const sentence = typeof body.sentence === "string" ? body.sentence.trim().slice(0, 500) : "";
 
@@ -60,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ translation: word });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Translation error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("Translate Word API Error:", err);
+    return NextResponse.json({ error: "Translation error" }, { status: 500 });
   }
 }

@@ -12,7 +12,6 @@ import {
   Play,
   Loader2,
   AlertCircle,
-  ExternalLink,
   Layers,
   ArrowRight,
 } from "lucide-react";

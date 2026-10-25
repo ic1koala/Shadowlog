@@ -96,9 +96,10 @@ export async function GET() {
 
     return NextResponse.json({ ok: true, candidates: results, cached: false });
   } catch (err: unknown) {
+    console.error("[Logo Vote Likes API Error]:", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { ok: false, error: "データの取得に失敗しました。", candidates: CANDIDATE_POSTS.map((c) => ({ ...c, likes: 0, views: 0 })) },
+      { status: 200 }
     );
   }
 }

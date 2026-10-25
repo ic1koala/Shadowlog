@@ -44,7 +44,6 @@ import {
 } from "@/lib/storage/persona-store";
 import {
   getActiveScrapSource,
-  ScrapSource,
 } from "@/lib/storage/scrap-store";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
 import { StudySessionSummaryModal } from "@/components/features/practice/StudySessionSummaryModal";

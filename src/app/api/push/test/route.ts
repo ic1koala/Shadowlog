@@ -4,6 +4,31 @@ import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 export const dynamic = "force-dynamic";
 
+function isValidPushEndpoint(endpoint: unknown): endpoint is string {
+  if (typeof endpoint !== "string" || !endpoint.trim()) return false;
+  try {
+    const parsed = new URL(endpoint.trim());
+    if (parsed.protocol !== "https:") return false;
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      host === "[::1]" ||
+      /^127\./.test(host) ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^169\.254\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const rateLimit = checkRateLimit(req, "push-test", 10, 60_000);
   if (!rateLimit.allowed) {
@@ -19,9 +44,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const subscription = body.subscription;
-    if (!subscription || typeof subscription !== "object" || !subscription.endpoint) {
+    if (!subscription || typeof subscription !== "object" || !isValidPushEndpoint(subscription.endpoint)) {
       return NextResponse.json(
-        { error: "Valid subscription object with endpoint is required" },
+        { error: "Valid HTTPS subscription endpoint is required" },
         { status: 400 }
       );
     }
@@ -54,7 +79,7 @@ export async function POST(req: NextRequest) {
       error: result.error,
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal Server Error";
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    console.error("Push Test Error:", err);
+    return NextResponse.json({ ok: false, error: "テスト通知の送信に失敗しました。" }, { status: 500 });
   }
 }

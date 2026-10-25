@@ -21,11 +21,9 @@ function getSupabaseAdmin() {
     "https://placeholder-project.supabase.co";
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_NEXT_PUBLIC_SUPABASE_SUPABASE_ANON_KEY ||
     "placeholder-key";
   return createClient(supabaseUrl, supabaseServiceKey);
 }
@@ -64,8 +62,23 @@ export async function POST(req: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
     const resend = getResendClient();
 
-    const body = await req.json();
-    const { category, email, content, screenshotBase64, environmentInfo, userId } = body;
+    let body: Record<string, unknown>;
+    try {
+      body = (await req.json()) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json(
+        { error: "リクエストの形式が正しくありません。" },
+        { status: 400 }
+      );
+    }
+    const { category, email, content, screenshotBase64, environmentInfo, userId } = body as {
+      category?: string;
+      email?: string;
+      content?: string;
+      screenshotBase64?: string;
+      environmentInfo?: Record<string, unknown>;
+      userId?: string;
+    };
 
     // Validation
     if (!category || !email || !content) {

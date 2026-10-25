@@ -13,8 +13,9 @@ function resolveSafeOrigin(rawOrigin: string | null): string {
       parsed.origin === process.env.NEXT_PUBLIC_APP_URL ||
       parsed.hostname === "localhost" ||
       parsed.hostname === "127.0.0.1" ||
-      parsed.hostname.endsWith(".vercel.app") ||
-      parsed.hostname.includes("shadowlog")
+      parsed.hostname === "shadowlog.app" ||
+      parsed.hostname.endsWith(".shadowlog.app") ||
+      parsed.hostname.endsWith(".vercel.app")
     ) {
       return parsed.origin;
     }
@@ -74,7 +75,8 @@ export async function POST(req: NextRequest) {
 
     const stripe = getStripeServer();
 
-    const isBase = plan === "base";
+    const safePlan: "base" | "pro" = plan === "base" ? "base" : "pro";
+    const isBase = safePlan === "base";
     const unitAmount = isBase ? 500 : 1000;
     const productName = isBase
       ? "ShadowLog ベースプラン (月額)"
@@ -108,16 +110,16 @@ export async function POST(req: NextRequest) {
       ],
       mode: "subscription",
       allow_promotion_codes: true,
-      success_url: `${origin}/practice?upgrade=success&plan=${plan}`,
+      success_url: `${origin}/practice?upgrade=success&plan=${safePlan}`,
       cancel_url: `${origin}/settings?upgrade=cancel`,
       metadata: {
         userId: userId || "",
-        plan,
+        plan: safePlan,
       },
       subscription_data: {
         metadata: {
           userId: userId || "",
-          plan,
+          plan: safePlan,
         },
       },
     };
@@ -137,7 +139,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
     console.error("Stripe Checkout Error:", error);
-    const msg = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json(
+      { error: "決済セッションの作成中にエラーが発生しました。時間をおいて再度お試しください。" },
+      { status: 500 }
+    );
   }
 }
