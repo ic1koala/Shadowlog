@@ -41,6 +41,10 @@ import {
   isPersonaEligible,
   getPersonaProfile,
   UserPersonaProfile,
+  getPersonaDailyQuota,
+  consumePersonaDailyQuota,
+  PersonaDailyQuotaStatus,
+  PRO_PERSONA_DAILY_LIMIT,
 } from "@/lib/storage/persona-store";
 import {
   getActiveScrapSource,
@@ -77,6 +81,7 @@ export default function PracticePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
   const [activePersona, setActivePersona] = useState<UserPersonaProfile | null>(null);
+  const [personaQuota, setPersonaQuota] = useState<PersonaDailyQuotaStatus | null>(null);
 
   const isAdmin = isAdminEmail(userEmail);
   const [showAdminTour, setShowAdminTour] = useState(false);
@@ -143,8 +148,10 @@ export default function PracticePage() {
       const currentPlan = getTicketStatus().plan;
       if (isPersonaEligible(currentPlan)) {
         setActivePersona(getPersonaProfile());
+        setPersonaQuota(getPersonaDailyQuota(currentPlan));
       } else {
         setActivePersona(null);
+        setPersonaQuota(null);
       }
       // Invalidate prefetched cache on persona switch to avoid showing outdated sentences
       prefetchedSentenceRef.current = null;
@@ -158,6 +165,7 @@ export default function PracticePage() {
     window.addEventListener("shadowlog:custom-words-update", handleCustomWordsSync);
     window.addEventListener("shadowlog:ticket-update", handleCustomWordsSync);
     window.addEventListener("shadowlog:persona-update", syncPersona);
+    window.addEventListener("shadowlog:persona-quota-update", syncPersona);
 
     // Recover unsynced local sessions to Supabase and confirm authenticated email on mount
     if (typeof window !== "undefined") {
@@ -209,6 +217,7 @@ export default function PracticePage() {
       window.removeEventListener("shadowlog:custom-words-update", handleCustomWordsSync);
       window.removeEventListener("shadowlog:ticket-update", handleCustomWordsSync);
       window.removeEventListener("shadowlog:persona-update", syncPersona);
+      window.removeEventListener("shadowlog:persona-quota-update", syncPersona);
     };
   }, []);
 
@@ -679,11 +688,23 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       formData.append("originalText", sentence.english);
       formData.append("durationSeconds", String(durationSeconds));
       formData.append("mode", practiceMode);
+
+      // Determine scoring engine: Pro user practicing with Persona (up to 15 questions/day) gets Azure AI Speech
+      const isProPlan = ticketStatus?.plan === "pro" || ticketStatus?.isVip;
+      const isPersonaActive = Boolean(
+        activePersona?.enabled &&
+        (activePersona.jobRole || activePersona.industryField || activePersona.targetScenario)
+      );
+      const isPersonaQuotaAvailable = personaQuota?.isEligibleForAzure ?? (isProPlan && (personaQuota?.remainingToday ?? 1) > 0);
+      const isPersonaAzureEligible = (isProPlan || isAdmin) && isPersonaActive && isPersonaQuotaAvailable;
+
+      let chosenEngine: "whisper" | "azure" = "whisper";
       if (isAdmin) {
-        formData.append("engine", scoringEngine);
-      } else {
-        formData.append("engine", "whisper");
+        chosenEngine = scoringEngine;
+      } else if (isPersonaAzureEligible) {
+        chosenEngine = "azure";
       }
+      formData.append("engine", chosenEngine);
 
       const res = await fetch("/api/transcribe-diff", {
         method: "POST",
@@ -701,6 +722,12 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
       setCoachFeedback(data.coachFeedback);
       setWpmInfo(data.wpmInfo);
       setAzureAssessment(data.azureAssessment);
+
+      // Consume persona daily quota if practicing with persona
+      if (isPersonaActive) {
+        const updatedPersonaQuota = consumePersonaDailyQuota(ticketStatus?.plan);
+        setPersonaQuota(updatedPersonaQuota);
+      }
 
       // Consume ticket upon successful analysis and notify components
       consumeTicket(practiceMode === "passage" ? "long" : "short");
@@ -1129,6 +1156,12 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
                     </button>
                   </div>
                 )}
+                {!isAdmin && (ticketStatus?.plan === "pro" || ticketStatus?.isVip) && activePersona?.enabled && (
+                  <span className="ml-1 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-[11px] font-bold text-purple-700 dark:text-purple-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                    👑 Azure高精度音素採点 ({personaQuota ? `本日残り: ${personaQuota.remainingToday}問` : `1日最大${PRO_PERSONA_DAILY_LIMIT}問`})
+                  </span>
+                )}
               </div>
               {sentence && (
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -1322,7 +1355,12 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
             transcription={transcription}
             coachFeedback={coachFeedback}
             wpmInfo={wpmInfo}
-            azureAssessment={isAdmin && scoringEngine === "azure" ? azureAssessment : undefined}
+            azureAssessment={
+              (isAdmin && scoringEngine === "azure") ||
+              (Boolean(azureAssessment) && (ticketStatus?.plan === "pro" || ticketStatus?.isVip))
+                ? azureAssessment
+                : undefined
+            }
             mode={practiceMode}
             onSaveSession={handleSaveSession}
             onRetry={handleRetry}

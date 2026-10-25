@@ -1,6 +1,8 @@
 import { UserPlanType } from "@/types";
 import { getPlanType } from "@/lib/storage/user-learning-store";
 import { isInvitedVip } from "@/lib/auth/vip-checker";
+import { getTicketStatus } from "@/lib/storage/ticket-store";
+import { getJstDateString } from "@/lib/storage/custom-words-store";
 
 export interface UserPersonaProfile {
   enabled: boolean;
@@ -13,6 +15,19 @@ export interface UserPersonaProfile {
 }
 
 const KEY_PERSONA = "shadowlog_user_persona";
+const KEY_PERSONA_DAILY_COUNTER = "shadowlog_persona_daily_counter";
+
+export const PRO_PERSONA_DAILY_LIMIT = 15;
+export const BASE_PERSONA_DAILY_LIMIT = 5;
+
+export interface PersonaDailyQuotaStatus {
+  date: string;
+  plan: UserPlanType;
+  usedToday: number;
+  dailyLimit: number;
+  remainingToday: number;
+  isEligibleForAzure: boolean;
+}
 
 /**
  * Checks whether a given plan is eligible for the Persona feature.
@@ -71,6 +86,90 @@ export function clearPersonaProfile(): void {
   } catch {
     // ignore
   }
+}
+
+/**
+ * Resolves the effective user plan.
+ */
+function resolveEffectivePlan(planOverride?: UserPlanType, now?: Date): UserPlanType {
+  if (planOverride) return planOverride;
+  const status = getTicketStatus(undefined, undefined, now);
+  if (status.isVip) return "pro";
+  return status.plan;
+}
+
+/**
+ * Retrieves the daily Persona quota status.
+ */
+export function getPersonaDailyQuota(
+  planOverride?: UserPlanType,
+  now: Date = new Date()
+): PersonaDailyQuotaStatus {
+  const plan = resolveEffectivePlan(planOverride, now);
+  const todayJst = getJstDateString(now);
+
+  if (typeof window === "undefined") {
+    const limit = plan === "pro" ? PRO_PERSONA_DAILY_LIMIT : plan === "base" ? BASE_PERSONA_DAILY_LIMIT : 0;
+    return {
+      date: todayJst,
+      plan,
+      usedToday: 0,
+      dailyLimit: limit,
+      remainingToday: limit,
+      isEligibleForAzure: plan === "pro" && limit > 0,
+    };
+  }
+
+  let usedToday = 0;
+  try {
+    const raw = localStorage.getItem(KEY_PERSONA_DAILY_COUNTER);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { date?: string; count?: number };
+      if (parsed.date === todayJst && typeof parsed.count === "number") {
+        usedToday = parsed.count;
+      }
+    }
+  } catch {
+    usedToday = 0;
+  }
+
+  const limit = plan === "pro" ? PRO_PERSONA_DAILY_LIMIT : plan === "base" ? BASE_PERSONA_DAILY_LIMIT : 0;
+  const remainingToday = Math.max(0, limit - usedToday);
+  // Pro (or VIP) is eligible for Azure AI Speech if within the daily 15 persona quota
+  const isEligibleForAzure = (plan === "pro" || isInvitedVip()) && usedToday < PRO_PERSONA_DAILY_LIMIT;
+
+  return {
+    date: todayJst,
+    plan,
+    usedToday,
+    dailyLimit: limit,
+    remainingToday,
+    isEligibleForAzure,
+  };
+}
+
+/**
+ * Consumes 1 practice quota from the Persona daily limit.
+ */
+export function consumePersonaDailyQuota(
+  planOverride?: UserPlanType,
+  now: Date = new Date()
+): PersonaDailyQuotaStatus {
+  const status = getPersonaDailyQuota(planOverride, now);
+  if (typeof window === "undefined") return status;
+
+  const nextCount = status.usedToday + 1;
+  try {
+    localStorage.setItem(
+      KEY_PERSONA_DAILY_COUNTER,
+      JSON.stringify({ date: status.date, count: nextCount })
+    );
+    window.dispatchEvent(new Event("shadowlog:persona-quota-update"));
+  } catch {
+    // ignore
+  }
+
+  return getPersonaDailyQuota(planOverride, now);
 }
 
 /**

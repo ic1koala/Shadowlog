@@ -5,6 +5,8 @@ import {
   savePersonaProfile,
   clearPersonaProfile,
   UserPersonaProfile,
+  getPersonaDailyQuota,
+  consumePersonaDailyQuota,
 } from "@/lib/storage/persona-store";
 import {
   getSentenceGenerationPrompt,
@@ -163,6 +165,41 @@ describe("Persona Feature & Prompt Integration", () => {
       expect(systemPrompt).toContain("IT・SaaS");
       expect(userPrompt).toContain("Target User Persona");
       expect(userPrompt).toContain("プロダクトマネージャー (PdM)");
+    });
+  });
+
+  describe("Persona Daily Quota & Azure Eligibility (getPersonaDailyQuota, consumePersonaDailyQuota)", () => {
+    it("provides 15 daily persona quota and Azure eligibility for Pro plan", () => {
+      const quota = getPersonaDailyQuota("pro");
+      expect(quota.dailyLimit).toBe(15);
+      expect(quota.usedToday).toBe(0);
+      expect(quota.remainingToday).toBe(15);
+      expect(quota.isEligibleForAzure).toBe(true);
+    });
+
+    it("provides 5 daily persona quota but no Azure eligibility for Base plan", () => {
+      const quota = getPersonaDailyQuota("base");
+      expect(quota.dailyLimit).toBe(5);
+      expect(quota.usedToday).toBe(0);
+      expect(quota.remainingToday).toBe(5);
+      expect(quota.isEligibleForAzure).toBe(false);
+    });
+
+    it("increments usage and switches off Azure eligibility after 15 questions for Pro plan", () => {
+      for (let i = 0; i < 14; i++) {
+        consumePersonaDailyQuota("pro");
+      }
+      let quota = getPersonaDailyQuota("pro");
+      expect(quota.usedToday).toBe(14);
+      expect(quota.remainingToday).toBe(1);
+      expect(quota.isEligibleForAzure).toBe(true);
+
+      // Consume 15th
+      consumePersonaDailyQuota("pro");
+      quota = getPersonaDailyQuota("pro");
+      expect(quota.usedToday).toBe(15);
+      expect(quota.remainingToday).toBe(0);
+      expect(quota.isEligibleForAzure).toBe(false);
     });
   });
 });

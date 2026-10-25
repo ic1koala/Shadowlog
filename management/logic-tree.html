@@ -278,11 +278,11 @@
           children: [
             {
               id: "q-azure-poc",
-              title: "🚀 Azure AI Speech 発音評価PoC (FB-046)",
-              summary: "音素(Phoneme)レベルでネイティブ音響モデルと波形照合。適当発音を23点まで適正減点！",
+              title: "🚀 Azure AI Speech 発音評価エンジン正式運用 (FB-046/078)",
+              summary: "音素(Phoneme)レベルでネイティブ音響モデルと波形照合。適当発音を適正減点！",
               status: "completed",
               priority: "high",
-              notes: "Accuracy(正確さ), Fluency(流暢さ), Completeness(完全性), Prosody(抑揚)の4軸採点＋単語別Mispronunciation判定。F0無料枠(毎月5時間=約3,600回)で運用。",
+              notes: "S0従量課金プラン移行完了。Proプランのペルソナ枠（1日15問）に正式接続。Accuracy, Fluency, Completeness, Prosody 4軸採点＋単語別音素判定を提供。",
               collapsed: false
             },
             {
@@ -726,11 +726,11 @@
                     },
                     {
                       id: "pro-ai-review",
-                      title: "💡 【検討中】長文AI高精度レビュー (1日1回提出型)",
-                      summary: "長文を読んで提出すると、AI(Azure音素/GPT)による精密な発音・抑揚添削が1日1回受けられる",
-                      status: "idea",
+                      title: "🚀 Proペルソナ枠（1日15問）Azure AI Speech高精度音素採点 (FB-078)",
+                      summary: "Pro会員のペルソナ問題（1日15問）に波形・音素照合＋抑揚(Prosody)採点を正式提供。16問目以降はWhisperで原価ガード",
+                      status: "completed",
                       priority: "high",
-                      notes: "Azure AI Speechは管理者PoC検証中。1日1回チケット制でAI原価を確実に予測可能に保つ。",
+                      notes: "Azure S0(従量課金)へ移行完了。4軸スコア＋音素Mispronunciation判定＋環境警告をリアルタイム提供。月間原価上限を最大189円/人に完全制御。",
                       collapsed: false
                     }
                   ]
@@ -875,7 +875,7 @@
     let currentSearchTerm = "";
     let currentFilterStatus = "all";
 
-    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v9";
+    const STORAGE_KEY = "shadowlog_improvement_logic_tree_v10";
 
     // Initialize
     function init() {

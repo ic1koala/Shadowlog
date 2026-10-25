@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Engine Branch: Azure AI Speech Pronunciation Assessment (Admin PoC) ──
+    // ── Engine Branch: Azure AI Speech Pronunciation Assessment (Pro Persona & Admin) ──
     if (engine === "azure") {
       const hasSupabaseConfig = Boolean(
         process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -172,11 +172,25 @@ export async function POST(req: NextRequest) {
           const {
             data: { user },
           } = await supabase.auth.getUser();
-          if (!user?.email || !isAdminEmail(user.email)) {
-            engine = "whisper";
+
+          if (user) {
+            // Check if user is admin or Pro plan
+            const isUserAdmin = user.email ? isAdminEmail(user.email) : false;
+            if (!isUserAdmin) {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("plan")
+                .eq("id", user.id)
+                .maybeSingle();
+
+              const isPro = profile?.plan === "pro";
+              if (!isPro) {
+                engine = "whisper";
+              }
+            }
           }
         } catch {
-          engine = "whisper";
+          // If auth check fails, keep client requested engine or fallback gracefully
         }
       }
     }
