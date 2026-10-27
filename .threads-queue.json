@@ -534,27 +534,35 @@
     "id": "queue_20261027_azure_release_parent",
     "text": "【超大型アップデート】👑\n「AI採点って適当に発音しても勝手に正しい英語に補正されちゃう…」\nそんな課題を解決するため、Microsoft Azure AIの波形解析エンジンをShadowLog（Pro版）に正式実装しました！\n\n文字起こしではなく、ネイティブの音響波形と直接比較して「正確度・流暢さ・完全性・抑揚（Prosody）」の4軸を精密採点します🔥\n\n#英語学習 #発音矯正 #AI英語 #ShadowLog",
     "scheduledAt": "2026-10-27T18:30:00+09:00",
-    "status": "pending"
+    "status": "published",
+    "publishedAt": "2026-10-27T14:21:26.091Z",
+    "postId": "18286061860294563"
   },
   {
     "id": "queue_20261027_azure_release_tree",
     "text": "あなたの職種や専門業界に特化したペルソナ問題（1日15問）で、L/Rやthの音素ズレまで赤字でピンポイント可視化されます。\n高額スクール不要のプロ添削を、ぜひ体感してみてください👇\nhttps://shadowlog.vercel.app",
     "replyToId": "queue_20261027_azure_release_parent",
     "scheduledAt": "2026-10-27T18:32:00+09:00",
-    "status": "pending"
+    "status": "published",
+    "publishedAt": "2026-10-27T14:21:35.816Z",
+    "postId": "18102138305059783"
   },
   {
     "id": "queue_20261027_night_parent",
     "text": "DUO 3.0やDistinction、金フレなどの人気単語帳。\n何周もして「文字を見れば意味が分かる」状態になったのに、いざネイティブの会話や海外ドラマになると全く聞き取れない…という経験ありませんか？\n\n文字情報（視覚）と音情報（聴覚・調音運動）が脳内でリンクしていないのが原因です。\n単語帳も「音声を聴いて即座に口に出す」と定着率が何倍にも跳ね上がります✨\n\n#DUO30 #Distinction #金フレ #英語学習 #単語暗記",
     "scheduledAt": "2026-10-27T19:00:00+09:00",
-    "status": "pending"
+    "status": "published",
+    "publishedAt": "2026-10-27T14:21:45.278Z",
+    "postId": "18373463161208333"
   },
   {
     "id": "queue_20261027_night_tree",
     "text": "単語の文字知識を「音の反射神経」に変えるスピード診断、やってみませんか？\nマイクに向かって1文吹き込むだけで、発話速度と推定TOEICスコアが分かります👇\nhttps://shadowlog.vercel.app/diagnosis",
     "replyToId": "queue_20261027_night_parent",
     "scheduledAt": "2026-10-27T19:02:00+09:00",
-    "status": "pending"
+    "status": "published",
+    "publishedAt": "2026-10-27T14:21:55.693Z",
+    "postId": "18191824033409106"
   },
   {
     "id": "queue_20261028_morning_parent",
