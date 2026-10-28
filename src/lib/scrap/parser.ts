@@ -111,3 +111,102 @@ export function isSafeExternalUrl(url: URL): boolean {
   }
   return true;
 }
+
+/**
+ * Decodes PDF string escape sequences such as \n, \r, \(, \), and octal codes \ddd.
+ */
+function decodePdfString(str: string): string {
+  return str
+    .replace(/\\([nrtbf()\\])/g, (_, ch) => {
+      if (ch === "n") return "\n";
+      if (ch === "r") return "\r";
+      if (ch === "t") return " ";
+      if (ch === "(") return "(";
+      if (ch === ")") return ")";
+      if (ch === "\\") return "\\";
+      return " ";
+    })
+    .replace(/\\([0-7]{1,3})/g, (_, oct) => {
+      const code = parseInt(oct, 8);
+      return code >= 32 && code <= 126 ? String.fromCharCode(code) : " ";
+    });
+}
+
+/**
+ * Extracts readable English/ASCII text from a PDF buffer (supports FlateDecode compressed streams and raw text operators).
+ */
+export function extractTextFromPdfBuffer(buffer: Buffer): string {
+  // Lazy require zlib so parser.ts remains safe when imported in client unit tests if not called
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const zlib = require("zlib") as typeof import("zlib");
+
+  const rawBinary = buffer.toString("latin1");
+  const decodedStreams: string[] = [];
+
+  // 1. Decompress FlateDecode streams if present
+  const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+  let match: RegExpExecArray | null;
+  while ((match = streamRegex.exec(rawBinary)) !== null) {
+    const streamData = Buffer.from(match[1], "latin1");
+    try {
+      const inflated = zlib.inflateSync(streamData);
+      decodedStreams.push(inflated.toString("latin1"));
+    } catch {
+      try {
+        const inflatedRaw = zlib.inflateRawSync(streamData);
+        decodedStreams.push(inflatedRaw.toString("latin1"));
+      } catch {
+        // Not a zlib stream or encrypted; keep raw stream segment if it contains text operators
+        decodedStreams.push(match[1]);
+      }
+    }
+  }
+
+  const contentPool = decodedStreams.length > 0 ? decodedStreams.join("\n") : rawBinary;
+  const extractedFragments: string[] = [];
+
+  // 2. Extract text from TJ arrays: [(Hello) -20 (world)] TJ
+  const tjArrayRegex = /\[((?:[^[\]]|\([^()]*\))*)\]\s*TJ/g;
+  let tjMatch: RegExpExecArray | null;
+  while ((tjMatch = tjArrayRegex.exec(contentPool)) !== null) {
+    const inner = tjMatch[1];
+    const strParts: string[] = [];
+    const literalRegex = /\(((?:\\.|[^\\()])*)\)/g;
+    let lit: RegExpExecArray | null;
+    while ((lit = literalRegex.exec(inner)) !== null) {
+      strParts.push(decodePdfString(lit[1]));
+    }
+    if (strParts.length > 0) {
+      extractedFragments.push(strParts.join(""));
+    }
+  }
+
+  // 3. Extract text from single literal Tj / ' / " operators: (Hello world) Tj
+  const singleTjRegex = /\(((?:\\.|[^\\()])+)\)\s*(?:Tj|'|")/g;
+  let sMatch: RegExpExecArray | null;
+  while ((sMatch = singleTjRegex.exec(contentPool)) !== null) {
+    extractedFragments.push(decodePdfString(sMatch[1]));
+  }
+
+  let combined = extractedFragments
+    .join(" ")
+    .replace(/[^\x20-\x7E\n]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // 4. Fallback: if PDF uses non-standard operators, extract readable English sentences/phrases (>= 4 words)
+  if (combined.length < 40) {
+    const asciiMatches = contentPool.match(/[A-Za-z][A-Za-z0-9,.'"-]+(?:\s+[A-Za-z][A-Za-z0-9,.'"-]+){3,}/g);
+    if (asciiMatches) {
+      const filtered = asciiMatches.filter(
+        (line) =>
+          !/obj|endobj|stream|endstream|Filter|FlateDecode|Type|Font|Page|Parent|Resources|MediaBox/i.test(
+            line
+          )
+      );
+      combined = filtered.join(" ").replace(/\s+/g, " ").trim();
+    }
+  }
+
+  return combined.slice(0, 12000);
+}

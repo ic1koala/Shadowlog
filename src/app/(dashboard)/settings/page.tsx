@@ -58,7 +58,16 @@ import { CustomWordsSection } from "@/components/features/settings/CustomWordsSe
 import { DocShadowSection } from "@/components/features/settings/DocShadowSection";
 import { AppFeatureGuide } from "@/components/features/settings/AppFeatureGuide";
 import { PersonaSettingsSection } from "@/components/features/settings/PersonaSettingsSection";
-import { isPersonaEligible } from "@/lib/storage/persona-store";
+import { isPersonaEligible, getPersonaProfile, getPersonaDailyQuota } from "@/lib/storage/persona-store";
+import { getCustomWords, getCustomGenerationQuota } from "@/lib/storage/custom-words-store";
+import {
+  GenerationSourceType,
+  getGenerationSource,
+  setGenerationSource,
+  getActiveScrapSource,
+  isScrapEligible,
+  isGenerationSourcePlanEligible,
+} from "@/lib/storage/scrap-store";
 import { isAdminEmail } from "@/lib/auth/admin-checker";
 
 export type SettingSectionKey =
@@ -111,6 +120,44 @@ export default function SettingsPage() {
 
   // Plan State
   const [ticketStatus, setTicketStatus] = useState<TicketStatus | null>(null);
+  const [genSource, setGenSource] = useState<GenerationSourceType>("industry");
+  const [sourceSummary, setSourceSummary] = useState<{
+    personaRole?: string;
+    personaRemaining?: number;
+    personaLimit?: number;
+    customWords: string[];
+    customRemaining?: number;
+    customLimit?: number;
+    activeScrapTitle?: string;
+  }>({ customWords: [] });
+
+  const refreshGenerationSourceState = () => {
+    setGenSource(getGenerationSource());
+    const p = getPersonaProfile();
+    const pq = getPersonaDailyQuota();
+    const cw = getCustomWords();
+    const cq = getCustomGenerationQuota();
+    const sc = getActiveScrapSource();
+    setSourceSummary({
+      personaRole: [p?.jobRole, p?.industryField].filter(Boolean).join(" × ") || undefined,
+      personaRemaining: pq.remainingToday,
+      personaLimit: pq.dailyLimit,
+      customWords: cw,
+      customRemaining: cq.remainingCount,
+      customLimit: cq.maxLimit,
+      activeScrapTitle: sc?.title,
+    });
+  };
+
+  const handleSelectGenerationSource = (target: GenerationSourceType) => {
+    const currentPlan = ticketStatus?.plan || "free";
+    if (!isGenerationSourcePlanEligible(target, currentPlan)) {
+      openSection("plans");
+      return;
+    }
+    setGenSource(target);
+    setGenerationSource(target);
+  };
 
   // Read URL query parameter or hash on mount if present (e.g., /settings?section=learning#section-custom-words)
   useEffect(() => {
@@ -212,16 +259,26 @@ export default function SettingsPage() {
       }
     });
 
-    // 3. Ticket Status
+    // 3. Ticket Status & Generation Source
     setTicketStatus(getTicketStatus());
+    refreshGenerationSourceState();
     const handleTicketUpdate = () => {
       setTicketStatus(getTicketStatus());
+      refreshGenerationSourceState();
     };
     window.addEventListener("shadowlog:ticket-update", handleTicketUpdate);
     window.addEventListener("shadowlog:plan-updated", handleTicketUpdate);
+    window.addEventListener("shadowlog:generation-source-update", refreshGenerationSourceState);
+    window.addEventListener("shadowlog:scrap-update", refreshGenerationSourceState);
+    window.addEventListener("shadowlog:custom-words-update", refreshGenerationSourceState);
+    window.addEventListener("shadowlog:persona-update", refreshGenerationSourceState);
     return () => {
       window.removeEventListener("shadowlog:ticket-update", handleTicketUpdate);
       window.removeEventListener("shadowlog:plan-updated", handleTicketUpdate);
+      window.removeEventListener("shadowlog:generation-source-update", refreshGenerationSourceState);
+      window.removeEventListener("shadowlog:scrap-update", refreshGenerationSourceState);
+      window.removeEventListener("shadowlog:custom-words-update", refreshGenerationSourceState);
+      window.removeEventListener("shadowlog:persona-update", refreshGenerationSourceState);
     };
   }, []);
 
@@ -982,6 +1039,203 @@ export default function SettingsPage() {
           {/* SECTION 3: 学習設定 */}
           {activeSection === "learning" && (
             <div className="bg-card rounded-2xl p-5 sm:p-7 border border-border shadow-xs space-y-6">
+              {/* Top-Level Generation Source Selector (タップで固定) */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-primary/10 via-indigo-500/5 to-card border border-primary/30 space-y-3.5 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
+                        最重要設定
+                      </span>
+                      <h3 className="text-sm sm:text-base font-bold text-foreground">
+                        フレーズ生成元の選択（タップで固定）
+                      </h3>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-relaxed">
+                      シャドーイング実践で「どの情報源を元にAIが毎回新しい英文を作るか」を1つ選んで固定できます。
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* Option 1: Industry */}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectGenerationSource("industry")}
+                    className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-2 ${
+                      genSource === "industry"
+                        ? "border-primary bg-primary/10 ring-2 ring-primary/25 shadow-xs"
+                        : "border-border/80 bg-background/80 hover:border-primary/40"
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                          <span>🏢 ① 学習する業種</span>
+                        </span>
+                        {genSource === "industry" ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
+                            固定中
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            全プラン
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        選択中の業種ドメイン×難易度から毎回新しいフレーズを生成
+                      </p>
+                    </div>
+                    <div className="text-[11px] font-semibold text-primary pt-1 border-t border-border/50 flex items-center justify-between">
+                      <span>
+                        現在: {industries.find((i) => i.key === industry)?.label.split(" ")[0]} /{" "}
+                        {levels.find((l) => l.key === level)?.label.split(" ")[0]}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Persona */}
+                  {(() => {
+                    const eligible = isPersonaEligible(ticketStatus?.plan);
+                    const isSelected = genSource === "persona";
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectGenerationSource("persona")}
+                        className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-2 ${
+                          isSelected
+                            ? "border-indigo-500 bg-indigo-500/15 ring-2 ring-indigo-500/25 shadow-xs"
+                            : "border-border/80 bg-background/80 hover:border-indigo-500/40"
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                              <span>🎯 ② ペルソナ設定</span>
+                            </span>
+                            {isSelected ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white">
+                                固定中
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-500 border border-indigo-500/30">
+                                {eligible ? "Base / Pro" : "🔒 Base / Pro"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            職種×専門業界×場面に完全特化した実務フレーズを都度AI生成
+                          </p>
+                        </div>
+                        <div className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 pt-1 border-t border-border/50 flex items-center justify-between">
+                          <span className="truncate">
+                            {!eligible
+                              ? "タップしてプラン詳細を確認"
+                              : sourceSummary.personaRole
+                              ? `${sourceSummary.personaRole} (本日残り${sourceSummary.personaRemaining ?? 0}回)`
+                              : "未設定（下のペルソナ設定から登録）"}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })()}
+
+                  {/* Option 3: Custom My Words */}
+                  {(() => {
+                    const isSelected = genSource === "custom_words";
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectGenerationSource("custom_words")}
+                        className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-2 ${
+                          isSelected
+                            ? "border-amber-500 bg-amber-500/15 ring-2 ring-amber-500/25 shadow-xs"
+                            : "border-border/80 bg-background/80 hover:border-amber-500/40"
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                              <span>✨ ③ カスタムマイ単語</span>
+                            </span>
+                            {isSelected ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-600 text-white">
+                                固定中
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                無料お試し可
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            登録した最大3単語を必ず組み込んだ実践フレーズを都度AI生成
+                          </p>
+                        </div>
+                        <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 pt-1 border-t border-border/50 flex items-center justify-between">
+                          <span className="truncate">
+                            {sourceSummary.customWords.length > 0
+                              ? `[${sourceSummary.customWords.join(", ")}] (残り${sourceSummary.customRemaining ?? 0}/${sourceSummary.customLimit ?? 2}回)`
+                              : "未登録（下のマイ単語欄で登録）"}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })()}
+
+                  {/* Option 4: My Scrap (PDF / Article / YouTube) */}
+                  {(() => {
+                    const eligible = isScrapEligible(ticketStatus?.plan);
+                    const isSelected = genSource === "scrap";
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectGenerationSource("scrap")}
+                        className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-2 ${
+                          isSelected
+                            ? "border-purple-500 bg-purple-500/15 ring-2 ring-purple-500/25 shadow-xs"
+                            : "border-border/80 bg-background/80 hover:border-purple-500/40"
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                              <span>📑 ④ マイスクラップ (PDF等)</span>
+                            </span>
+                            {isSelected ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-600 text-white">
+                                固定中
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-500 border border-purple-500/30">
+                                {eligible ? "Pro" : "🔒 Pro限定"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            保存したPDFや記事・動画から、毎回異なる切り口の英文をAI生成
+                          </p>
+                        </div>
+                        <div className="text-[11px] font-semibold text-purple-600 dark:text-purple-300 pt-1 border-t border-border/50 flex items-center justify-between">
+                          <span className="truncate">
+                            {!eligible
+                              ? "タップしてProプラン詳細を確認"
+                              : sourceSummary.activeScrapTitle
+                              ? `選択中: ${sourceSummary.activeScrapTitle}`
+                              : "未登録（下のマイスクラップからPDF等を保存）"}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })()}
+                </div>
+
+                <p className="text-[10px] sm:text-[11px] text-muted-foreground">
+                  💡 選択した生成元の1日の回数上限に達した場合（または未登録の場合）は、自動的に「① 学習する業種」へフォールバックして練習を継続できます。
+                </p>
+              </div>
+
               {/* Industry Selection */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

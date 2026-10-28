@@ -6,6 +6,53 @@ export interface PromptTemplate {
   userPrompt: string;
 }
 
+export interface ScrapGenerationContext {
+  title: string;
+  rawText: string;
+}
+
+const SCRAP_FOCUS_ANGLES = [
+  "Core thesis, strategic problem statement, or primary objective",
+  "Specific factual finding, data insight, or concrete mechanism",
+  "Practical implication, actionable recommendation, or operational takeaway",
+  "Key contrast, trade-off, challenge, or turning point in the material",
+  "Notable technical/domain concept or real-world application described in the text",
+];
+
+/**
+ * Extracts a randomized 3,000-char window from a longer rawText so each generation
+ * draws from different sections of an uploaded PDF or article.
+ */
+export function selectScrapWindow(rawText: string): {
+  excerpt: string;
+  windowPositionLabel: string;
+  focusAngle: string;
+} {
+  const cleaned = rawText.replace(/\s+/g, " ").trim();
+  const focusAngle =
+    SCRAP_FOCUS_ANGLES[Math.floor(Math.random() * SCRAP_FOCUS_ANGLES.length)]!;
+
+  const windowSize = 3000;
+  if (cleaned.length <= windowSize) {
+    return {
+      excerpt: cleaned,
+      windowPositionLabel: "Full Document",
+      focusAngle,
+    };
+  }
+
+  const maxOffset = cleaned.length - windowSize;
+  const randomOffset = Math.floor(Math.random() * (maxOffset + 1));
+  const slice = cleaned.slice(randomOffset, randomOffset + windowSize);
+  const pct = Math.round((randomOffset / maxOffset) * 100);
+
+  return {
+    excerpt: slice,
+    windowPositionLabel: `Document Section (~${pct}% offset)`,
+    focusAngle,
+  };
+}
+
 const INDUSTRY_SITUATIONS: Record<Industry, string[]> = {
   tech: [
     "Production outage post-mortem and root cause analysis",
@@ -246,7 +293,8 @@ export function getSentenceGenerationPrompt(
   weakWords?: string[],
   referenceDate?: Date,
   customWords?: string[],
-  persona?: UserPersonaProfile | null
+  persona?: UserPersonaProfile | null,
+  scrapContext?: ScrapGenerationContext | null
 ): PromptTemplate {
   const cleanCustomWords = Array.isArray(customWords)
     ? customWords.map((w) => w.trim()).filter((w) => w.length > 0).slice(0, 3)
@@ -262,6 +310,9 @@ export function getSentenceGenerationPrompt(
       persona.targetScenario?.trim() ||
       persona.interestedTopics?.trim())
   );
+
+  const isScrapActive = Boolean(scrapContext && scrapContext.rawText?.trim());
+  const scrapWindow = isScrapActive ? selectScrapWindow(scrapContext!.rawText) : null;
 
   const spec = TOEIC_LEVEL_SPECS[level];
 
@@ -290,7 +341,7 @@ export function getSentenceGenerationPrompt(
   const randomSeed = Math.random().toString(36).substring(2, 8);
   const seasonal = getSeasonalTrendContext(normInd, referenceDate);
 
-  const hasWeakWords = !hasCustomWords && weakWords && weakWords.length > 0;
+  const hasWeakWords = !hasCustomWords && !isScrapActive && weakWords && weakWords.length > 0;
   const weakWordList = hasWeakWords ? weakWords!.slice(0, 3).join(", ") : null;
 
   const systemPrompt = `You are an expert English language coach specializing in shadowing practice.
@@ -315,7 +366,17 @@ ${
     : `- This is for practical professional communication ("${normInd}" domain). Write in clear, natural spoken English suitable for real workplace meetings or discussions.`
 }
 ${
-  isPersonaActive
+  isScrapActive && scrapWindow
+    ? `
+USER UPLOADED DOCUMENT / MY SCRAP DIRECTIVE (CRITICAL - HIGHEST PRIORITY):
+- Source Title: "${scrapContext!.title || "Uploaded Material"}"
+- Source Section: ${scrapWindow.windowPositionLabel}
+- Focus Angle for This Generation: ${scrapWindow.focusAngle}
+- Instructions:
+  - The user uploaded this document/PDF/transcript to practice speaking about its contents and domain expressions.
+  - Pick a specific concept, insight, fact, or discussion point from the provided source excerpt below and craft a FRESH, natural spoken English sentence calibrated to ${spec.name} (${levelGuidelines[level]}).
+  - Do NOT return the exact same opening sentence every time. Vary the angle and draw from different details inside the excerpt based on the Variation Seed (${randomSeed}) and Focus Angle.`
+    : isPersonaActive
     ? `
 USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE (CRITICAL - HIGHEST PRIORITY):
 - Target Learner Profile:
@@ -367,7 +428,22 @@ Return ONLY a valid JSON object with the following schema:
 }
 Do NOT include markdown fences, extra commentary, or additional fields.`;
 
-  const userPrompt = isPersonaActive
+  const userPrompt = isScrapActive && scrapWindow
+    ? `Generate a fresh, natural shadowing practice sentence based on the user's registered source material:
+- Source Material Title: "${scrapContext!.title || "Uploaded Document"}"
+- Focus Angle: ${scrapWindow.focusAngle}
+- Difficulty Level: ${level} (${levelGuidelines[level]})
+- Variation Seed: ${randomSeed}
+
+--- SOURCE EXCERPT (${scrapWindow.windowPositionLabel}) ---
+${scrapWindow.excerpt}
+----------------------------------------------------------
+
+Requirements:
+- Select a concrete idea, fact, argument, or domain expression from the source excerpt above (focusing on "${scrapWindow.focusAngle}") and turn it into ONE natural spoken English sentence suitable for shadowing practice.
+- Calibrate vocabulary and sentence length to ${spec.name} (${levelGuidelines[level]}).
+- Make sure the sentence stands on its own as a clear, meaningful statement a speaker would say out loud.`
+    : isPersonaActive
     ? `Generate an authentic, highly specialized shadowing practice sentence for this specific professional:
 - Target User Persona (PRIMARY DRIVER):
   - Role: ${persona!.jobRole || "Professional"}
@@ -433,7 +509,8 @@ export function getPassageGenerationPrompt(
   level: DifficultyLevel,
   topic?: string,
   referenceDate?: Date,
-  persona?: UserPersonaProfile | null
+  persona?: UserPersonaProfile | null,
+  scrapContext?: ScrapGenerationContext | null
 ): PromptTemplate {
   const normInd = normalizeIndustry(industry);
   const isDaily = normInd === "daily";
@@ -451,6 +528,9 @@ export function getPassageGenerationPrompt(
       persona.targetScenario?.trim() ||
       persona.interestedTopics?.trim())
   );
+
+  const isScrapActive = Boolean(scrapContext && scrapContext.rawText?.trim());
+  const scrapWindow = isScrapActive ? selectScrapWindow(scrapContext!.rawText) : null;
 
   const personaIntro = isDaily
     ? `You are a native English speaker sharing a natural, engaging, and authentic story or recommendation with a friend or colleague.
@@ -472,7 +552,16 @@ TOEIC Score & Vocabulary Ceiling Calibration (STRICT):
 - Required Grammar / Structure: ${spec.structureRules}
 - Self-Verification Check: Before returning the passage, verify that every sentence conforms to the TOEIC ${spec.toeicScore} level. Replace any overly dense or uncharacteristic words with natural, level-appropriate equivalents.
 ${
-  isPersonaActive
+  isScrapActive && scrapWindow
+    ? `
+USER UPLOADED DOCUMENT / MY SCRAP DIRECTIVE (CRITICAL - HIGHEST PRIORITY):
+- Source Title: "${scrapContext!.title || "Uploaded Material"}"
+- Source Section: ${scrapWindow.windowPositionLabel}
+- Focus Angle for This Generation: ${scrapWindow.focusAngle}
+- Instructions:
+  - Craft a fresh, coherent 3-to-5 sentence spoken passage (60-90 words) based on the ideas, arguments, or facts in the provided source excerpt.
+  - Do NOT repeat the exact same excerpt every time. Focus on "${scrapWindow.focusAngle}" with Variation Seed (${randomSeed}) so the user can practice varied passages across the document.`
+    : isPersonaActive
     ? `
 USER PERSONA & REAL-WORLD WORKPLACE DIRECTIVE (CRITICAL - HIGHEST PRIORITY):
 - Target Learner Profile:
@@ -511,7 +600,22 @@ Return ONLY a valid JSON object with the following schema:
 }
 Do NOT include markdown fences, extra commentary, or additional fields.`;
 
-  const userPrompt = isPersonaActive
+  const userPrompt = isScrapActive && scrapWindow
+    ? `Generate a fresh spoken English passage (60 to 90 words, 3 to 5 sentences) based on the user's registered source material:
+- Source Material Title: "${scrapContext!.title || "Uploaded Document"}"
+- Focus Angle: ${scrapWindow.focusAngle}
+- Difficulty Level: ${level} (${spec.name}, ~${spec.toeicScore} pts)
+- Variation Seed: ${randomSeed}
+
+--- SOURCE EXCERPT (${scrapWindow.windowPositionLabel}) ---
+${scrapWindow.excerpt}
+----------------------------------------------------------
+
+Requirements:
+- Synthesize or adapt a specific part of the source excerpt above (focusing on "${scrapWindow.focusAngle}") into a natural, spoken 3-to-5 sentence passage (60-90 words).
+- Calibrate vocabulary and sentence rhythm to ${spec.name} (~${spec.toeicScore} pts).
+- Ensure natural spoken pauses and clear chunking for continuous shadowing.`
+    : isPersonaActive
     ? `Generate an authentic spoken English passage for this specific professional:
 - Target User Persona (PRIMARY DRIVER):
   - Role: ${persona!.jobRole || "Professional"}

@@ -7,6 +7,7 @@ import {
   fetchYouTubeOEmbed,
   cleanHtmlText,
   isSafeExternalUrl,
+  extractTextFromPdfBuffer,
 } from "@/lib/scrap/parser";
 
 export const dynamic = "force-dynamic";
@@ -28,20 +29,71 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let body: Record<string, unknown>;
-    try {
-      body = (await req.json()) as Record<string, unknown>;
-    } catch {
-      return NextResponse.json(
-        { error: "リクエストの形式が正しくありません。" },
-        { status: 400 }
-      );
-    }
-    const type = body.type as "youtube" | "web" | "text";
-    const rawInput = typeof body.input === "string" ? body.input.trim() : "";
-    const level = (body.level as string) || "intermediate";
+    const contentType = req.headers.get("content-type") || "";
+    let type: "youtube" | "web" | "text" | "pdf" = "text";
+    let rawInput = "";
+    let level = "intermediate";
+    let pdfFileName = "";
+    let pdfExtractedText = "";
 
-    if (!rawInput) {
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const file = formData.get("file") as File | null;
+      level = (formData.get("level") as string) || "intermediate";
+      const textFallback = (formData.get("input") as string) || "";
+
+      if (file && file.size > 0) {
+        if (file.size > 10 * 1024 * 1024) {
+          return NextResponse.json(
+            { error: "PDFファイルのサイズは10MB以下にしてください。" },
+            { status: 400 }
+          );
+        }
+        type = "pdf";
+        pdfFileName = file.name.replace(/\.pdf$/i, "") || "PDFドキュメント";
+        const arrayBuf = await file.arrayBuffer();
+        pdfExtractedText = extractTextFromPdfBuffer(Buffer.from(arrayBuf));
+        if (textFallback.trim()) {
+          pdfExtractedText = `${pdfExtractedText}\n${textFallback.trim()}`.trim();
+        }
+      } else if (textFallback.trim()) {
+        type = "text";
+        rawInput = textFallback.trim();
+      } else {
+        return NextResponse.json(
+          { error: "PDFファイルまたはテキストを選択・入力してください。" },
+          { status: 400 }
+        );
+      }
+    } else {
+      let body: Record<string, unknown>;
+      try {
+        body = (await req.json()) as Record<string, unknown>;
+      } catch {
+        return NextResponse.json(
+          { error: "リクエストの形式が正しくありません。" },
+          { status: 400 }
+        );
+      }
+      type = (body.type as "youtube" | "web" | "text" | "pdf") || "text";
+      rawInput = typeof body.input === "string" ? body.input.trim() : "";
+      level = (body.level as string) || "intermediate";
+
+      if (type === "pdf" && typeof body.pdfBase64 === "string" && body.pdfBase64) {
+        pdfFileName = typeof body.fileName === "string" ? body.fileName.replace(/\.pdf$/i, "") : "PDFドキュメント";
+        const base64Clean = body.pdfBase64.replace(/^data:application\/pdf;base64,/, "");
+        const buf = Buffer.from(base64Clean, "base64");
+        if (buf.byteLength > 10 * 1024 * 1024) {
+          return NextResponse.json(
+            { error: "PDFファイルのサイズは10MB以下にしてください。" },
+            { status: 400 }
+          );
+        }
+        pdfExtractedText = extractTextFromPdfBuffer(buf);
+      }
+    }
+
+    if (type !== "pdf" && !rawInput) {
       return NextResponse.json(
         { error: "入力内容（URLまたはテキスト）が空です。" },
         { status: 400 }
@@ -85,13 +137,15 @@ export async function POST(req: NextRequest) {
         let totalDurationSec = 0;
         const validLines: string[] = [];
 
-        for (const item of transcriptItems.slice(0, 40)) {
+        for (const item of transcriptItems.slice(0, 120)) {
           const cleanText = item.text.replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
           if (cleanText) {
             validLines.push(cleanText);
-            const words = cleanText.split(/\s+/).filter(Boolean).length;
-            totalWords += words;
-            totalDurationSec += (item.duration || 2000) / 1000;
+            if (validLines.length <= 40) {
+              const words = cleanText.split(/\s+/).filter(Boolean).length;
+              totalWords += words;
+              totalDurationSec += (item.duration || 2000) / 1000;
+            }
           }
         }
 
@@ -101,7 +155,7 @@ export async function POST(req: NextRequest) {
           measuredWpm = Math.min(200, Math.max(120, measuredWpm));
         }
 
-        extractedText = validLines.slice(0, 35).join(" ");
+        extractedText = validLines.join(" ").slice(0, 12000);
       } catch (err: unknown) {
         const rawMsg = err instanceof Error ? err.message : String(err);
         const isIpBlocked =
@@ -152,7 +206,7 @@ export async function POST(req: NextRequest) {
 
         const html = (await res.text()).slice(0, 250_000);
         const text = cleanHtmlText(html);
-        extractedText = text.slice(0, 4000);
+        extractedText = text.slice(0, 12000);
         sourceTitle = parsedUrl.hostname;
       } catch {
         return NextResponse.json(
@@ -163,9 +217,23 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-    // 3. Plain Text / PDF Copy-Paste
+    // 3. PDF File Upload Extraction
+    else if (type === "pdf") {
+      extractedText = (pdfExtractedText || rawInput).slice(0, 12000);
+      sourceTitle = pdfFileName || "PDFドキュメント";
+      if (!extractedText || extractedText.length < 20) {
+        return NextResponse.json(
+          {
+            error:
+              "このPDFから十分な英語テキストを抽出できませんでした（スキャン画像PDFまたは特殊フォントの可能性があります）。PDF内のテキストをコピーして下のテキスト欄に貼り付けてお試しください。",
+          },
+          { status: 422 }
+        );
+      }
+    }
+    // 4. Plain Text / PDF Copy-Paste
     else {
-      extractedText = rawInput.slice(0, 4000);
+      extractedText = rawInput.slice(0, 12000);
       sourceTitle = "カスタムテキスト";
     }
 
@@ -176,7 +244,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Use OpenAI GPT-4o-mini to extract and polish the passage
+    const promptExcerpt = extractedText.slice(0, 4500);
+
+    // 5. Use OpenAI GPT-4o-mini to extract and polish the initial passage
     const openai = getOpenAIClient();
     const systemPrompt = `You are an elite spoken English shadowing coach for ShadowLog.
 The user provides a raw transcript or article excerpt from YouTube, Web news, or PDF.
@@ -201,7 +271,7 @@ Return STRICT JSON matching this schema:
         { role: "system", content: systemPrompt },
         {
           role: "user",
-          content: `Target level: ${level}\nSource Type: ${type}\nRaw content:\n"""\n${extractedText}\n"""`,
+          content: `Target level: ${level}\nSource Type: ${type}\nRaw content:\n"""\n${promptExcerpt}\n"""`,
         },
       ],
       response_format: { type: "json_object" },
@@ -226,9 +296,10 @@ Return STRICT JSON matching this schema:
       summary: parsedAi.summary || "",
       passage: passageText,
       translation: parsedAi.translation || "",
+      rawText: extractedText,
       targetWpm: measuredWpm || (level === "advanced" ? 160 : level === "beginner" ? 120 : 140),
       sourceType: type,
-      sourceUrl: type === "text" ? undefined : rawInput,
+      sourceUrl: type === "text" || type === "pdf" ? undefined : rawInput,
     });
   } catch (error: unknown) {
     console.error("[Parse Scrap API Error]:", error);

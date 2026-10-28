@@ -11,6 +11,7 @@ import {
   getSentenceGenerationPrompt,
   getPassageGenerationPrompt,
   getFallbackPassage,
+  ScrapGenerationContext,
 } from "@/lib/ai/prompts";
 import type { UserPersonaProfile } from "@/lib/storage/persona-store";
 import { countWords } from "@/lib/diff/diff-calculator";
@@ -22,6 +23,43 @@ import {
 import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 const VALID_LEVELS: DifficultyLevel[] = ["beginner", "intermediate", "advanced"];
+
+/**
+ * Picks a randomized sentence or passage from raw scrap text when OpenAI API is unavailable (e.g. offline/tests).
+ */
+function pickFallbackFromScrap(
+  scrap: ScrapGenerationContext,
+  mode: PracticeMode
+): { english: string; japanese: string } {
+  const raw = scrap.rawText.replace(/\s+/g, " ").trim();
+  const sentences = raw
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 15);
+
+  if (sentences.length === 0) {
+    const shortRaw = raw.slice(0, mode === "passage" ? 350 : 120);
+    return {
+      english: shortRaw || "We should review the main findings from the uploaded document.",
+      japanese: `【マイスクラップ: ${scrap.title}】からの抽出フレーズです。`,
+    };
+  }
+
+  if (mode === "passage") {
+    const startIdx = Math.floor(Math.random() * Math.max(1, sentences.length - 2));
+    const slice = sentences.slice(startIdx, startIdx + 3).join(" ");
+    return {
+      english: slice,
+      japanese: `【マイスクラップ: ${scrap.title}】から抽出した長文シャドーイング教材です。`,
+    };
+  }
+
+  const randomSentence = sentences[Math.floor(Math.random() * sentences.length)]!;
+  return {
+    english: randomSentence,
+    japanese: `【マイスクラップ: ${scrap.title}】から生成した実践フレーズです。`,
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,7 +87,9 @@ export async function POST(req: NextRequest) {
       customWords?: string[];
       excludeIds?: string[];
       preferBank?: boolean;
+      forceFresh?: boolean;
       persona?: UserPersonaProfile | null;
+      scrapSource?: { title?: string; rawText?: string } | null;
       skipAudio?: boolean;
     } = {};
     try {
@@ -84,6 +124,7 @@ export async function POST(req: NextRequest) {
       ? body.excludeIds.filter((id): id is string => typeof id === "string")
       : [];
     const preferBank = Boolean(body.preferBank);
+    const forceFresh = Boolean(body.forceFresh);
     const skipAudio = Boolean(body.skipAudio);
 
     const persona = body.persona && typeof body.persona === "object" ? body.persona : undefined;
@@ -93,9 +134,25 @@ export async function POST(req: NextRequest) {
       (persona.jobRole?.trim() || persona.industryField?.trim() || persona.targetScenario?.trim() || persona.interestedTopics?.trim())
     );
 
-    // 1. If the sentence bank slot has reached 300 (or preferBank is requested) and neither customWords nor persona are active, serve from the bank
-    const slotFull = !hasCustomWords && !isPersonaActive && (await isSlotFull(industry, level, mode));
-    if (!hasCustomWords && !isPersonaActive && (slotFull || preferBank)) {
+    const scrapContext: ScrapGenerationContext | null =
+      body.scrapSource &&
+      typeof body.scrapSource === "object" &&
+      typeof body.scrapSource.rawText === "string" &&
+      body.scrapSource.rawText.trim().length > 0
+        ? {
+            title: (body.scrapSource.title || "マイスクラップ教材").trim().slice(0, 120),
+            rawText: body.scrapSource.rawText.trim().slice(0, 12000),
+          }
+        : null;
+    const isScrapActive = Boolean(scrapContext);
+    const isPersonalizedGeneration = hasCustomWords || isPersonaActive || isScrapActive;
+
+    // 1. If the sentence bank slot has reached 300 (or preferBank is requested) and neither customWords/persona/scrap nor forceFresh is active, serve from the bank
+    const slotFull =
+      !isPersonalizedGeneration &&
+      !forceFresh &&
+      (await isSlotFull(industry, level, mode));
+    if (!isPersonalizedGeneration && !forceFresh && (slotFull || preferBank)) {
       const banked = await pickFromSentenceBank({
         industry,
         level,
@@ -108,13 +165,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Otherwise generate a new sentence via OpenAI and store it in the sentence bank (unless customWords or persona is active)
+    // 2. Otherwise generate a new sentence via OpenAI and store it in the sentence bank (unless personalized)
     try {
       const openai = getOpenAIClient();
       const { systemPrompt, userPrompt } =
         mode === "passage"
-          ? getPassageGenerationPrompt(industry, level, topic, undefined, persona)
-          : getSentenceGenerationPrompt(industry, level, topic, weakWords, undefined, customWords, persona);
+          ? getPassageGenerationPrompt(industry, level, topic, undefined, persona, scrapContext)
+          : getSentenceGenerationPrompt(
+              industry,
+              level,
+              topic,
+              weakWords,
+              undefined,
+              customWords,
+              persona,
+              scrapContext
+            );
 
       // Generate sentence text with GPT-4o-mini
       const completion = await openai.chat.completions.create({
@@ -168,8 +234,8 @@ export async function POST(req: NextRequest) {
         mode,
       };
 
-      // Save newly generated sentence to the shared bank only when not a personalized custom-word or persona generation
-      if (!hasCustomWords && !isPersonaActive) {
+      // Save newly generated sentence to the shared bank only when not a personalized generation
+      if (!isPersonalizedGeneration) {
         const savedRecord = await saveToSentenceBank(responsePayload);
         if (savedRecord) {
           responsePayload.id = savedRecord.id;
@@ -180,8 +246,8 @@ export async function POST(req: NextRequest) {
     } catch (openaiErr) {
       console.warn("OpenAI API call failed, checking sentence bank or fallback:", openaiErr);
 
-      // Try sentence bank before static fallback (unless customWords or persona were specifically requested)
-      if (!hasCustomWords && !isPersonaActive) {
+      // Try sentence bank before static fallback (unless customWords, persona, or scrap were specifically requested)
+      if (!isPersonalizedGeneration) {
         const banked = await pickFromSentenceBank({
           industry,
           level,
@@ -198,7 +264,11 @@ export async function POST(req: NextRequest) {
       let fallbackText = "";
       let fallbackJa = "";
 
-      if (hasCustomWords) {
+      if (isScrapActive && scrapContext) {
+        const scrapFallback = pickFallbackFromScrap(scrapContext, mode);
+        fallbackText = scrapFallback.english;
+        fallbackJa = scrapFallback.japanese;
+      } else if (hasCustomWords) {
         const [w1, w2, w3] = customWords;
         const joinedEn = [w1, w2, w3].filter(Boolean).join(", ");
         if (level === "beginner") {
@@ -241,7 +311,7 @@ export async function POST(req: NextRequest) {
       }
 
       const responsePayload: SentenceResponse = {
-        id: `fallback-${Date.now()}`,
+        id: `fallback-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         english: fallbackText,
         japanese: fallbackJa,
         wordCount: countWords(fallbackText),

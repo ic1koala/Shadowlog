@@ -48,6 +48,11 @@ import {
 } from "@/lib/storage/persona-store";
 import {
   getActiveScrapSource,
+  ScrapSource,
+  GenerationSourceType,
+  getGenerationSource,
+  setGenerationSource,
+  resolveEffectiveGenerationSource,
 } from "@/lib/storage/scrap-store";
 import { UpgradeModal } from "@/components/features/subscription/UpgradeModal";
 import { StudySessionSummaryModal } from "@/components/features/practice/StudySessionSummaryModal";
@@ -108,6 +113,8 @@ export default function PracticePage() {
   const [activeCustomWords, setActiveCustomWords] = useState<string[]>([]);
   const [customQuota, setCustomQuota] = useState<CustomGenerationQuota | null>(null);
   const [customUpsellNotice, setCustomUpsellNotice] = useState<string | null>(null);
+  const [generationSource, setGenerationSourceState] = useState<GenerationSourceType>("industry");
+  const [activeScrap, setActiveScrap] = useState<ScrapSource | null>(null);
 
   // Floating recording bar state
   const [floatIsRecording, setFloatIsRecording] = useState(false);
@@ -130,6 +137,7 @@ export default function PracticePage() {
     level: DifficultyLevel;
     mode: PracticeMode;
     personaSignature: string;
+    generationSource: GenerationSourceType;
   } | null>(null);
   const seenSentenceIdsRef = useRef<Set<string>>(new Set());
   const prefetchRequestIdRef = useRef<number>(0);
@@ -161,9 +169,15 @@ export default function PracticePage() {
     const handleCustomWordsSync = () => {
       setRegisteredCustomWords(getCustomWords());
       setCustomQuota(getCustomGenerationQuota());
+      setGenerationSourceState(getGenerationSource());
+      setActiveScrap(getActiveScrapSource());
     };
+    setGenerationSourceState(getGenerationSource());
+    setActiveScrap(getActiveScrapSource());
     window.addEventListener("shadowlog:custom-words-update", handleCustomWordsSync);
     window.addEventListener("shadowlog:ticket-update", handleCustomWordsSync);
+    window.addEventListener("shadowlog:generation-source-update", handleCustomWordsSync);
+    window.addEventListener("shadowlog:scrap-update", handleCustomWordsSync);
     window.addEventListener("shadowlog:persona-update", syncPersona);
     window.addEventListener("shadowlog:persona-quota-update", syncPersona);
 
@@ -216,6 +230,8 @@ export default function PracticePage() {
     return () => {
       window.removeEventListener("shadowlog:custom-words-update", handleCustomWordsSync);
       window.removeEventListener("shadowlog:ticket-update", handleCustomWordsSync);
+      window.removeEventListener("shadowlog:generation-source-update", handleCustomWordsSync);
+      window.removeEventListener("shadowlog:scrap-update", handleCustomWordsSync);
       window.removeEventListener("shadowlog:persona-update", syncPersona);
       window.removeEventListener("shadowlog:persona-quota-update", syncPersona);
     };
@@ -251,8 +267,25 @@ export default function PracticePage() {
       }
 
       const currentPlan = getTicketStatus().plan;
-      const personaToSend = isPersonaEligible(currentPlan) ? getPersonaProfile() : null;
+      const resolved = resolveEffectiveGenerationSource(currentPlan);
+
+      // Avoid background prefetching when custom_words is pinned so we don't prematurely consume limited custom word quota
+      if (resolved.effectiveSource === "custom_words") {
+        return;
+      }
+
+      const personaToSend =
+        resolved.effectiveSource === "persona" ? getPersonaProfile() : null;
       const currentPersonaSig = getPersonaSignature(personaToSend);
+      const scrapItem =
+        resolved.effectiveSource === "scrap" ? getActiveScrapSource() : null;
+      const scrapPayload =
+        scrapItem && (scrapItem.rawText || scrapItem.extractedPassage)
+          ? {
+              title: scrapItem.title,
+              rawText: scrapItem.rawText || scrapItem.extractedPassage,
+            }
+          : undefined;
 
       const existing = prefetchedSentenceRef.current;
       if (
@@ -261,6 +294,7 @@ export default function PracticePage() {
         existing.level === targetLevel &&
         existing.mode === targetMode &&
         existing.personaSignature === currentPersonaSig &&
+        existing.generationSource === resolved.effectiveSource &&
         existing.sentence.id !== currentId
       ) {
         return;
@@ -275,9 +309,17 @@ export default function PracticePage() {
             industry: targetIndustry,
             level: targetLevel,
             mode: targetMode,
-            weakWords: targetMode === "sentence" ? activeWeakWords : [],
+            weakWords:
+              resolved.effectiveSource === "industry" && targetMode === "sentence"
+                ? activeWeakWords
+                : [],
             excludeIds: Array.from(seenSentenceIdsRef.current),
-            persona: personaToSend && personaToSend.enabled !== false ? personaToSend : undefined,
+            persona:
+              personaToSend && personaToSend.enabled !== false
+                ? personaToSend
+                : undefined,
+            scrapSource: scrapPayload,
+            forceFresh: true,
           }),
         });
 
@@ -291,6 +333,7 @@ export default function PracticePage() {
             level: targetLevel,
             mode: targetMode,
             personaSignature: currentPersonaSig,
+            generationSource: resolved.effectiveSource,
           };
         }
       } catch {
@@ -310,23 +353,14 @@ export default function PracticePage() {
       const targetIndustry = normalizeIndustry(overrideIndustry || industry);
       const targetLevel = overrideLevel || level;
       const targetMode = overrideMode || practiceMode;
-      const customWordsToUse =
+      const explicitCustomWords =
         Array.isArray(overrideCustomWords) && overrideCustomWords.length > 0
           ? overrideCustomWords
           : [];
-      const isCustomGeneration = customWordsToUse.length > 0;
 
       // Check ticket limits before generating
       const currentStatus = getTicketStatus();
       setTicketStatus(currentStatus);
-
-      const personaToSend = isPersonaEligible(currentStatus.plan) ? getPersonaProfile() : null;
-      const currentPersonaSig = getPersonaSignature(personaToSend);
-      if (isPersonaEligible(currentStatus.plan)) {
-        setActivePersona(personaToSend);
-      } else {
-        setActivePersona(null);
-      }
 
       if (targetMode === "sentence" && !currentStatus.canPracticeShort) {
         setShowProModal(true);
@@ -336,6 +370,54 @@ export default function PracticePage() {
         setShowProModal(true);
         return;
       }
+
+      // Resolve effective generation source based on user's pinned preference, plan, and remaining quota
+      const resolved = resolveEffectiveGenerationSource(currentStatus.plan);
+      setGenerationSourceState(resolved.effectiveSource);
+      const latestScrap = getActiveScrapSource();
+      setActiveScrap(latestScrap);
+
+      let customWordsToUse: string[] = explicitCustomWords;
+      const fallbackNoticeToShow: string | null = resolved.fallbackNotice || null;
+
+      if (
+        customWordsToUse.length === 0 &&
+        resolved.effectiveSource === "custom_words"
+      ) {
+        const storedWords = getCustomWords();
+        if (storedWords.length > 0) {
+          const { success, quota: nextQuota } = consumeCustomGenerationQuota(
+            currentStatus.plan
+          );
+          setCustomQuota(nextQuota);
+          if (success) {
+            customWordsToUse = storedWords;
+          }
+        }
+      }
+
+      const isCustomGeneration = customWordsToUse.length > 0;
+      const personaToSend =
+        !isCustomGeneration && resolved.effectiveSource === "persona"
+          ? getPersonaProfile()
+          : null;
+      const currentPersonaSig = getPersonaSignature(personaToSend);
+      if (isPersonaEligible(currentStatus.plan)) {
+        setActivePersona(personaToSend);
+      } else {
+        setActivePersona(null);
+      }
+
+      const scrapPayload =
+        !isCustomGeneration &&
+        resolved.effectiveSource === "scrap" &&
+        latestScrap &&
+        (latestScrap.rawText || latestScrap.extractedPassage)
+          ? {
+              title: latestScrap.title,
+              rawText: latestScrap.rawText || latestScrap.extractedPassage,
+            }
+          : undefined;
 
       const requestId = ++activeRequestIdRef.current;
       // Fully reset audio recorder and floating button state
@@ -351,9 +433,9 @@ export default function PracticePage() {
       setIsSaved(false);
       setErrorMessage(null);
       setAzureAssessment(undefined);
-      setCustomUpsellNotice(null);
+      setCustomUpsellNotice(fallbackNoticeToShow);
 
-      // 0.0s instant swap if background-prefetched sentence is ready for the same conditions and persona (and not a custom word generation)
+      // 0.0s instant swap if background-prefetched sentence is ready for the same conditions and generation source
       const prefetched = prefetchedSentenceRef.current;
       if (
         !isCustomGeneration &&
@@ -361,7 +443,8 @@ export default function PracticePage() {
         prefetched.industry === targetIndustry &&
         prefetched.level === targetLevel &&
         prefetched.mode === targetMode &&
-        prefetched.personaSignature === currentPersonaSig
+        prefetched.personaSignature === currentPersonaSig &&
+        prefetched.generationSource === resolved.effectiveSource
       ) {
         prefetchedSentenceRef.current = null;
         seenSentenceIdsRef.current.add(prefetched.sentence.id);
@@ -388,10 +471,20 @@ export default function PracticePage() {
             industry: targetIndustry,
             level: targetLevel,
             mode: targetMode,
-            weakWords: !isCustomGeneration && targetMode === "sentence" ? activeWeakWords : [],
+            weakWords:
+              !isCustomGeneration &&
+              !scrapPayload &&
+              targetMode === "sentence"
+                ? activeWeakWords
+                : [],
             customWords: isCustomGeneration ? customWordsToUse : undefined,
             excludeIds: Array.from(seenSentenceIdsRef.current),
-            persona: personaToSend && personaToSend.enabled !== false ? personaToSend : undefined,
+            persona:
+              personaToSend && personaToSend.enabled !== false
+                ? personaToSend
+                : undefined,
+            scrapSource: scrapPayload,
+            forceFresh: true,
           }),
         });
 
@@ -530,42 +623,14 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
 
       // Check if user clicked practice from a Scrap source
       if (sourceParam === "scrap") {
-        const activeScrap = getActiveScrapSource();
-        if (activeScrap) {
-          setPracticeMode("passage");
-          setIsLoadingSentence(true);
-          const scrapId = `scrap-${activeScrap.id}`;
-          seenSentenceIdsRef.current.add(scrapId);
-
-          void (async () => {
-            let audioBase64: string | undefined;
-            try {
-              const ttsRes = await fetch("/api/tts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: activeScrap.extractedPassage, level: "intermediate" }),
-              });
-              if (ttsRes.ok) {
-                const ttsData = (await ttsRes.json()) as { audioBase64?: string };
-                if (ttsData.audioBase64) {
-                  audioBase64 = ttsData.audioBase64;
-                }
-              }
-            } catch {}
-
-            const scrapSentence: SentenceResponse = {
-              id: scrapId,
-              english: activeScrap.extractedPassage,
-              japanese: activeScrap.japaneseTranslation || activeScrap.summary || "",
-              audioBase64,
-              wordCount: activeScrap.extractedPassage.trim().split(/\s+/).length,
-              industry: "business",
-              level: "intermediate",
-              mode: "passage",
-            };
-            setSentence(scrapSentence);
-            setIsLoadingSentence(false);
-          })();
+        setGenerationSource("scrap");
+        setGenerationSourceState("scrap");
+        const activeScrapItem = getActiveScrapSource();
+        if (activeScrapItem) {
+          setActiveScrap(activeScrapItem);
+          const targetScrapMode: PracticeMode = modeParam === "sentence" ? "sentence" : "passage";
+          setPracticeMode(targetScrapMode);
+          void fetchNewSentence(undefined, undefined, targetScrapMode);
           return;
         }
       }
@@ -1235,6 +1300,29 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               </div>
             )}
 
+            {/* Active My Scrap Badge */}
+            {generationSource === "scrap" && activeScrap && sentence && (
+              <div className="flex items-center justify-between gap-2 flex-wrap px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-800 dark:text-purple-300 text-[11px] sm:text-xs font-semibold animate-in fade-in-50">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-600 dark:text-purple-300 font-bold text-[10px]">
+                    📑 マイスクラップ生成中
+                  </span>
+                  <span className="font-bold text-foreground truncate max-w-[220px] sm:max-w-[340px]">
+                    {activeScrap.title}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    （保存資料から毎回新しいフレーズをAI生成）
+                  </span>
+                </div>
+                <Link
+                  href="/settings?section=learning#section-doc-shadow"
+                  className="text-purple-600 dark:text-purple-400 hover:underline font-bold text-[11px] shrink-0"
+                >
+                  生成元・資料変更 ↗
+                </Link>
+              </div>
+            )}
+
             {/* Active Custom Words Badge */}
             {activeCustomWords.length > 0 && sentence && (
               <div className="flex items-center justify-between gap-2 flex-wrap px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] sm:text-xs font-semibold animate-in fade-in-50">
@@ -1255,6 +1343,7 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
 
             {/* Persona Specialization Badge (Base / Pro users with active persona) */}
             {activeCustomWords.length === 0 &&
+              generationSource === "persona" &&
               activePersona &&
               activePersona.enabled !== false &&
               (activePersona.jobRole || activePersona.industryField || activePersona.targetScenario) &&
@@ -1283,12 +1372,15 @@ const LEVEL_OPTIONS: Array<{ key: DifficultyLevel; label: string }> = [
               )}
 
             {/* Personalization badge: shown when weak words are being reinforced (and not custom word mode) */}
-            {activeCustomWords.length === 0 && activeWeakWords.length > 0 && sentence && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-[11px] font-semibold w-fit animate-in fade-in-50">
-                <span>🎯</span>
-                <span>苦手単語『{activeWeakWords.slice(0, 2).join("」「")}』の特訓問題</span>
-              </div>
-            )}
+            {activeCustomWords.length === 0 &&
+              generationSource === "industry" &&
+              activeWeakWords.length > 0 &&
+              sentence && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-[11px] font-semibold w-fit animate-in fade-in-50">
+                  <span>🎯</span>
+                  <span>苦手単語『{activeWeakWords.slice(0, 2).join("」「")}』の特訓問題</span>
+                </div>
+              )}
 
             <SentenceCard
               sentence={sentence}
