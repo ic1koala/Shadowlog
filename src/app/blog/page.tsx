@@ -24,6 +24,39 @@ export const metadata: Metadata = {
 
 const ARTICLES = [
   {
+    slug: "busy-professional-micro-learning",
+    title: "「忙しくて英語の勉強時間が取れない」社会人が毎日10分で成果を出すマイクロラーニング術",
+    description:
+      "仕事や家事で忙しい社会人が英語学習を習慣化するための科学的メソッド。エビングハウスの忘却曲線と分散学習効果、If-Thenプランニングを活用し、1日10分のスキマ時間で成果を出す方法を解説。",
+    date: "2026.10.31",
+    readTime: "5分",
+    category: "習慣化・生産性",
+    tags: ["習慣化", "社会人英語", "マイクロラーニング", "分散学習"],
+    isFeatured: true,
+  },
+  {
+    slug: "stop-backward-translation-sight-translation",
+    title: "英語を後ろから訳していませんか？「返り読み」を強制終了して英語脳を作る方法",
+    description:
+      "長文読解やTOEICリスニングで時間が足りなくなる最大の原因「返り読み」。同時通訳者の基本訓練法である「サイトトランスレーション」と「チャンク・シャドーイング」を組み合わせ、語順のまま理解する技術を解説。",
+    date: "2026.10.29",
+    readTime: "5分",
+    category: "リーディング・リスニング",
+    tags: ["返り読み", "サイトトランスレーション", "チャンク", "英語脳"],
+    isFeatured: false,
+  },
+  {
+    slug: "why-passive-listening-fails",
+    title: "「英語の聞き流し」はなぜ効果が薄いのか？脳科学（音韻ループ理論）が明かす真実",
+    description:
+      "洋楽や英語ニュースをBGMのように聞き流しても英語が話せるようにならないのはなぜ？アラン・バドリー教授による「音韻ループ理論」とワーキングメモリの仕組みから、本当に効果の出るアクティブ・リスニング法を解説。",
+    date: "2026.10.27",
+    readTime: "5分",
+    category: "脳科学・記憶理論",
+    tags: ["聞き流し", "音韻ループ", "ワーキングメモリ", "シャドーイング"],
+    isFeatured: false,
+  },
+  {
     slug: "why-listening-is-hard-speech-perception",
     title: "なぜ知っている単語なのに聞き取れないのか？英語リスニングの壁を壊す「音声知覚」の正体",
     description:
@@ -32,7 +65,7 @@ const ARTICLES = [
     readTime: "5分",
     category: "リスニング科学",
     tags: ["リスニング", "音声知覚", "第二言語習得論", "ワーキングメモリ"],
-    isFeatured: true,
+    isFeatured: false,
   },
   {
     slug: "hybrid-shadowing-pro-features",
