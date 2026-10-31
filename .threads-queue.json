@@ -683,14 +683,16 @@
     "id": "queue_20261031_night_parent",
     "text": "10月も今日で最終日ですね🎃\n今月、少しでも英語学習を続けられた方、本当に素晴らしいです！お疲れ様でした👏\n\n完璧にできなくても、毎日1フレーズでも触れられたら100点満点。\n明日から11月、新しい気持ちでまた一歩ずつ進んでいきましょう！\n\n今月のみなさんの学習成果はどうでしたか？\n\n#10月最終日 #英語学習 #英語の勉強垢 #大人の学び直し",
     "scheduledAt": "2026-10-31T19:00:00+09:00",
-    "status": "pending"
+    "status": "failed",
+    "error": "Error validating access token: The session has been invalidated because the user changed their password or Facebook has changed the session for security reasons."
   },
   {
     "id": "queue_20261031_night_tree",
     "text": "11月の英語学習スタートに向けて、今の自分の発話スピード（WPM）と推定TOEICスコアをチェックしてみませんか？\nスマホで30秒吹き込むだけの無料AI診断です👇\nhttps://shadowlog.vercel.app/diagnosis",
     "replyToId": "queue_20261031_night_parent",
     "scheduledAt": "2026-10-31T19:02:00+09:00",
-    "status": "pending"
+    "status": "skipped",
+    "error": "Parent item queue_20261031_night_parent was failed"
   },
   {
     "id": "queue_20261101_morning_parent",
