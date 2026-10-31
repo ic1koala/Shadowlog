@@ -6,8 +6,8 @@
 // Campaign Dates (JST)
 // Registration Cutoff: 2026-10-20 23:59:59 JST
 export const CAMPAIGN_REGISTRATION_DEADLINE = "2026-10-20T23:59:59+09:00";
-// Campaign VIP Expiration: 2026-10-30 23:59:59 JST
-export const CAMPAIGN_EXPIRATION_DATE = "2026-10-30T23:59:59+09:00";
+// VIP Member November Benefit Expiration: 2026-11-30 23:59:59 JST
+export const CAMPAIGN_EXPIRATION_DATE = "2026-11-30T23:59:59+09:00";
 
 export const KEY_INVITED_VIP = "shadowlog_invited_vip";
 
@@ -18,7 +18,7 @@ export function getVipTesterEmails(): string[] {
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 
-  // Initial registered VIP testers & Owner accounts
+  // Registered VIP testers, Early ambassadors & Owner accounts
   const defaultVipEmails = [
     "shadowlog.app@gmail.com",
     "koala.hs@gmail.com",
@@ -26,6 +26,7 @@ export function getVipTesterEmails(): string[] {
     "96430.yummy.717@gmail.com",
     "ntprnc3shkr1ysk@gmail.com",
     "misticmirage_s@yahoo.co.jp",
+    "sakurannbo_sweet@yahoo.co.jp",
   ];
 
   for (const email of defaultVipEmails) {

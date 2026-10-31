@@ -41,9 +41,9 @@ export function TicketBadge() {
             <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
             <span>
               {status.vipType === "campaign"
-                ? "👑 VIP (10/30迄)"
+                ? "👑 VIP (11/30迄)"
                 : status.isVip
-                ? "👑 VIP Tester (無制限)"
+                ? "👑 VIP (11月中無制限)"
                 : "👑 Pro (無制限)"}
             </span>
           </div>

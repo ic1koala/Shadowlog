@@ -51,7 +51,7 @@ export default function WaitlistPage() {
               href="#register"
               className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all"
             >
-              <span>事前登録・VIP申込</span>
+              <span>無料体験・VIP特典</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -249,7 +249,7 @@ export default function WaitlistPage() {
                 明瞭・手軽な3つのプラン
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                2026年11月の正式リリース時の予定料金です。事前登録者には無料クーポンを進呈します。
+                本日2026年11月1日 正式リリース！無料登録で20回分チケット即時進呈＆初期VIP限定クーポン配布中。
               </p>
             </div>
 
@@ -364,7 +364,7 @@ export default function WaitlistPage() {
             {/* Campaign Banner */}
             <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-center">
               <p className="text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-400">
-                ✨ 事前登録いただいた方全員に、正式リリース時に「14日間無料体験クーポン」を進呈します！
+                ✨ 本日11月1日正式リリース！無料登録で20回分チケット即時進呈＆初期VIP限定クーポン【VIP2026NOV】配布中！
               </p>
             </div>
           </div>
@@ -375,11 +375,11 @@ export default function WaitlistPage() {
           <div className="max-w-2xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>2026年11月 正式リリース予定</span>
+              <span>2026年11月1日 祝・正式リリース！</span>
             </div>
 
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">
-              先行登録で、お得に英語習慣を始めよう。
+              無料登録で、今日から仕事の英語習慣を始めよう。
             </h2>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">

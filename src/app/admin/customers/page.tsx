@@ -1044,7 +1044,7 @@ export default function AdminCustomersPage() {
                           {customer.vip_type === "campaign" ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                               <Crown className="w-3 h-3 text-amber-500" />
-                              VIP (10/30迄)
+                              VIP (11/30迄)
                             </span>
                           ) : customer.vip_type === "invite" ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
@@ -1257,10 +1257,10 @@ export default function AdminCustomersPage() {
                             {customer.vip_type === "campaign" ? (
                               <span
                                 className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
-                                title="10/20まで登録特典：10/30までVIP利用可能"
+                                title="先行VIPメンバー特典：11/30までVIP利用可能"
                               >
                                 <Crown className="w-3 h-3 text-amber-500" />
-                                VIP (10/30迄)
+                                VIP (11/30迄)
                               </span>
                             ) : customer.vip_type === "invite" ? (
                               <span

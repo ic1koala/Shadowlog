@@ -85,7 +85,7 @@ export default function PublicDiagnosisPage() {
               href="/signup?vip=1"
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition shadow-xs"
             >
-              <span>VIP先行登録</span>
+              <span>VIP限定特典で登録</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

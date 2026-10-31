@@ -76,17 +76,17 @@ export function WaitlistForm({ sourceLocation = "hero", className = "" }: Waitli
           </div>
           <div className="space-y-1.5">
             <h3 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-              <span>{isDuplicate ? "ご登録確認完了！" : "🎉 事前登録が完了しました！"}</span>
+              <span>{isDuplicate ? "ご登録確認完了！" : "🎉 登録完了！ウェルカム特典を適用しました"}</span>
             </h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
               {isDuplicate
-                ? "すでにウェイティングリストへご登録いただいております。2026年11月の正式リリース日に、14日間無料体験クーポンコードと一緒にお知らせいたします！"
-                : "ご登録いただいたメールアドレスへ確認メールをお送りしました。2026年11月の正式リリース日に、14日間無料体験クーポンコードと一緒にお届けします。"}
+                ? "すでにShadowLogへご登録いただいております。本日11月1日より正式オープン！無料チケット20回分＆限定クーポン【VIP2026NOV】をぜひご活用ください！"
+                : "ご登録いただいたメールアドレスへ確認メールをお送りしました。無料チケット20回分＆限定クーポン【VIP2026NOV】を使って今すぐ英語習慣を始めましょう！"}
             </p>
             <div className="pt-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>特典: 14日間無料体験クーポン進呈対象</span>
+                <span>特典: 無料20回チケット ＆ VIP限定クーポン【VIP2026NOV】進呈</span>
               </span>
             </div>
           </div>
@@ -129,7 +129,7 @@ export function WaitlistForm({ sourceLocation = "hero", className = "" }: Waitli
               </>
             ) : (
               <>
-                <span>14日間無料で事前登録する</span>
+                <span>今すぐ無料で始める（20回分チケット付き）</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -144,7 +144,7 @@ export function WaitlistForm({ sourceLocation = "hero", className = "" }: Waitli
         )}
 
         <p className="text-[11px] text-muted-foreground text-center sm:text-left leading-normal px-1">
-          ※ 2026年11月の正式リリース時に限定クーポンをお届けします。迷惑メールは一切送信いたしません。
+          ※ 登録直後から無料チケットで練習を開始できます。迷惑メールは一切送信いたしません。
         </p>
       </form>
     </div>

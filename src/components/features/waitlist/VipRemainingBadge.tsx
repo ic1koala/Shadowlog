@@ -80,7 +80,7 @@ export function VipRemainingBadge({
       <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 shadow-sm">
         <Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" />
         <span>
-          先着{vipLimit}名限定 VIPモニター枠（Pro無制限）：
+          先着{vipLimit}名限定 VIPモニター枠（11月中Pro無制限＆クーポン）：
           <strong className="text-rose-600 dark:text-rose-400 underline underline-offset-2 ml-1">
             残り {displayRemaining} 名
           </strong>

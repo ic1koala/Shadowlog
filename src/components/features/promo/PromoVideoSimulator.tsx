@@ -651,13 +651,13 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
               <div className="animate-fade-in space-y-1 text-center">
                 <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur-md animate-pulse">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  🎉 2026年11月 正式配信スタート！
+                  🎉 祝・本日正式リリース！
                 </span>
                 <h2 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug">
                   AIシャドーイングの新習慣を、最速で。
                 </h2>
                 <div className="text-sm sm:text-base font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-orange-400 leading-tight">
-                  Waitlist先行登録受付中
+                  無料20回チケット＆VIP特典配布中
                 </div>
                 <p className="text-[11px] text-amber-200/90 font-medium">
                   （限定特典：全Pro機能 1ヶ月無料）
@@ -976,13 +976,13 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
                       <div className="bg-gradient-to-b from-amber-500/20 via-orange-500/15 to-transparent border border-amber-500/40 rounded-xl p-2 space-y-1 shadow-lg shadow-amber-500/10">
                         <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-wide border border-amber-500/30">
                           <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-                          2026年11月 正式リリース
+                          祝・本日正式リリース！
                         </div>
                         <p className="text-[10px] font-bold text-slate-200">
-                          先行登録で【全Pro機能 1ヶ月無料】
+                          無料20回チケット＆【Pro 1ヶ月無料】クーポン配布中
                         </p>
                         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black py-1.5 px-3 rounded-lg text-[10px] shadow-md shadow-orange-500/30 tracking-tight animate-bounce">
-                          🚀 Waitlistに今すぐ登録 →
+                          🚀 無料で今すぐ始める →
                         </div>
                       </div>
                     </div>
@@ -1014,7 +1014,7 @@ export function PromoVideoSimulator({ onFullScreenChange }: PromoVideoSimulatorP
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border-2 border-amber-400/60 backdrop-blur-md shadow-[0_0_25px_rgba(245,158,11,0.35)] animate-pulse">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
                 <span className="text-xs sm:text-sm font-black text-white tracking-wide">
-                  🎉 11月配信開始！Waitlistに登録 ➔ <span className="text-amber-300 underline font-mono">shadowlog.vercel.app/waitlist</span>
+                  🎉 祝・本日正式リリース！今すぐ無料体験 ➔ <span className="text-amber-300 underline font-mono">shadowlog.vercel.app</span>
                 </span>
               </div>
             ) : (
